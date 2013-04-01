@@ -11,6 +11,7 @@
 #include <boost/preprocessor/repetition/repeat_from_to.hpp>
 
 namespace mpl = boost::mpl;
+namespace x11 = boost::mpl::x11;
 
 #define N_ARG 10
 
@@ -43,7 +44,7 @@ struct x_pack;
 
 #define T_PACK(z, n, text) template <typename T>              \
 struct x_pack<T, typename std::enable_if<                     \
-	mpl::x11::and_<                                       \
+	x11::and_<                                       \
 		mpl::equal_to<mpl::size<T>, mpl::int_<n> >,   \
 		BOOST_PP_ENUM_ ## z(n, T_HAS_KEY, nil)        \
 	>::value                                              \

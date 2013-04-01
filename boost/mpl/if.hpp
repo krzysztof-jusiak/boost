@@ -14,20 +14,16 @@
 #include <type_traits>
 
 #if defined(BOOST_TEST_MODULE)
-#include_next<boost/mpl/if.hpp>
+#include_next <boost/mpl/if.hpp>
 #endif
 
 namespace boost { namespace mpl { namespace x11 {
 
 template <bool C, typename T1, typename T2>
-struct if_c {
-	typedef typename std::conditional<C, T1, T2>::type type;
-};
+using if_c = std::conditional<C, T1, T2>;
 
 template <typename T1, typename T2, typename T3>
-struct if_ {
-	typedef typename std::conditional<T1::value, T2, T3>::type type;
-};
+using if_ = std::conditional<T1::value, T2, T3>;
 
 }}}
 

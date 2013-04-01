@@ -6,3 +6,5 @@ alias test_case : : : : <include>../../..
 
 run if.cpp : : test_case ;
 run logical.cpp : : test_case ;
+run largest_int.cpp : : test_case ;
+run arithmetic.cpp : : test_case ;
