@@ -2,7 +2,7 @@
 
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/map.hpp>
-#include <boost/mpl/and.hpp>
+#include <boost/mpl/logical.hpp>
 #include <boost/mpl/size.hpp>
 #include <boost/mpl/equal_to.hpp>
 #include <boost/mpl/erase_key.hpp>
@@ -45,7 +45,7 @@ struct x_pack;
 #define T_PACK(z, n, text) template <typename T>              \
 struct x_pack<T, typename std::enable_if<                     \
 	x11::and_<                                       \
-		mpl::equal_to<mpl::size<T>, mpl::int_<n> >,   \
+		mpl::equal_to<mpl::size<T>, x11::int_<n> >,   \
 		BOOST_PP_ENUM_ ## z(n, T_HAS_KEY, nil)        \
 	>::value                                              \
 >::type> {                                                    \

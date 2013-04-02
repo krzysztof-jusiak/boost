@@ -15,16 +15,9 @@
 
 #if defined(BOOST_TEST_MODULE)
 #include_next <boost/mpl/arithmetic.hpp>
-#include <boost/mpl/int.hpp>
 #endif
 
 namespace boost { namespace mpl { namespace x11 {
-
-template <int value>
-using int_ = std::integral_constant<int, value>;
-
-template <long value>
-using long_ = std::integral_constant<long, value>;
 
 template <typename...>
 struct plus;

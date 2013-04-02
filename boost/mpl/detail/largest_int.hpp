@@ -12,39 +12,26 @@
 #pragma once
 #endif
 
-#include <type_traits>
+#include <boost/mpl/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
 template <typename T>
 struct integral_rank;
 
-template <> struct integral_rank<bool>
-: std::integral_constant<int, 1> {};
-template <> struct integral_rank<signed char>
-: std::integral_constant<int, 2> {};
-template <> struct integral_rank<char>
-: std::integral_constant<int, 3> {};
-template <> struct integral_rank<unsigned char>
-: std::integral_constant<int, 4> {};
-template <> struct integral_rank<wchar_t>
-: std::integral_constant<int, 5> {};
-template <> struct integral_rank<short>
-: std::integral_constant<int, 6> {};
-template <> struct integral_rank<unsigned short>
-: std::integral_constant<int, 7> {};
-template <> struct integral_rank<int>
-: std::integral_constant<int, 8> {};
-template <> struct integral_rank<unsigned int>
-: std::integral_constant<int, 9> {};
-template <> struct integral_rank<long>
-: std::integral_constant<int, 10> {};
-template <> struct integral_rank<unsigned long>
-: std::integral_constant<int, 11> {};
-template <> struct integral_rank<long long>
-: std::integral_constant<int, 12> {};
-template <> struct integral_rank<unsigned long long>
-: std::integral_constant<int, 13> {};
+template <> struct integral_rank<bool>               : int_<1> {};
+template <> struct integral_rank<signed char>        : int_<2> {};
+template <> struct integral_rank<char>               : int_<3> {};
+template <> struct integral_rank<unsigned char>      : int_<4> {};
+template <> struct integral_rank<wchar_t>            : int_<5> {};
+template <> struct integral_rank<short>              : int_<6> {};
+template <> struct integral_rank<unsigned short>     : int_<7> {};
+template <> struct integral_rank<int>                : int_<8> {};
+template <> struct integral_rank<unsigned int>       : int_<9> {};
+template <> struct integral_rank<long>               : int_<10> {};
+template <> struct integral_rank<unsigned long>      : int_<11> {};
+template <> struct integral_rank<long long>          : int_<12> {};
+template <> struct integral_rank<unsigned long long> : int_<13> {};
 
 template <typename...>
 struct largest_int;
