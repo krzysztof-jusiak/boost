@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE mpl
 #include <boost/test/included/unit_test.hpp>
 
-#include <boost/mpl/logical.hpp>
+#include <boost/mpl/x11/logical.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 

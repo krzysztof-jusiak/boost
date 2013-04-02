@@ -10,16 +10,8 @@
 #if !defined(MPL_X11_LIST_APR_02_2013_1710)
 #define MPL_X11_LIST_APR_02_2013_1710
 
-#if defined(_MSC_VER)
-#pragma once
-#endif
-
-#include <boost/mpl/arithmetic.hpp>
-#include <boost/mpl/size_fwd.hpp>
-
-#if defined(BOOST_TEST_MODULE)
-#include_next <boost/mpl/list.hpp>
-#endif
+#include <boost/mpl/x11/arithmetic.hpp>
+#include <boost/mpl/x11/size_fwd.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

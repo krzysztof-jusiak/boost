@@ -8,6 +8,10 @@
 #if !defined(MPL_X11_SEQUENCE_TAG_APR_02_2013_1800)
 #define MPL_X11_SEQUENCE_TAG_APR_02_2013_1800
 
+#include <boost/mpl/x11/sequence_tag_fwd.hpp>
+#include <boost/mpl/x11/detail/has_tag.hpp>
+#include <boost/mpl/x11/detail/has_begin.hpp>
+
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 

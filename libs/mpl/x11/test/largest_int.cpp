@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE mpl
 #include <boost/test/included/unit_test.hpp>
 
-#include <boost/mpl/detail/largest_int.hpp>
+#include <boost/mpl/x11/detail/largest_int.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 

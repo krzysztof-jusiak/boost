@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2000-2004 Aleksey Gurtovoy 2000-2004
+    Copyright (c) 2000-2004 Aleksey Gurtovoy
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -8,11 +8,7 @@
 #if !defined(MPL_X11_DETAIL_LARGEST_INT_APR_01_2013_2300)
 #define MPL_X11_DETAIL_LARGEST_INT_APR_01_2013_2300
 
-#if defined(_MSC_VER)
-#pragma once
-#endif
-
-#include <boost/mpl/integral.hpp>
+#include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
@@ -41,27 +37,27 @@ struct largest_int<> {
 	typedef bool type;
 };
 
-template <typename T>
-struct largest_int<T> {
-	typedef T type;
+template <typename T0>
+struct largest_int<T0> {
+	typedef T0 type;
 };
 
-template <typename T1, typename T2>
-struct largest_int<T1, T2> {
+template <typename T0, typename T1>
+struct largest_int<T0, T1> {
 	typedef typename std::conditional<
-		integral_rank<T1>::value >= integral_rank<T2>::value,
-		T1, T2
+		integral_rank<T0>::value >= integral_rank<T1>::value,
+		T0, T1
 	>::type type;
 };
 
-template <typename T1, typename T2, typename... Tn>
-struct largest_int<T1, T2, Tn...> {
+template <typename T0, typename T1, typename... Tn>
+struct largest_int<T0, T1, Tn...> {
 	typedef typename std::conditional<
-		integral_rank<T1>::value
+		integral_rank<T0>::value
 		>= integral_rank<
-			typename largest_int<T2, Tn...>::type
+			typename largest_int<T1, Tn...>::type
 		>::value,
-		T1, typename largest_int<T2, Tn...>::type
+		T0, typename largest_int<T1, Tn...>::type
 	>::type type;
 };
 

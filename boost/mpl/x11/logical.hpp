@@ -7,14 +7,6 @@
 #if !defined(MPL_X11_LOGICAL_MAR_31_2013_2300)
 #define MPL_X11_LOGICAL_MAR_31_2013_2300
 
-#if defined(_MSC_VER)
-#pragma once
-#endif
-
-#if defined(BOOST_TEST_MODULE)
-#include_next <boost/mpl/logical.hpp>
-#endif
-
 #include <type_traits>
 
 namespace boost { namespace mpl { namespace x11 {
@@ -26,17 +18,17 @@ template <>
 struct or_<> : std::true_type
 {};
 
-template <typename T>
-struct or_<T> : T
+template <typename T0>
+struct or_<T0> : T0
 {};
 
-template <typename T1, typename T2>
-struct or_<T1, T2> : std::conditional<T1::value, T1, T2>::type
+template <typename T0, typename T1>
+struct or_<T0, T1> : std::conditional<T0::value, T0, T1>::type
 {};
 
-template <typename T1, typename T2, typename... Tn>
-struct or_<T1, T2, Tn...>
-: std::conditional<T1::value, T1, or_<T2, Tn...>>::type
+template <typename T0, typename T1, typename... Tn>
+struct or_<T0, T1, Tn...>
+: std::conditional<T0::value, T0, or_<T1, Tn...>>::type
 {};
 
 template <typename...>
@@ -50,13 +42,13 @@ template <typename T>
 struct and_<T> : T
 {};
 
-template <typename T1, typename T2>
-struct and_<T1, T2> : std::conditional<T1::value, T2, T1>::type
+template <typename T0, typename T1>
+struct and_<T0, T1> : std::conditional<T0::value, T1, T0>::type
 {};
 
-template <typename T1, typename T2, typename... Tn>
-struct and_<T1, T2, Tn...>
-: std::conditional<T1::value, and_<T2, Tn...>, T1>::type
+template <typename T0, typename T1, typename... Tn>
+struct and_<T0, T1, Tn...>
+: std::conditional<T0::value, and_<T1, Tn...>, T0>::type
 {};
 
 template <typename T>
