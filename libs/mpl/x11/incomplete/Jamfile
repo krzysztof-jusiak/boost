@@ -5,3 +5,4 @@ alias test_case : : : : <include>../../../..
                         <library>../../../..//test_exec_monitor ;
 
 run arithmetic.cpp : : test_case ;
+run map.cpp : : test_case ;

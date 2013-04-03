@@ -24,6 +24,9 @@ struct wrapped_type <type_wrapper<T>> {
 	typedef T type;
 };
 
+template <typename T>
+static T const &ptr_to_ref(T *);
+
 }}}}
 
 #endif

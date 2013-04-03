@@ -1,20 +1,15 @@
 #include <cstdio>
 
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/map.hpp>
-#include <boost/mpl/size.hpp>
-#include <boost/mpl/equal_to.hpp>
-#include <boost/mpl/erase_key.hpp>
+#include <boost/mpl/x11/at.hpp>
+#include <boost/mpl/x11/map.hpp>
+#include <boost/mpl/x11/size.hpp>
+#include <boost/mpl/x11/equal_to.hpp>
+#include <boost/mpl/x11/erase_key.hpp>
 
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/repetition/enum.hpp>
 #include <boost/preprocessor/repetition/repeat_from_to.hpp>
 
-#include <boost/mpl/x11/logical.hpp>
-#include <boost/mpl/x11/integral.hpp>
-
-
-namespace mpl = boost::mpl;
 namespace x11 = boost::mpl::x11;
 
 #define N_ARG 10
@@ -29,9 +24,9 @@ void test() { printf("val %d\n", n); }    \
 
 BOOST_PP_REPEAT(N_ARG, T_VAL, nil)
 
-#define T_MAP_PAIR(z, n, text) mpl::pair<key##n, val##n>
+#define T_MAP_PAIR(z, n, text) x11::pair<key##n, val##n>
 
-#define T_MAP(z, n, text) typedef mpl::map< \
+#define T_MAP(z, n, text) typedef x11::map< \
 BOOST_PP_ENUM_ ## z(n, T_MAP_PAIR, nil)     \
 > map##n##_t;
 
@@ -40,16 +35,16 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(N_ARG), T_MAP, nil)
 template <typename T, typename Enable = void>
 struct x_pack;
 
-#define T_HAS_KEY(z, n, text) mpl::has_key<T, key##n>
+#define T_HAS_KEY(z, n, text) x11::has_key<T, key##n>
 
-#define T_X_TYPE(z, n, text) typename mpl::at<T, key##n>::type a##n;
+#define T_X_TYPE(z, n, text) typename x11::at<T, key##n>::type a##n;
 
 #define T_X_TEST(z, n, text) a##n.test();
 
 #define T_PACK(z, n, text) template <typename T>              \
 struct x_pack<T, typename std::enable_if<                     \
 	x11::and_<                                            \
-		mpl::equal_to<mpl::size<T>, x11::int_<n>>,    \
+		x11::equal_to<x11::size<T>, x11::int_<n>>,    \
 		BOOST_PP_ENUM_ ## z(n, T_HAS_KEY, nil)        \
 	>::value                                              \
 >::type> {                                                    \

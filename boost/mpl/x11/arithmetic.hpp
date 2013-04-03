@@ -48,6 +48,12 @@ using increment = std::integral_constant<
 	typename T::value_type, (T::value + 1)
 >;
 
+template <typename T>
+using decrement = std::integral_constant<
+	typename T::value_type, (T::value - 1)
+>;
+
+
 }}}
 
 #endif

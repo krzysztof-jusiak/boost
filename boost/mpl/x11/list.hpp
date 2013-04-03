@@ -53,11 +53,18 @@ struct l_iter<l_end> {
 	typedef forward_iterator_tag category;
 };
 
-template<>
+template <>
 struct begin_impl<list_tag> {
 	template <typename List>
 	struct apply {
 		typedef l_iter<typename List::type> type;
+	};
+};
+
+template <>
+struct clear_impl<list_tag> {
+	template <typename List> struct apply {
+		typedef l_end type;
 	};
 };
 
@@ -67,7 +74,7 @@ struct empty_impl<list_tag> {
 	struct apply : not_<typename List::size> {};
 };
 
-template<>
+template <>
 struct end_impl<list_tag> {
 	template <typename>
 	struct apply {
@@ -83,13 +90,13 @@ struct front_impl<list_tag> {
 	};
 };
 
-template<>
+template <>
 struct has_push_back_impl<list_tag> {
 	template <typename Seq>
 	struct apply : std::false_type {};
 };
 
-template<>
+template <>
 struct pop_front_impl<list_tag> {
 	template <typename List>
 	struct apply {
@@ -97,7 +104,7 @@ struct pop_front_impl<list_tag> {
 	};
 };
 
-template<>
+template <>
 struct push_front_impl<list_tag> {
 	template<typename List, typename T>
 	struct apply {
