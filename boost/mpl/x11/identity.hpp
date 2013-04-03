@@ -5,17 +5,20 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
-#if !defined(MPL_X11_SIZE_FWD_APR_02_2013_1745)
-#define MPL_X11_SIZE_FWD_APR_02_2013_1745
+#if !defined(MPL_X11_IDENTITY_APR_03_2013_1700)
+#define MPL_X11_IDENTITY_APR_03_2013_1700
 
 namespace boost { namespace mpl { namespace x11 {
-namespace detail {
 
-template <typename Tag> struct size_impl;
+template <typename T>
+struct identity {
+	typedef T type;
+};
 
-}
-
-template <typename Sequence> struct size;
+template <typename T>
+struct make_identity {
+	typedef identity<T> type;
+};
 
 }}}
 

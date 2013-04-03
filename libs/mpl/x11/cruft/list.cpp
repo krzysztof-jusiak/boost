@@ -14,8 +14,8 @@ int main(int argc, char **argv)
 	typedef list<char, char, char, char, char, char, char, char, char> l9;
 
 	printf("%ld\n", size<l0>::value);
-	//printf("%ld\n", size<l1>::value);
-	//printf("%ld\n", size<l2>::value);
-	//printf("%ld\n", size<l9>::value);
+	printf("%ld\n", size<l1>::value);
+	printf("%ld\n", size<l2>::value);
+	printf("%ld\n", size<l9>::value);
 	return 0;
 }

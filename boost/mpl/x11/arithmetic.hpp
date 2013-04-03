@@ -43,6 +43,11 @@ struct plus<T0, T1, Tn...>
 template <typename T>
 using negate = std::integral_constant<typename T::value_type, -(T::value)>;
 
+template <typename T>
+using increment = std::integral_constant<
+	typename T::value_type, (T::value + 1)
+>;
+
 }}}
 
 #endif

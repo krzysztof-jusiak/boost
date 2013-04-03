@@ -52,8 +52,8 @@ struct sequence_tag_impl<false, false> {
 
 template <typename Sequence>
 struct sequence_tag : detail::sequence_tag_impl<
-	::boost::mpl::x11::detail::has_tag<Sequence>::value,
-	::boost::mpl::x11::detail::has_begin<Sequence>::value
+	detail::has_tag<Sequence>::value,
+	detail::has_begin<Sequence>::value
 >::template result_<Sequence> {};
 
 }}}
