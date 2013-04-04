@@ -11,34 +11,37 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <boost/mpl/x11/map.hpp>
-#include <boost/mpl/x11/size.hpp>
+#include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/clear.hpp>
+#include <boost/mpl/x11/contains.hpp>
+#include <boost/mpl/x11/erase.hpp>
+#include <boost/mpl/x11/has_key.hpp>
+#include <boost/mpl/x11/insert.hpp>
+#include <boost/mpl/x11/order.hpp>
+#include <boost/mpl/x11/size.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
 BOOST_AUTO_TEST_CASE(map_0)
 {
 	typedef map<
-		pair<int, unsigned>, 
+		pair<int, unsigned>,
 		pair<char, unsigned char>
 	> m_;
 
-	//typedef erase_key<m_, char>::type m;
-	typedef m_ m;
+	typedef erase_key<m_, char>::type m;
 
-	BOOST_CHECK_EQUAL((size<m>::value), 2);
+	BOOST_CHECK_EQUAL((size<m>::value), 1);
 	BOOST_CHECK(!(empty<m>::value));
 	BOOST_CHECK((std::is_same<clear<m>::type, map<>>::value));
-}
-#if 0
+
 	BOOST_CHECK((std::is_same<at<m, int>::type, unsigned>::value));
 	BOOST_CHECK((std::is_same<at<m, char>::type, void_>::value));
 	BOOST_CHECK((contains<m, pair<int, unsigned>>::value));
 	BOOST_CHECK(!(contains<m, pair<int, int>>::value));
 	BOOST_CHECK(!(contains<m, pair<char, unsigned char>>::value));
-
-	BOOST_CHECK(!(has_key<m, char>::type));
-	BOOST_CHECK((has_key<m, int>::type));
+	BOOST_CHECK(!(has_key<m, char>::value));
+	BOOST_CHECK((has_key<m, int>::value));
 
 	BOOST_CHECK(!(std::is_same<order<m, int>::type, void_>::value));
 	BOOST_CHECK((std::is_same<order<m, char>::type, void_>::value));
@@ -50,8 +53,14 @@ BOOST_AUTO_TEST_CASE(map_0)
 				  pair<int, unsigned>>::value));
 	BOOST_CHECK((std::is_same<next<first>::type, last>::value));
 
+	printf("%s\n", typeid(at<m, char>::type).name());
+	printf("%s\n", typeid(m_).name());
 	typedef insert<m, pair<char, long>>::type m2;
+	typedef insert<m2, pair<short, long>>::type m3;
 
+	printf("%s\n", typeid(at<m2, char>::type).name());
+	printf("%s\n", typeid(m3).name());
+	printf("%d\n", size<m3>::value);
 	BOOST_CHECK_EQUAL((size<m2>::value), 2);
 	BOOST_CHECK(!(empty<m2>::value));
 	BOOST_CHECK((std::is_same<clear<m2>::type, map<>>::value));
@@ -69,7 +78,8 @@ BOOST_AUTO_TEST_CASE(map_0)
 	BOOST_CHECK(!(std::is_same<order<m2, char>::type, void_>::value));
 	BOOST_CHECK(!(std::is_same<order<m2, char>::type,\
 				   order<m2, int>::type>::value));
-
+}
+#if 0
 	typedef begin<m2>::type first2;
 	typedef end<m2>::type last2;
 

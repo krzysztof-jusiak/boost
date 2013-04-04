@@ -21,7 +21,10 @@ struct is_void_ : std::false_type {};
 
 template <> struct is_void_<void_> : std::true_type {};
 
-template <typename T> struct is_not_void_ : std::true_type {};
+template <typename T>
+struct is_not_void_ : std::true_type {};
+
+template <> struct is_not_void_<void_> : std::false_type {};
 
 }}}
 

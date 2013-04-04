@@ -5,23 +5,22 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
-#if !defined(MPL_X11_IDENTITY_APR_03_2013_1700)
-#define MPL_X11_IDENTITY_APR_03_2013_1700
+#if !defined(MPL_X11_AT_APR_04_2013_1225)
+#define MPL_X11_AT_APR_04_2013_1225
+
+#include <boost/mpl/x11/detail/at.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
-template <typename T>
-struct identity {
-	typedef T type;
-};
+template <typename Sequence, typename N>
+struct at
+: detail::at_impl<typename sequence_tag<Sequence>::type>
+	::template apply<Sequence, N> {};
 
-template <typename T>
-struct make_identity {
-	typedef identity<T> type;
-};
-
-template <typename T>
-struct protect : T {};
+template<typename Sequence, long N>
+struct at_c
+: detail::at_impl<typename sequence_tag<Sequence>::type>
+	::template apply<Sequence, long_<N>> {};
 
 }}}
 

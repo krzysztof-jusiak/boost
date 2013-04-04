@@ -62,7 +62,7 @@ template <typename Sequence> struct front;
 
 template <typename Sequence, typename Key> struct has_key;
 
-template <typename Sequence, typename Pos_or_T, typename T> struct insert;
+template <typename...> struct insert;
 
 template <typename Sequence, typename Position, typename Range>
 struct insert_range;
