@@ -7,3 +7,4 @@ alias test_case : : : : <include>../../../..
 
 run arithmetic.cpp : : test_case ;
 run map.cpp : : test_case ;
+run apply_wrap.cpp : : test_case ;

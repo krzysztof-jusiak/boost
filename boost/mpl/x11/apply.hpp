@@ -16,7 +16,7 @@ template <typename...>
 struct apply_wrap;
 
 template <typename F>
-struct apply_wrap<F> : F::apply {};
+struct apply_wrap<F> : F::template apply<> {};
 
 template <typename F, typename T0>
 struct apply_wrap<F, T0> : F::template apply<T0> {};
