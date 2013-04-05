@@ -12,6 +12,7 @@
 #include <boost/mpl/x11/arg.hpp>
 #include <boost/mpl/x11/same_as.hpp>
 #include <boost/mpl/x11/identity.hpp>
+#include <boost/mpl/x11/iter_fold_if.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

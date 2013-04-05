@@ -10,7 +10,7 @@
 
 #include <boost/mpl/x11/sequence_tag_fwd.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
-#include <boost/mpl/x11/apply.hpp>
+#include <boost/mpl/x11/apply_wrap.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
