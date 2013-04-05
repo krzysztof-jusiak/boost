@@ -12,17 +12,29 @@
 #include <boost/mpl/x11/detail/template_arity.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
+namespace test {
 
-BOOST_AUTO_TEST_CASE(template_arity)
-{
 	struct my {};
 	template <typename T0> struct my1 {};
 	template <typename T0, typename T1 = void> struct my2 {};
+	template <typename T0, typename T1, typename T2> struct my3 {};
+}
 
-	BOOST_CHECK_EQUAL((detail::template_arity<my>::value), -1);
-	BOOST_CHECK_EQUAL((detail::template_arity<my1<int>>::value), 1);
-	BOOST_CHECK_EQUAL((detail::template_arity<my2<int, long>>::value), 2);
-	BOOST_CHECK_EQUAL((detail::template_arity<my2<int>>::value), 2);
+BOOST_AUTO_TEST_CASE(template_arity)
+{
+	/* BOOST_CHECK_EQUAL would not work due to missing ::value linker
+	 * reference.
+	 */
+	BOOST_CHECK((detail::template_arity<test::my>::value == 0));
+	BOOST_CHECK((detail::template_arity<test::my1<int>>::value == 1));
+	BOOST_CHECK((\
+		detail::template_arity<test::my2<int, long>>::value == 2  \
+	));
+	BOOST_CHECK((detail::template_arity<test::my2<int>>::value == 2));
+	BOOST_CHECK((                                                     \
+		detail::template_arity<test::my3<int, long, void>>::value \
+		== 3                                                      \
+	));
 }
 
 }}}

@@ -9,14 +9,26 @@
 #define MPL_X11_APPLY_APR_04_2013_1410
 
 #include <boost/mpl/x11/lambda.hpp>
+#include <boost/mpl/x11/detail/has_apply.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
+namespace detail {
+
+template <
+	typename F,
+	typename has_apply_ = typename detail::has_apply<F>::type
+> struct apply_wrap0 : F::template apply< > {};
+
+template <typename F>
+struct apply_wrap0<F, std::true_type> : F::apply {};
+
+}
 
 template <typename...>
 struct apply_wrap;
 
 template <typename F>
-struct apply_wrap<F> : F::template apply<> {};
+struct apply_wrap<F> : detail::apply_wrap0<F> {};
 
 template <typename F, typename T0>
 struct apply_wrap<F, T0> : F::template apply<T0> {};

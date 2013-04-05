@@ -4,7 +4,9 @@ alias test_case : : : : <include>../../../..
                         <library>../../../..//unit_test_framework
                         <library>../../../..//test_exec_monitor ;
 
+run apply_wrap.cpp : : test_case ;
 run if.cpp : : test_case ;
-run logical.cpp : : test_case ;
 run largest_int.cpp : : test_case ;
 run list.cpp : : test_case ;
+run logical.cpp : : test_case ;
+run template_arity.cpp : : test_case ;
