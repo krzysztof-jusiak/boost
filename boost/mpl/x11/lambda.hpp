@@ -10,7 +10,9 @@
 
 #include <boost/mpl/x11/lambda_fwd.hpp>
 #include <boost/mpl/x11/integral.hpp>
-#include <boost/mpl/x11/arg.hpp>
+#include <boost/mpl/x11/quote.hpp>
+#include <boost/mpl/x11/bind.hpp>
+
 
 namespace boost { namespace mpl { namespace x11 {
 

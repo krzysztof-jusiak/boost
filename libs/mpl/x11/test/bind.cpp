@@ -11,6 +11,8 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <boost/mpl/x11/bind.hpp>
+#include <boost/mpl/x11/quote.hpp>
+#include <boost/mpl/x11/arithmetic.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace test {
@@ -41,7 +43,7 @@ BOOST_AUTO_TEST_CASE(bind_0)
 
 	BOOST_CHECK((std::is_same<r11, int>::value));
 	BOOST_CHECK((std::is_same<r12, int>::value));
-/*
+
 	typedef apply_wrap<
 		bind<test::f5, arg<0>, arg<1>, arg<2>, arg<3>, arg<4>>,
 		void, void, void, void, int
@@ -53,19 +55,19 @@ BOOST_AUTO_TEST_CASE(bind_0)
 
 	BOOST_CHECK((std::is_same<r51, int>::value));
 	BOOST_CHECK((std::is_same<r52, int>::value));
-*/
+
 }
 
 BOOST_AUTO_TEST_CASE(bind_1)
 {
 	typedef apply_wrap<bind<test::f1, int>>::type r11;
-//	typedef apply_wrap<
-//		bind<test::f5, void, void, void, void, int>
-//	>::type r51;
+	typedef apply_wrap<
+		bind<test::f5, void, void, void, void, int>
+	>::type r51;
 	BOOST_CHECK((std::is_same<r11,int>::value));
-//	BOOST_CHECK((std::is_same<r51,int>::value));
+	BOOST_CHECK((std::is_same<r51,int>::value));
 }
-/*
+
 BOOST_AUTO_TEST_CASE(bind_2)
 {
 	typedef apply_wrap<
@@ -88,12 +90,14 @@ BOOST_AUTO_TEST_CASE(bind_2)
 
 BOOST_AUTO_TEST_CASE(bind_3)
 {
-	typedef bind<quote<if_>, arg<0>, bind<quote<next>, arg<1>>, arg<2>> f;
+	typedef bind<
+		quote<if_>, arg<0>, bind<quote<increment>, arg<1>>, arg<2>
+	> f;
 	typedef apply_wrap<f, std::true_type, int_<0>, int>::type r1;
 	typedef apply_wrap<f, std::false_type, int, int_<0>>::type r2;
 
 	BOOST_CHECK((std::is_same<r1, int_<1>>::value));
 	BOOST_CHECK((std::is_same<r2, int_<0>>::value));
 }
-*/
+
 }}}

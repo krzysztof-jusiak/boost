@@ -36,6 +36,24 @@ struct arg {
 	};
 };
 
+template <>
+struct arg<-1L> {
+	static long const value = -1;
+
+	template <typename...>
+	struct apply;
+
+	template <typename T0>
+	struct apply<T0> {
+		typedef T0 type;
+	};
+
+	template <typename T0, typename... Tn>
+	struct apply<T0, Tn...> {
+		typedef T0 type;
+	};
+};
+
 }}}
 
 #endif

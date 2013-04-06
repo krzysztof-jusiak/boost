@@ -10,3 +10,5 @@ run largest_int.cpp : : test_case ;
 run list.cpp : : test_case ;
 run logical.cpp : : test_case ;
 run template_arity.cpp : : test_case ;
+run quote.cpp : : test_case ;
+run bind.cpp : : test_case ;
