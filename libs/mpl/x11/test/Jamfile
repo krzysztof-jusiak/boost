@@ -12,3 +12,4 @@ run logical.cpp : : test_case ;
 run template_arity.cpp : : test_case ;
 run quote.cpp : : test_case ;
 run bind.cpp : : test_case ;
+run lambda.cpp : : test_case ;

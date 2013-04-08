@@ -44,7 +44,7 @@ template <
 template <typename F>
 struct template_arity {
 	typedef typename arity_helper<F>::type type;
-	static int const value = type::value;
+	static long const value = type::value;
 };
 
 }}}}

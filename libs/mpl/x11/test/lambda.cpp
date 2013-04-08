@@ -9,10 +9,11 @@
 #define BOOST_TEST_MODULE mpl
 #include <boost/test/included/unit_test.hpp>
 
-#include <boost/mpl/x11/lambda.hpp>
 #include <boost/mpl/x11/sizeof.hpp>
 #include <boost/mpl/x11/arg.hpp>
-#include <boost/mpl/x11/apply_wrap.hpp>
+#include <boost/mpl/x11/logical.hpp>
+#include <boost/mpl/x11/comparison.hpp>
+#include <boost/mpl/x11/lambda.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace test {
@@ -32,35 +33,38 @@ BOOST_AUTO_TEST_CASE(lambda_0)
 		greater<sizeof_<arg<0>>, size_t<8>>
 	>>::type f;
 
-	//BOOST_CHECK(!(apply_wrap<f, char>::value));
-	//BOOST_CHECK(!(apply_wrap<f, double>::value));
-	//BOOST_CHECK((apply_wrap<f, long>::value));
-	BOOST_CHECK((apply_wrap<f, test::my>::value));
+	typedef apply_wrap<f, test::my> x;
+
+	BOOST_CHECK(!(apply_wrap<f, char>::type::value));
+	BOOST_CHECK(!(apply_wrap<f, double>::type::value));
+	BOOST_CHECK((apply_wrap<f, long>::type::value));
+	BOOST_CHECK((apply_wrap<f, test::my>::type::value));
 }
-#if 0
+
 BOOST_AUTO_TEST_CASE(lambda_1)
 {
 	 /* x == y || x == my || sizeof(x) == sizeof(y) */
 	typedef lambda<or_<
-		std::is_same<_1, _2>, std::is_same<_2, my>,
-		equal_to<sizeof_<_1>, sizeof_<_2>>
+		std::is_same<arg<0>, arg<1>>,
+		std::is_same<arg<1>, test::my>,
+		equal_to<sizeof_<arg<0>>, sizeof_<arg<1>>>
 	>>::type f;
 
-	BOOST_CHECK(!(apply_wrap<f, double, char>));
-	BOOST_CHECK(!(apply_wrap<f, my, int>));
-	BOOST_CHECK(!(apply_wrap<f, my, char[99]>));
-	BOOST_CHECK((apply_wrap<f, int, int>));
-	BOOST_CHECK((apply_wrap<f, my, my>));
-	BOOST_CHECK((apply_wrap<f, signed long, unsigned long>));
+	BOOST_CHECK(!(apply_wrap<f, double, char>::type::value));
+	BOOST_CHECK(!(apply_wrap<f, test::my, int>::type::value));
+	BOOST_CHECK(!(apply_wrap<f, test::my, char[99]>::type::value));
+	BOOST_CHECK((apply_wrap<f, int, int>::type::value));
+	BOOST_CHECK((apply_wrap<f, test::my, test::my>::type::value));
+	BOOST_CHECK((apply_wrap<f, signed long, unsigned long>::type::value));
 }
 
 BOOST_AUTO_TEST_CASE(lambda_2)
 {
 	/* bind <-> lambda interaction */
-	typedef lambda<less<_1, _2>>::type pred;
-	typedef bind<pred, _1, int_<4>> f;
+	typedef lambda<less<arg<0>, arg<1>>>::type pred;
+	typedef bind<pred, arg<0>, int_<4>> f;
 
-	BOOST_CHECK((apply_wrap<f, int_<3>>));
+	BOOST_CHECK((apply_wrap<f, int_<3>>::type::value));
 }
-#endif
+
 }}}

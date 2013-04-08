@@ -30,7 +30,7 @@ struct cast1st_impl {
 };
 
 template <typename F, typename Tag0, typename Tag1>
-struct cast2st_impl {
+struct cast2nd_impl {
 	template <typename N0, typename N1>
 	struct apply : apply_wrap<
 		F,

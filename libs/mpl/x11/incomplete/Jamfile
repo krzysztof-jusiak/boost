@@ -8,4 +8,3 @@ alias test_case : : : : <include>../../../..
 
 run arithmetic.cpp : : test_case ;
 run map.cpp : : test_case ;
-run lambda.cpp : : test_case ;

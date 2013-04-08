@@ -8,6 +8,8 @@
 #if !defined(MPL_X11_COMPARISON_APR_05_2013_1400)
 #define MPL_X11_COMPARISON_APR_05_2013_1400
 
+#include <boost/mpl/x11/numeric_cast.hpp>
+
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
@@ -35,6 +37,16 @@ struct greater_tag<std::integral_constant<T, v>> {
 	typedef integral_c_tag type;
 };
 
+template <typename T>
+struct less_tag {
+	typedef typename T::tag type;
+};
+
+template <typename T, T v>
+struct less_tag<std::integral_constant<T, v>> {
+	typedef integral_c_tag type;
+};
+
 template <typename Tag0, typename Tag1>
 struct equal_to_impl
 : if_c<
@@ -46,7 +58,7 @@ struct equal_to_impl
 template <>
 struct equal_to_impl <integral_c_tag, integral_c_tag> {
 	template <typename N0, typename N1>
-	struct apply : std::bool_type<(N0::value == N1::value)> {};
+	struct apply : bool_<(N0::value == N1::value)> {};
 };
 
 template <typename Tag0, typename Tag1>
@@ -60,7 +72,21 @@ struct greater_impl
 template <>
 struct greater_impl <integral_c_tag, integral_c_tag> {
 	template <typename N0, typename N1>
-	struct apply : std::bool_type<(N0::value > N1::value)> {};
+	struct apply : bool_<(N0::value > N1::value)> {};
+};
+
+template <typename Tag0, typename Tag1>
+struct less_impl
+: if_c<
+	(Tag0::value > Tag1::value),
+	cast2nd_impl<less_impl<Tag0, Tag0>, Tag0, Tag1>,
+	cast1st_impl<less_impl<Tag1, Tag1>, Tag0, Tag1>
+>::type {};
+
+template <>
+struct less_impl <integral_c_tag, integral_c_tag> {
+	template <typename N0, typename N1>
+	struct apply : bool_<(N0::value < N1::value)> {};
 };
 
 }
@@ -75,6 +101,12 @@ template <typename N0, typename N1>
 struct greater : detail::greater_impl<
 	typename detail::greater_tag<N0>::type,
 	typename detail::greater_tag<N1>::type
+>::template apply <N0, N1>::type {};
+
+template <typename N0, typename N1>
+struct less : detail::less_impl<
+	typename detail::less_tag<N0>::type,
+	typename detail::less_tag<N1>::type
 >::template apply <N0, N1>::type {};
 
 }}}

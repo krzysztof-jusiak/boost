@@ -12,11 +12,25 @@
 #include <boost/mpl/x11/detail/template_arity.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
+/*
+template <typename...>
+struct lambda;
+
+template <typename T, typename Tag, typename Arity>
+struct lambda<T, Tag, Arity>;
+
+template <typename T, typename Tag>
+struct lambda<T, Tag>
+: lambda<T, Tag, typename detail::template_arity<T>::type> {};
+
+template <typename T>
+struct lambda<T> : lambda<T, void_> {};
+*/
 
 template <
 	typename T,
 	typename Tag = void_,
-	typename Arity = long_<detail::template_arity<T>::value>
+	typename Arity = typename detail::template_arity<T>::type
 > struct lambda;
 
 }}}
