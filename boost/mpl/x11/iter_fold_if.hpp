@@ -174,7 +174,7 @@ template <
 
 template <
 	typename Sequence, typename State, typename ForwardOp,
-	typename ForwardPredicate, BackwardOp
+	typename ForwardPredicate, typename BackwardOp
 > struct iter_fold_if<Sequence, State, ForwardOp, ForwardPredicate, BackwardOp>
 : iter_fold_if<
 	Sequence, State, ForwardOp, ForwardPredicate,
@@ -185,7 +185,10 @@ template <
 	typename Sequence, typename State, typename ForwardOp,
 	typename ForwardPredicate, typename BackwardOp,
 	typename BackwardPredicate
-> struct iter_fold_if {
+> struct iter_fold_if<
+	Sequence, State, ForwardOp, ForwardPredicate, BackwardOp,
+	BackwardPredicate
+> {
 	typedef typename begin<Sequence>::type first_;
 	typedef typename end<Sequence>::type last_;
 

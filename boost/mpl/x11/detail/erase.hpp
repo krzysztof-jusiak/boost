@@ -10,6 +10,7 @@
 
 #include <boost/mpl/x11/sequence_tag_fwd.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
+#include <boost/mpl/x11/iterator_range.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
