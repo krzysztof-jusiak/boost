@@ -147,7 +147,6 @@ template <
 
 template <typename T, typename Tag, typename Arity>
 struct lambda {
-	typedef long_<-15> x_tag;
 	typedef std::false_type is_le;
 	typedef T result_;
 	typedef T type;
@@ -159,7 +158,6 @@ struct is_lambda_expression
 
 template <long N, typename Tag>
 struct lambda<arg<N>, Tag, long_<0>> {
-	typedef long_<-10> x_tag;
 	typedef std::true_type is_le;
 	typedef arg<N> result_;
 	typedef protect<result_> type;
@@ -167,7 +165,6 @@ struct lambda<arg<N>, Tag, long_<0>> {
 
 template <typename F, typename Tag>
 struct lambda<bind<F>, Tag, long_<1>> {
-	typedef long_<11> x_tag;
 	typedef std::false_type is_le;
 	typedef bind<F> result_;
 
@@ -176,7 +173,6 @@ struct lambda<bind<F>, Tag, long_<1>> {
 
 template <template <typename... Pn> class F, typename T0, typename Tag>
 struct lambda<F<T0>, Tag, long_<1>> {
-	typedef long_<13> x_tag;
 	typedef lambda<T0, Tag> l0;
 	typedef typename l0::is_le is_le0;
 	typedef typename detail::lambda_or<is_le0::value>::type is_le;
@@ -189,7 +185,6 @@ struct lambda<F<T0>, Tag, long_<1>> {
 
 template <typename T, typename Tag>
 struct lambda<protect<T>, Tag, long_<1>> {
-	typedef long_<14> x_tag;
 	typedef std::false_type is_le;
 	typedef protect<T> result_;
 	typedef result_ type;
@@ -197,7 +192,6 @@ struct lambda<protect<T>, Tag, long_<1>> {
 
 template <typename F, typename T0, typename Tag>
 struct lambda<bind<F, T0>, Tag, long_<2>> {
-	typedef long_<21> x_tag;
 	typedef std::false_type is_le;
 	typedef bind<F, T0> result_;
 
@@ -208,7 +202,6 @@ template <
 	template <typename... Pn> class F, typename T0, typename T1,
 	typename Tag
 > struct lambda<F<T0, T1>, Tag, long_<2>> {
-	typedef long_<23> x_tag;
 	typedef lambda<T0, Tag> l0;
 	typedef lambda<T1, Tag> l1;
 

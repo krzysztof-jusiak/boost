@@ -28,13 +28,13 @@ struct insert_impl {
 		typedef typename reverse_fold<
 			second_half_,
 			typename clear<Sequence>::type,
-			push_front<_, _>
+			push_front<arg<-1>, arg<-1>>
 		>::type half_sequence_;
 
 		typedef typename reverse_fold<
 			first_half_,
 			typename push_front<half_sequence_, T>::type,
-			push_front<_, _>
+			push_front<arg<-1>, arg<-1>>
 		>::type type;
 	};
 };

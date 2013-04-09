@@ -111,7 +111,7 @@ template <
 
 
 template <
-	typename First, typename Last, typename State, typename BackwardOp
+	typename First, typename Last, typename State, typename BackwardOp,
 	typename ForwardOp
 > struct reverse_fold_impl<4, First, Last, State, BackwardOp, ForwardOp> {
 	typedef First iter0;

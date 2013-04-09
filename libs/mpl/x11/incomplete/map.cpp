@@ -19,6 +19,7 @@
 #include <boost/mpl/x11/insert.hpp>
 #include <boost/mpl/x11/order.hpp>
 #include <boost/mpl/x11/size.hpp>
+#include <boost/mpl/x11/at.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
@@ -60,7 +61,7 @@ BOOST_AUTO_TEST_CASE(map_0)
 
 	printf("%s\n", typeid(at<m2, char>::type).name());
 	printf("%s\n", typeid(m3).name());
-	printf("%d\n", size<m3>::value);
+	printf("%ld\n", size<m3>::value);
 	BOOST_CHECK_EQUAL((size<m2>::value), 2);
 	BOOST_CHECK(!(empty<m2>::value));
 	BOOST_CHECK((std::is_same<clear<m2>::type, map<>>::value));

@@ -11,6 +11,7 @@
 #include <boost/mpl/x11/sequence_tag_fwd.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
 #include <boost/mpl/x11/iterator_range.hpp>
+#include <boost/mpl/x11/reverse_fold.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
@@ -31,11 +32,12 @@ struct erase_impl {
 		typedef typename reverse_fold<
 			second_half_,
 			typename clear<Sequence>::type,
-			push_front<_, _>
+			push_front<arg<-1>, arg<-1>>
 		>::type half_sequence_;
 
 		typedef typename reverse_fold<
-			first_half_, half_sequence_, push_front<_, _>
+			first_half_, half_sequence_,
+			push_front<arg<-1>, arg<-1>>
 		>::type type;
 	};
 };

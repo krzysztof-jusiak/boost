@@ -16,7 +16,7 @@
 #include <boost/mpl/x11/void.hpp>
 #include <boost/mpl/x11/logical.hpp>
 #include <boost/mpl/x11/arithmetic.hpp>
-
+#include <boost/mpl/x11/iterator_tags.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
 
 #include <boost/mpl/x11/detail/at.hpp>
@@ -159,21 +159,14 @@ struct map<> {
 template <typename P0>
 struct map<P0>
 : detail::m_item<typename P0::first, typename P0::second, map<>> {
-	typedef map<P0> type;
+	typedef typename map<P0>::type type;
 };
 
-template <typename P0, typename P1>
-struct map<P0, P1> : detail::m_item<
-	typename P0::first, typename P0::second, map<P1>
+template <typename P0, typename... Pn>
+struct map<P0, Pn...> : detail::m_item<
+	typename P0::first, typename P0::second, map<Pn...>
 > {
-	typedef map<P0, P1> type;
-};
-
-template <typename P0, typename P1, typename... Pn>
-struct map<P0, P1, Pn...> : detail::m_item<
-	typename P0::first, typename P0::second, map<P1, Pn...>
-> {
-	typedef map<P0, P1, Pn...> type;
+	typedef typename map<P0, Pn...>::type type;
 };
 
 namespace detail {
@@ -281,10 +274,10 @@ struct insert_impl<map_tag> {
 	struct apply;
 
 	template <typename Map, typename Pos>
-	struct apply<Map, Pos> : map_insert_impl<Map, Pos>::type {};
+	struct apply<Map, Pos> : map_insert_impl<Map, Pos> {};
 
 	template <typename Map, typename Pos, typename T>
-	struct apply<Map, Pos, T> : map_insert_impl<Map, T>::type {};
+	struct apply<Map, Pos, T> : map_insert_impl<Map, T> {};
 };
 
 template <>
