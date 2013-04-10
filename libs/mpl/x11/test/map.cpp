@@ -168,39 +168,60 @@ BOOST_AUTO_TEST_CASE(map_1)
 	BOOST_CHECK_EQUAL((size<m0_1>::value), 0);
 	BOOST_CHECK((std::is_same<at<m0_1, char>::type, void_>::value));
 }
-#if 0
-BOOST_AUTO_TEST_CASE(map_2)
-{
-	template <class M>
-	void test() {
+
+namespace test {
+	template <typename M>
+	void t() {
 		BOOST_CHECK_EQUAL((size<M>::value), 3);
 
 		typedef typename end<M>::type not_found;
 
-		BOOST_CHECK(!(std::is_same<find<M, pair<int, int*>>::type,\
-					   not_found>::value));
-		BOOST_CHECK(!(std::is_same<find<M, pair<long, long*>>::type,\
-					   not_found>::value));
-		BOOST_CHECK(!(std::is_same<find<M, pair<char, char*>>::type,\
-					   not_found>::value));
-		BOOST_CHECK((std::is_same<find<M, int>::type,\
-					  not_found>::value));
+		BOOST_CHECK(!(                                             \
+			std::is_same<                                      \
+				typename find<M, pair<int, int*>>::type,   \
+				not_found                                  \
+			>::value                                           \
+		));
+		BOOST_CHECK(!(                                             \
+			std::is_same<                                      \
+				typename find<M, pair<long, long*>>::type, \
+				not_found                                  \
+			>::value                                           \
+		));
+		BOOST_CHECK(!(                                             \
+			std::is_same<                                      \
+				typename find<M, pair<char, char*>>::type, \
+				not_found                                  \
+			>::value                                           \
+		));
+		BOOST_CHECK((                                              \
+			std::is_same<                                      \
+				typename find<M, int>::type,               \
+				not_found                                  \
+			>::value                                           \
+		));
 	};
+}
+
+BOOST_AUTO_TEST_CASE(map_2)
+{
 
 	typedef map<pair<int, int*>> map_of_1_pair;
 	typedef begin<map_of_1_pair>::type iter_to_1_pair;
 
-	BOOST_CHECK((std::is_same<deref<iter_to_1_pair>::type,\
-				  pair<int, int*>>::value));
+	BOOST_CHECK((                                     \
+		std::is_same<deref<iter_to_1_pair>::type, \
+		pair<int, int*>>::value                   \
+	));
 
 	typedef map<
-		pair<int, int *>,
-		pair<long, long *>,
+		pair<int, int*>,
+		pair<long, long*>,
 		pair<char, char*>
 	> mymap;
 
-	test<mymap>();
-	test<mymap::type>();
+	test::t<mymap>();
+	test::t<mymap::type>();
 }
 
 BOOST_AUTO_TEST_CASE(map_3)
@@ -215,5 +236,4 @@ BOOST_AUTO_TEST_CASE(map_3)
 
 	BOOST_CHECK((std::is_same<at<with_char_too, char>::type, long>::value));
 }
-#endif
 }}}

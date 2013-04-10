@@ -137,7 +137,7 @@ struct map;
 
 template <>
 struct map<> {
-	typedef map<> type;
+	typedef map type;
 	typedef detail::map_tag tag;
 	typedef void_ key_;
 	typedef long_<1> order;
@@ -160,14 +160,14 @@ struct map<> {
 template <typename P0>
 struct map<P0>
 : detail::m_item<typename P0::first, typename P0::second, map<>> {
-	typedef typename map<P0>::type type;
+	typedef map type;
 };
 
 template <typename P0, typename... Pn>
 struct map<P0, Pn...> : detail::m_item<
 	typename P0::first, typename P0::second, map<Pn...>
 > {
-	typedef typename map<P0, Pn...>::type type;
+	typedef map type;
 };
 
 namespace detail {

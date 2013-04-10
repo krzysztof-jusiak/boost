@@ -59,5 +59,11 @@ int main(int argc, char **argv)
 	typedef erase_key<m1, char>::type m_1;
 	std::cout << "3: " << demangle<m_1>() << '\n';
 
+	typedef map<
+		pair<int, int*>, pair<long, long*>, pair<char, char*>
+	> mymap;
+
+	std::cout << "4.1: " << demangle<mymap>() << '\n';
+	std::cout << "4.2: " << demangle<mymap::type>() << '\n';
 	return 0;
 }

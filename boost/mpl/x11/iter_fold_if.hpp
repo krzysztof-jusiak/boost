@@ -154,7 +154,7 @@ struct iter_fold_if_pred {
 	template <typename State, typename Iterator>
 	struct apply : and_<
 		not_<std::is_same<Iterator, LastIterator>>,
-		apply<Predicate, Iterator>
+		x11::apply<Predicate, Iterator>
 	> {};
 };
 
