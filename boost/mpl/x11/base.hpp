@@ -5,22 +5,15 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
-#if !defined(MPL_X11_ERASE_APR_04_2013_1225)
-#define MPL_X11_ERASE_APR_04_2013_1225
-
-#include <boost/mpl/x11/detail/erase.hpp>
+#if !defined(MPL_X11_BASE_APR_10_2013_1830)
+#define MPL_X11_BASE_APR_10_2013_1830
 
 namespace boost { namespace mpl { namespace x11 {
 
-template <typename Sequence, typename First, typename Last>
-struct erase
-: detail::erase_impl<typename sequence_tag<Sequence>::type>
-	::template apply<Sequence, First, Last> {};
-
-template<typename Sequence, typename Key>
-struct erase_key
-: detail::erase_key_impl<typename sequence_tag<Sequence>::type>
-	::template apply<Sequence, Key> {};
+template <typename T>
+struct base {
+	typedef typename T::base type;
+};
 
 }}}
 

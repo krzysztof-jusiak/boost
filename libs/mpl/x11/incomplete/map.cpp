@@ -50,18 +50,14 @@ BOOST_AUTO_TEST_CASE(map_0)
 	typedef begin<m>::type first;
 	typedef end<m>::type last;
 
-	BOOST_CHECK((std::is_same<deref<first>::type,\
-				  pair<int, unsigned>>::value));
+	BOOST_CHECK((                            \
+		std::is_same<deref<first>::type, \
+		pair<int, unsigned>>::value      \
+	));
 	BOOST_CHECK((std::is_same<next<first>::type, last>::value));
 
-	printf("%s\n", typeid(at<m, char>::type).name());
-	printf("%s\n", typeid(m_).name());
 	typedef insert<m, pair<char, long>>::type m2;
-	typedef insert<m2, pair<short, long>>::type m3;
 
-	printf("%s\n", typeid(at<m2, char>::type).name());
-	printf("%s\n", typeid(m3).name());
-	printf("%ld\n", size<m3>::value);
 	BOOST_CHECK_EQUAL((size<m2>::value), 2);
 	BOOST_CHECK(!(empty<m2>::value));
 	BOOST_CHECK((std::is_same<clear<m2>::type, map<>>::value));
@@ -79,8 +75,7 @@ BOOST_AUTO_TEST_CASE(map_0)
 	BOOST_CHECK(!(std::is_same<order<m2, char>::type, void_>::value));
 	BOOST_CHECK(!(std::is_same<order<m2, char>::type,\
 				   order<m2, int>::type>::value));
-}
-#if 0
+
 	typedef begin<m2>::type first2;
 	typedef end<m2>::type last2;
 
@@ -145,23 +140,23 @@ BOOST_AUTO_TEST_CASE(map_1)
 	BOOST_CHECK((std::is_same<clear<m>::type, map<>>::value));
 	BOOST_CHECK((std::is_same<at<m, char>::type, void_>::value));
 
-	BOOST_CHECK(!(has_key<m, char>::type));
-	BOOST_CHECK(!(has_key<m, int>::type));
-	BOOST_CHECK(!(has_key<m, UDT>::type));
-	BOOST_CHECK(!(has_key<m, incomplete>::type));
+	BOOST_CHECK(!(has_key<m, char>::value));
+	BOOST_CHECK(!(has_key<m, int>::value));
+	BOOST_CHECK(!(has_key<m, UDT>::value));
+	BOOST_CHECK(!(has_key<m, incomplete>::value));
 
-	BOOST_CHECK(!(has_key<m, char const>::type));
-	BOOST_CHECK(!(has_key<m, int const>::type));
-	BOOST_CHECK(!(has_key<m, UDT const>::type));
-	BOOST_CHECK(!(has_key<m, incomplete const>::type));
+	BOOST_CHECK(!(has_key<m, char const>::value));
+	BOOST_CHECK(!(has_key<m, int const>::value));
+	BOOST_CHECK(!(has_key<m, UDT const>::value));
+	BOOST_CHECK(!(has_key<m, incomplete const>::value));
 
-	BOOST_CHECK(!(has_key<m, int *>::type));
-	BOOST_CHECK(!(has_key<m, UDT *>::type));
-	BOOST_CHECK(!(has_key<m, incomplete *>::type));
+	BOOST_CHECK(!(has_key<m, int *>::value));
+	BOOST_CHECK(!(has_key<m, UDT *>::value));
+	BOOST_CHECK(!(has_key<m, incomplete *>::value));
 
-	BOOST_CHECK(!(has_key<m, int &>::type));
-	BOOST_CHECK(!(has_key<m, UDT &>::type));
-	BOOST_CHECK(!(has_key<m, incomplete &>::type));
+	BOOST_CHECK(!(has_key<m, int &>::value));
+	BOOST_CHECK(!(has_key<m, UDT &>::value));
+	BOOST_CHECK(!(has_key<m, incomplete &>::value));
 
 	typedef insert<m, pair<char, int>>::type m1;
 
@@ -173,7 +168,7 @@ BOOST_AUTO_TEST_CASE(map_1)
 	BOOST_CHECK_EQUAL((size<m0_1>::value), 0);
 	BOOST_CHECK((std::is_same<at<m0_1, char>::type, void_>::value));
 }
-
+#if 0
 BOOST_AUTO_TEST_CASE(map_2)
 {
 	template <class M>

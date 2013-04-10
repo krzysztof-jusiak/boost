@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include <cxxabi.h>
 
+#if defined(X11)
 #include <boost/mpl/x11/map.hpp>
 #include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/clear.hpp>
@@ -13,6 +14,23 @@
 #include <boost/mpl/x11/size.hpp>
 #include <boost/mpl/x11/at.hpp>
 
+using namespace boost::mpl::x11;
+#else
+#include <boost/mpl/map.hpp>
+#include <boost/mpl/insert.hpp>
+#include <boost/mpl/erase_key.hpp>
+#include <boost/mpl/contains.hpp>
+#include <boost/mpl/at.hpp>
+#include <boost/mpl/clear.hpp>
+#include <boost/mpl/has_key.hpp>
+#include <boost/mpl/order.hpp>
+#include <boost/mpl/size.hpp>
+#include <boost/mpl/empty.hpp>
+#include <boost/mpl/begin_end.hpp>
+
+using namespace boost::mpl;
+#endif
+
 template <typename T>
 std::string demangle()
 {
@@ -22,36 +40,24 @@ std::string demangle()
 	return rv;
 }
 
-using namespace boost::mpl::x11;
+
 
 int main(int argc, char **argv)
 {
 
 	typedef map<
 		pair<int, unsigned>,
-		pair<char, unsigned char>,
-		pair<short, long>
-	> m1;
+		pair<char, unsigned char>
+	> m_;
 
-	//std::cout << demangle<m0>() << '\n';
+	typedef erase_key<m_, char>::type m;
+	std::cout << "1: " << demangle<m>() << '\n';
 
-	//typedef erase_key<m0, char>::type m1;
+	typedef insert<m, pair<char, long>>::type m1;
+	std::cout << "2: " << demangle<m1>() << '\n';
 
-	//std::cout << demangle<deref<begin<m1>>::type>() << '\n';
-
-	typedef insert<m1, pair<char, long>>::type m2;
-	std::cout << "1: " << demangle<m2>() << '\n';
-//	std::cout << "2: " << demangle<m2::t1>() << '\n';
-//	std::cout << "2.1: " << demangle<m2::t1::x_tag>() << '\n';
-//	std::cout << "3: " << demangle<m2::t2>() << '\n';
-//	std::cout << "3.1: " << demangle<m2::t2::x_tag>() << '\n';
-//	std::cout << "3.1: " << demangle<m2::t2::y_tag>() << '\n';
-//	std::cout << "4: "<< demangle<m2::type>() << '\n';
-	//typedef detail::insert_impl<typename sequence_tag<m1>::type> tm2;
-	//std::cout << demangle<tm2>() << '\n';
-
-	typedef insert<m2, pair<short, unsigned>>::type m3;
-	std::cout << demangle<m3>() << '\n';
+	typedef erase_key<m1, char>::type m_1;
+	std::cout << "3: " << demangle<m_1>() << '\n';
 
 	return 0;
 }

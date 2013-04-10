@@ -12,6 +12,7 @@
 #define MPL_X11_MAP_APR_03_2013_1950
 
 #include <boost/mpl/x11/if.hpp>
+#include <boost/mpl/x11/base.hpp>
 #include <boost/mpl/x11/pair.hpp>
 #include <boost/mpl/x11/void.hpp>
 #include <boost/mpl/x11/logical.hpp>
@@ -255,7 +256,7 @@ struct erase_key_impl<map_tag> {
 		has_key_impl<map_tag>::apply<Map, Key>,
 		eval_if<
 			std::is_same<Key, typename Map::key_>,
-			typename Map::base, identity<m_mask<Key, Map>>
+			base<Map>, identity<m_mask<Key, Map>>
 		>,
 		identity<Map>
 	> {};
