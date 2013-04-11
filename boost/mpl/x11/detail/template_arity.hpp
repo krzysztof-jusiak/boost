@@ -24,6 +24,11 @@ struct arity_helper<F> {
 template <typename...>
 struct arity_count;
 
+template <>
+struct arity_count<> {
+	typedef long_<0> type;
+};
+
 template <typename T0>
 struct arity_count<T0> {
 	typedef long_<1> type;

@@ -12,6 +12,7 @@
 #include <boost/mpl/x11/always.hpp>
 #include <boost/mpl/x11/apply.hpp>
 #include <boost/mpl/x11/logical.hpp>
+#include <boost/mpl/x11/pair.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

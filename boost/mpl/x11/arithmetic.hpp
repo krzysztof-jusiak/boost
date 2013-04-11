@@ -14,29 +14,42 @@ namespace boost { namespace mpl { namespace x11 {
 template <typename...>
 struct plus;
 
-template <>
-struct plus<> : std::false_type
-{};
-
 template <typename T0>
 struct plus<T0> : T0
 {};
 
+template <typename T0, typename... Tn>
+struct plus<T0, Tn...>
+: std::integral_constant<
+	typename detail::largest_int<
+		typename T0::value_type, typename plus<Tn...>::value_type
+	>::type, T0::value + plus<Tn...>::value
+>
+{};
+
+template <typename...>
+struct minus;
+
+template <typename T0>
+struct minus<T0> : T0
+{};
+
 template <typename T0, typename T1>
-struct plus<T0, T1>
+struct minus<T0, T1>
 : std::integral_constant<
 	typename detail::largest_int<
 		typename T0::value_type, typename T1::value_type
-	>::type, T0::value + T1::value
+	>::type, T0::value - T1::value
 >
 {};
 
 template <typename T0, typename T1, typename... Tn>
-struct plus<T0, T1, Tn...>
+struct minus<T0, T1, Tn...>
 : std::integral_constant<
 	typename detail::largest_int<
-		typename T0::value_type, typename plus<T1, Tn...>::value_type
-	>::type, T0::value + plus<T1, Tn...>::value
+		typename T0::value_type, typename T1::value_type,
+		typename minus<minus<T0, T1>, Tn...>::value_type
+	>::type, minus<minus<T0, T1>, Tn...>::value
 >
 {};
 

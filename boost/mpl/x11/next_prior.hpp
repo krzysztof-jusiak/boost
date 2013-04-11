@@ -10,9 +10,27 @@
 
 namespace boost { namespace mpl { namespace x11 {
 
+template <typename...>
+struct next;
+
+template <>
+struct next<> {
+	template <typename T0, typename... Tn>
+	struct apply : next<T0> {};
+};
+
 template <typename T>
-struct next {
+struct next<T> {
 	typedef typename T::next type;
+};
+
+template <typename...>
+struct prior;
+
+template <>
+struct prior<> {
+	template <typename T0, typename... Tn>
+	struct apply : prior<T0> {};
 };
 
 template <typename T>

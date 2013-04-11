@@ -9,7 +9,13 @@
 #define MPL_X11_VECTOR_APR_10_2013_2330
 
 #include <boost/mpl/x11/detail/type_wrapper.hpp>
+#include <boost/mpl/x11/void.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/arithmetic.hpp>
+#include <boost/mpl/x11/iterator_tags.hpp>
+
+#include <boost/mpl/x11/detail/at.hpp>
+#include <boost/mpl/x11/detail/clear.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
@@ -21,8 +27,8 @@ struct v_iter_tag;
 template <typename T, typename Base, int at_front = 0>
 struct v_item : Base {
 	typedef typename Base::upper_bound_ index_;
-	typedef typename next<index_>::type upper_bound_;
-	typedef typename next<typename Base::size>::type size;
+	typedef typename increment<index_>::type upper_bound_;
+	typedef typename increment<typename Base::size>::type size;
 	typedef Base base;
 	typedef v_item type;
 
@@ -32,9 +38,9 @@ struct v_item : Base {
 
 template <typename T, typename Base>
 struct v_item<T, Base, 1> : Base {
-	typedef typename prior<typename Base::lower_bound_>::type index_;
+	typedef typename decrement<typename Base::lower_bound_>::type index_;
 	typedef index_ lower_bound_;
-	typedef typename next<typename Base::size>::type size;
+	typedef typename increment<typename Base::size>::type size;
 	typedef Base base;
 	typedef v_item type;
 
@@ -44,9 +50,9 @@ struct v_item<T, Base, 1> : Base {
 
 template <typename Base, int at_front>
 struct v_mask : Base {
-	typedef typename prior<typename Base::upper_bound_>::type index_;
+	typedef typename decrement<typename Base::upper_bound_>::type index_;
 	typedef index_ upper_bound_;
-	typedef typename prior<typename Base::size>::type size;
+	typedef typename decrement<typename Base::size>::type size;
 	typedef Base base;
 	typedef v_mask type;
 
@@ -57,8 +63,8 @@ struct v_mask : Base {
 template <typename Base>
 struct v_mask<Base, 1> : Base {
 	typedef typename Base::lower_bound_ index_;
-	typedef typename next<index_>::type lower_bound_;
-	typedef typename prior<typename Base::size>::type size;
+	typedef typename increment<index_>::type lower_bound_;
+	typedef typename decrement<typename Base::size>::type size;
 	typedef Base base;
 	typedef v_mask type;
 
@@ -88,12 +94,31 @@ struct v_iter {
 
 }
 
+template <typename Vector, long n_>
+struct next <detail::v_iter<Vector, n_>> {
+	typedef detail::v_iter<Vector, (n_ + 1)> type;
+};
+
+template <typename Vector, long n_>
+struct prior<detail::v_iter<Vector, n_>> {
+	typedef detail::v_iter<Vector, (n_ - 1)> type;
+};
+
+template <typename Vector, long n_, typename Distance>
+struct advance<detail::v_iter<Vector, n_>, Distance> {
+	typedef detail::v_iter<Vector, (n_ + Distance::value)> type;
+};
+
+template <typename Vector, long n_, long m_>
+struct distance<detail::v_iter<Vector, n_>, detail::v_iter<Vector, m_>>
+: long_<(m_ - n_)> {};
+
 template <typename...>
 struct vector;
 
 template <>
 struct vector<> {
-typedef aux::vector_tag tag;
+	typedef detail::vector_tag tag;
 	typedef vector type;
 	typedef long_<32768> lower_bound_;
 	typedef lower_bound_ upper_bound_;
@@ -103,15 +128,112 @@ typedef aux::vector_tag tag;
 };
 
 template <typename T0>
-struct vector<T0> : detail::v_item<T0, vector<>> {
+struct vector<T0> : detail::v_item<T0, vector<>, 1> {
 	typedef vector type;
 };
 
 template <typename T0, typename... Tn>
-struct vector<T0, Tn...> : detail::v_item<T0, vector<Tn...>> {
+struct vector<T0, Tn...> : detail::v_item<T0, vector<Tn...>, 1> {
 	typedef vector type;
 };
 
+namespace detail {
+
+template <>
+struct at_impl<vector_tag> {
+	template <typename Vector, typename N>
+	struct apply : v_at<Vector, N::value>
+	{};
+};
+
+template <>
+struct back_impl<vector_tag> {
+	template <typename Vector>
+	struct apply : v_at<
+		Vector, decrement<typename Vector::size>::type::value
+	> {};
+};
+
+template <>
+struct begin_impl<vector_tag> {
+	template <typename Vector>
+	struct apply {
+		typedef v_iter<Vector, 0> type;
+	};
+};
+
+template <>
+struct clear_impl<vector_tag> {
+	template <typename Vector>
+	struct apply {
+		typedef vector<> type;
+	};
+};
+
+template <>
+struct empty_impl<vector_tag> {
+	template <typename Vector>
+	struct apply : std::is_same<
+		typename Vector::lower_bound_, typename Vector::upper_bound_
+	> {};
+};
+
+template <>
+struct end_impl<vector_tag> {
+	template <typename Vector>
+	struct apply {
+		typedef v_iter<Vector, Vector::size::value> type;
+	};
+};
+
+template <>
+struct front_impl<vector_tag> {
+	template <typename Vector>
+	struct apply : v_at<Vector, 0>
+	{};
+};
+
+template <>
+struct pop_back_impl<vector_tag> {
+	template <typename Vector>
+	struct apply {
+		typedef v_mask<Vector, 0> type;
+	};
+};
+
+template <>
+struct pop_front_impl<vector_tag> {
+	template <typename Vector>
+	struct apply {
+		typedef v_mask<Vector, 1> type;
+	};
+};
+
+template <>
+struct push_back_impl<vector_tag> {
+	template <typename Vector, typename T>
+	struct apply {
+		typedef v_item<T, Vector, 0> type;
+	};
+};
+
+template <>
+struct push_front_impl<vector_tag> {
+	template <typename Vector, typename T>
+	struct apply {
+		typedef v_item<T, Vector, 1> type;
+	};
+};
+
+template <>
+struct size_impl<vector_tag>
+{
+	template <typename Vector>
+	struct apply : Vector::size
+	{};
+};
+
+}
 }}}
 
 #endif

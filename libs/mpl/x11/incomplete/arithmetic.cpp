@@ -24,9 +24,23 @@ BOOST_AUTO_TEST_CASE(arithmetic)
 	BOOST_CHECK_EQUAL((plus<_0, _10>::value), 10);
 	BOOST_CHECK_EQUAL((plus<_10, _0>::value), 10);
 
-	typedef plus<_3, _10, _20> sum;
-	BOOST_CHECK_EQUAL((sum::value), 33);
-	BOOST_CHECK((std::is_same<sum::value_type, long>::value));
+	BOOST_CHECK_EQUAL((minus<_0, _10>::value), -10);
+	BOOST_CHECK_EQUAL((minus<_10, _0>::value), 10);
+/*
+	BOOST_CHECK_EQUAL((times<_1, _10>::value), 10);
+	BOOST_CHECK_EQUAL((times<_10, _1>::value), 10);
+	BOOST_CHECK_EQUAL((multiplies<_1, _10>::value), 10);
+	BOOST_CHECK_EQUAL((multiplies<_10, _1>::value), 10);
+
+	BOOST_CHECK_EQUAL((divides<_10, _1>::value), 10);
+	BOOST_CHECK_EQUAL((divides<_10, _1>::value), 10);
+*/
+//	BOOST_CHECK_EQUAL((modulus<_10, _1>::value), 0);
+//	BOOST_CHECK_EQUAL((modulus<_10, _3>::value), 1);
+	BOOST_CHECK_EQUAL((minus<_10, _1, _10, _10, _1>::value), -12);
+	BOOST_CHECK_EQUAL((plus<_10, _1, _10, _10, _1>::value), 32);
+//	BOOST_CHECK_EQUAL((divides<_10, _1, _10>::value), 1);
+//	BOOST_CHECK_EQUAL((divides<_10, _1 ,_10>::value), 1);
 
 	BOOST_CHECK_EQUAL((negate<_10>::value), -10);
 }
