@@ -53,6 +53,67 @@ struct minus<T0, T1, Tn...>
 >
 {};
 
+template <typename...>
+struct times;
+
+template <typename T0>
+struct times<T0> : T0
+{};
+
+template <typename T0, typename T1>
+struct times<T0, T1>
+: std::integral_constant<
+	typename detail::largest_int<
+		typename T0::value_type, typename T1::value_type
+	>::type, T0::value * T1::value
+>
+{};
+
+template <typename T0, typename T1, typename... Tn>
+struct times<T0, T1, Tn...>
+: std::integral_constant<
+	typename detail::largest_int<
+		typename T0::value_type, typename T1::value_type,
+		typename times<times<T0, T1>, Tn...>::value_type
+	>::type, times<times<T0, T1>, Tn...>::value
+>
+{};
+
+template <typename...>
+struct divides;
+
+template <typename T0>
+struct divides<T0> : T0
+{};
+
+template <typename T0, typename T1>
+struct divides<T0, T1>
+: std::integral_constant<
+	typename detail::largest_int<
+		typename T0::value_type, typename T1::value_type
+	>::type, T0::value / T1::value
+>
+{};
+
+template <typename T0, typename T1, typename... Tn>
+struct divides<T0, T1, Tn...>
+: std::integral_constant<
+	typename detail::largest_int<
+		typename T0::value_type, typename T1::value_type,
+		typename divides<divides<T0, T1>, Tn...>::value_type
+	>::type, divides<divides<T0, T1>, Tn...>::value
+>
+{};
+
+template <typename T0, typename T1>
+struct modulus
+: std::integral_constant<
+	typename detail::largest_int<
+		typename T0::value_type, typename T1::value_type
+	>::type, T0::value % T1::value
+>
+{};
+
 template <typename T>
 using negate = std::integral_constant<typename T::value_type, -(T::value)>;
 
