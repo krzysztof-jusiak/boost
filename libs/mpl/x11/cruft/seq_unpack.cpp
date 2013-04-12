@@ -3,8 +3,9 @@
 #include <boost/mpl/x11/at.hpp>
 #include <boost/mpl/x11/map.hpp>
 #include <boost/mpl/x11/size.hpp>
-#include <boost/mpl/x11/equal_to.hpp>
-#include <boost/mpl/x11/erase_key.hpp>
+#include <boost/mpl/x11/comparison.hpp>
+#include <boost/mpl/x11/erase.hpp>
+#include <boost/mpl/x11/has_key.hpp>
 
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/repetition/enum.hpp>
@@ -12,7 +13,7 @@
 
 namespace x11 = boost::mpl::x11;
 
-#define N_ARG 10
+#define N_ARG 20
 
 #define T_KEY(z, n, text) struct key##n {};
 
@@ -44,7 +45,7 @@ struct x_pack;
 #define T_PACK(z, n, text) template <typename T>              \
 struct x_pack<T, typename std::enable_if<                     \
 	x11::and_<                                            \
-		x11::equal_to<x11::size<T>, x11::int_<n>>,    \
+		x11::equal_to<x11::size<T>, x11::long_<n>>,   \
 		BOOST_PP_ENUM_ ## z(n, T_HAS_KEY, nil)        \
 	>::value                                              \
 >::type> {                                                    \

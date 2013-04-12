@@ -6,7 +6,7 @@
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 #if !defined(MPL_X11_ITERATOR_TAGS_APR_03_2013_1550)
-#define MPL_X11_SEQUENCE_TAG_APR_03_2013_1550
+#define MPL_X11_ITERATOR_TAGS_APR_03_2013_1550
 
 #include <boost/mpl/x11/integral.hpp>
 

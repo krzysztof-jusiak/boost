@@ -34,7 +34,7 @@ struct prior<> {
 };
 
 template <typename T>
-struct prior {
+struct prior<T> {
 	typedef typename T::prior type;
 };
 

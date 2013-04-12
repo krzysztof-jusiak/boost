@@ -13,10 +13,6 @@
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
-struct integral_c_tag {
-	static const int value = 0;
-};
-
 template <typename T>
 struct equal_to_tag {
 	typedef typename T::tag type;

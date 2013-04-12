@@ -4,6 +4,7 @@
 
 #if defined(X11)
 #include <boost/mpl/x11/map.hpp>
+#include <boost/mpl/x11/vector.hpp>
 #include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/clear.hpp>
 #include <boost/mpl/x11/contains.hpp>
@@ -13,10 +14,13 @@
 #include <boost/mpl/x11/order.hpp>
 #include <boost/mpl/x11/size.hpp>
 #include <boost/mpl/x11/at.hpp>
+#include <boost/mpl/x11/comparison.hpp>
+#include <boost/mpl/x11/unpack_args.hpp>
 
 using namespace boost::mpl::x11;
 #else
 #include <boost/mpl/map.hpp>
+#include <boost/mpl/vector.hpp>
 #include <boost/mpl/insert.hpp>
 #include <boost/mpl/erase_key.hpp>
 #include <boost/mpl/contains.hpp>
@@ -27,6 +31,8 @@ using namespace boost::mpl::x11;
 #include <boost/mpl/size.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/begin_end.hpp>
+#include <boost/mpl/comparison.hpp>
+#include <boost/mpl/unpack_args.hpp>
 
 using namespace boost::mpl;
 #endif
@@ -65,5 +71,11 @@ int main(int argc, char **argv)
 
 	std::cout << "4.1: " << demangle<mymap>() << '\n';
 	std::cout << "4.2: " << demangle<mymap::type>() << '\n';
+
+	typedef vector<int, int> v2;
+	typedef apply<unpack_args<std::is_same<arg<0>, arg<1>>>, v2> a;
+	
+	std::cout << "5: " << demangle<a::type>() << '\n';
+	std::cout << "5: " << a::value << '\n';
 	return 0;
 }

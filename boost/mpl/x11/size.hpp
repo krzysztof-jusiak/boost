@@ -8,16 +8,23 @@
 #if !defined(MPL_X11_SIZE_APR_02_2013_1745)
 #define MPL_X11_SIZE_APR_02_2013_1745
 
-#include <boost/mpl/x11/sequence_fwd.hpp>
-#include <boost/mpl/x11/sequence_tag.hpp>
+#include <boost/mpl/x11/detail/size.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
+template <>
+struct size<> {
+	template <typename T0, typename... Tn>
+	struct apply : size<T0> {};
+};
+
 template <typename Sequence>
-struct size : detail::size_impl<
+struct size<Sequence> : detail::size_impl<
 	typename sequence_tag<Sequence>::type
 >::template apply<Sequence>::type
-{};
+{
+	typedef detail::integral_c_tag tag;
+};
 
 template <typename Sequence>
 struct empty : detail::empty_impl<

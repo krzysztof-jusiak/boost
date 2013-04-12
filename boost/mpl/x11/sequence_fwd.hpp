@@ -40,7 +40,7 @@ template <typename Tag> struct value_type_impl;
 }
 
 template <typename Iterator, typename N> struct advance;
-template <typename Sequence, typename N> struct at;
+template <typename...> struct at;
 
 template <typename Sequence> struct back;
 template <typename Sequence> struct begin;
@@ -77,7 +77,7 @@ template <typename Sequence> struct pop_front;
 template <typename Sequence, typename T> struct push_back;
 template <typename Sequence, typename T> struct push_front;
 
-template <typename Sequence> struct size;
+template <typename...> struct size;
 
 template <typename Sequence, typename T> struct value_type;
 

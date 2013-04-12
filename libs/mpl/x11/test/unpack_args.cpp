@@ -1,32 +1,26 @@
 /*=============================================================================
+    Copyright (c) 2002-2004 Aleksey Gurtovoy
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
-#if !defined(MPL_X11_INTEGRAL_APR_02_2013_1615)
-#define MPL_X11_INTEGRAL_APR_02_2013_1615
 
-#include <type_traits>
+#define BOOST_TEST_MODULE mpl
+#include <boost/test/included/unit_test.hpp>
+
+#include <boost/mpl/x11/vector.hpp>
+#include <boost/mpl/x11/unpack_args.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
-namespace detail {
 
-struct integral_c_tag {
-	static const int value = 0;
-};
+BOOST_AUTO_TEST_CASE(unpack_args_0)
+{
+	typedef vector<int, int> v2;
 
+	BOOST_CHECK((                                                       \
+		apply<unpack_args<std::is_same<arg<0>, arg<1>>>, v2>::type::value \
+	));
 }
 
-template <bool value>
-using bool_ = std::integral_constant<bool, value>;
-
-template <int value>
-using int_ = std::integral_constant<int, value>;
-
-template <long value>
-using long_ = std::integral_constant<long, value>;
-
 }}}
-
-#endif
