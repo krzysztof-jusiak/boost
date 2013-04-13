@@ -7,7 +7,7 @@
 #if !defined(MPL_X11_LOGICAL_MAR_31_2013_2300)
 #define MPL_X11_LOGICAL_MAR_31_2013_2300
 
-#include <type_traits>
+#include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
@@ -36,7 +36,7 @@ struct and_<T0, Tn...>
 {};
 
 template <typename T>
-struct not_ : std::integral_constant<bool, !T::value> {};
+struct not_ : integral_constant<bool, !T::value> {};
 
 }}}
 

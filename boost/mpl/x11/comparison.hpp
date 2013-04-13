@@ -18,29 +18,14 @@ struct equal_to_tag {
 	typedef typename T::tag type;
 };
 
-template <typename T, T v>
-struct equal_to_tag<std::integral_constant<T, v>> {
-	typedef integral_c_tag type;
-};
-
 template <typename T>
 struct greater_tag {
 	typedef typename T::tag type;
 };
 
-template <typename T, T v>
-struct greater_tag<std::integral_constant<T, v>> {
-	typedef integral_c_tag type;
-};
-
 template <typename T>
 struct less_tag {
 	typedef typename T::tag type;
-};
-
-template <typename T, T v>
-struct less_tag<std::integral_constant<T, v>> {
-	typedef integral_c_tag type;
 };
 
 template <typename Tag0, typename Tag1>

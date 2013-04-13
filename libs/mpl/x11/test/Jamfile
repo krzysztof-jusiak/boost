@@ -4,16 +4,20 @@ alias test_case : : : : <include>../../../..
                         <library>../../../..//unit_test_framework
                         <library>../../../..//test_exec_monitor ;
 
+run advance.cpp : : test_case ;
+run always.cpp : : test_case ;
+run apply.cpp : : test_case ;
 run apply_wrap.cpp : : test_case ;
+run arithmetic.cpp : : test_case ;
+run bind.cpp : : test_case ;
 run if.cpp : : test_case ;
+run lambda.cpp : : test_case ;
 run largest_int.cpp : : test_case ;
 run list.cpp : : test_case ;
 run logical.cpp : : test_case ;
-run template_arity.cpp : : test_case ;
-run quote.cpp : : test_case ;
-run bind.cpp : : test_case ;
-run lambda.cpp : : test_case ;
 run map.cpp : : test_case ;
-run vector.cpp : : test_case ;
-run arithmetic.cpp : : test_case ;
+run quote.cpp : : test_case ;
+run template_arity.cpp : : test_case ;
 run unpack_args.cpp : : test_case ;
+run vector.cpp : : test_case ;
+

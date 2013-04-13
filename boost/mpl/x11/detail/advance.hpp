@@ -11,6 +11,8 @@
 #include <boost/mpl/x11/sequence_tag_fwd.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
 #include <boost/mpl/x11/apply_wrap.hpp>
+#include <boost/mpl/x11/comparison.hpp>
+#include <boost/mpl/x11/arithmetic.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 

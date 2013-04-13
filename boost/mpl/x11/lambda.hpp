@@ -28,7 +28,7 @@ struct lambda_or<C0> {
 template <bool C0, bool... Cn>
 struct lambda_or<C0, Cn...> {
 	typedef typename if_c<
-		C0, std::true_type, typename lambda_or<Cn...>::type
+		C0, true_type, typename lambda_or<Cn...>::type
 	>::type type;
 };
 
@@ -42,7 +42,7 @@ template <
 };
 
 template <typename Tag, template <typename... Pn> class F, typename L0>
-struct le_result1<std::true_type, Tag, F, L0> {
+struct le_result1<true_type, Tag, F, L0> {
 	typedef bind<quote<F, Tag>, typename L0::result_> result_;
 
 	typedef protect<result_> type;
@@ -60,7 +60,7 @@ template <
 template <
 	typename Tag, template <typename... Pn> class F,
 	typename L0, typename L1
-> struct le_result2<std::true_type, Tag, F, L0, L1> {
+> struct le_result2<true_type, Tag, F, L0, L1> {
 	typedef bind<
 		quote<F, Tag>, typename L0::result_, typename L1::result_
 	> result_;
@@ -83,7 +83,7 @@ template <
 template <
 	typename Tag, template <typename... Pn> class F,
 	typename L0, typename L1, typename L2
-> struct le_result3<std::true_type, Tag, F, L0, L1, L2> {
+> struct le_result3<true_type, Tag, F, L0, L1, L2> {
 	typedef bind<
 		quote<F, Tag>, typename L0::result_, typename L1::result_,
 		typename L2::result_
@@ -109,7 +109,7 @@ template <
 	typename Tag,
 	template <typename... Pn> class F,
 	typename L0, typename L1, typename L2, typename L3
-> struct le_result4<std::true_type, Tag, F, L0, L1, L2, L3> {
+> struct le_result4<true_type, Tag, F, L0, L1, L2, L3> {
 	typedef bind<
 		quote<F, Tag>, typename L0::result_, typename L1::result_,
 		typename L2::result_, typename L3::result_
@@ -134,7 +134,7 @@ template <
 template <
 	typename Tag, template <typename... Pn> class F,
 	typename L0, typename L1, typename L2, typename L3, typename L4
-> struct le_result5<std::true_type, Tag, F, L0, L1, L2, L3, L4> {
+> struct le_result5<true_type, Tag, F, L0, L1, L2, L3, L4> {
 	typedef bind<
 		quote<F, Tag>, typename L0::result_, typename L1::result_,
 		typename L2::result_, typename L3::result_, typename L4::result_
@@ -145,9 +145,22 @@ template <
 
 }
 
+template <>
+struct lambda<> {
+	template <typename T0, typename T1, typename... Tn> struct apply
+	: lambda<T0, T1> {};
+};
+
+template <typename Tag>
+struct lambda<lambda<>, Tag, int_<-1>> {
+	typedef false_type is_le;
+	typedef lambda<> result_;
+	typedef lambda<> type;
+};
+
 template <typename T, typename Tag, typename Arity>
-struct lambda {
-	typedef std::false_type is_le;
+struct lambda<T, Tag, Arity> {
+	typedef false_type is_le;
 	typedef T result_;
 	typedef T type;
 };
@@ -158,14 +171,14 @@ struct is_lambda_expression
 
 template <long N, typename Tag>
 struct lambda<arg<N>, Tag, long_<0>> {
-	typedef std::true_type is_le;
+	typedef true_type is_le;
 	typedef arg<N> result_;
 	typedef protect<result_> type;
 };
 
 template <typename F, typename Tag>
 struct lambda<bind<F>, Tag, long_<1>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef bind<F> result_;
 
 	typedef result_ type;
@@ -185,14 +198,14 @@ struct lambda<F<T0>, Tag, long_<1>> {
 
 template <typename T, typename Tag>
 struct lambda<protect<T>, Tag, long_<1>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef protect<T> result_;
 	typedef result_ type;
 };
 
 template <typename F, typename T0, typename Tag>
 struct lambda<bind<F, T0>, Tag, long_<2>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef bind<F, T0> result_;
 
 	typedef result_ type;
@@ -220,7 +233,7 @@ template <
 
 template <typename F, typename T0, typename T1, typename Tag>
 struct lambda<bind<F, T0, T1>, Tag, long_<3>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef bind<F, T0, T1> result_;
 	typedef result_ type;
 };
@@ -268,7 +281,7 @@ struct lambda<lambda<F, Tag0, Arity>, Tag1, long_<3>> {
 template <
 	typename F, typename T0, typename T1, typename T2, typename Tag
 > struct lambda<bind<F, T0, T1, T2>, Tag, long_<4>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef bind<F, T0, T1, T2> result_;
 
 	typedef result_ type;
@@ -304,7 +317,7 @@ template <
 	typename F, typename T0, typename T1, typename T2, typename T3,
 	typename Tag
 > struct lambda<bind<F, T0, T1, T2, T3>, Tag, long_<5>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef bind<F, T0, T1, T2, T3> result_;
 
 	typedef result_ type;
@@ -344,7 +357,7 @@ template <
 	typename F, typename T0, typename T1, typename T2, typename T3,
 	typename T4, typename Tag
 > struct lambda<bind<F, T0, T1, T2, T3, T4>, Tag, long_<6>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef bind<F, T0, T1, T2, T3, T4> result_;
 
 	typedef result_ type;

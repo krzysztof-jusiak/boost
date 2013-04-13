@@ -16,7 +16,7 @@ namespace detail {
 template <
 	typename F,
 	typename has_apply_ = typename detail::has_apply<F>::type
-> struct apply_wrap0 : F::template apply< > {};
+> struct apply_wrap0 : F::template apply<> {};
 
 template <typename F>
 struct apply_wrap0<F, std::true_type> : F::apply {};

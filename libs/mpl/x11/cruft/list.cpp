@@ -46,7 +46,8 @@ std::string demangle()
 	return rv;
 }
 
-
+template <typename T>
+struct std_vector {};
 
 int main(int argc, char **argv)
 {
@@ -72,10 +73,7 @@ int main(int argc, char **argv)
 	std::cout << "4.1: " << demangle<mymap>() << '\n';
 	std::cout << "4.2: " << demangle<mymap::type>() << '\n';
 
-	typedef vector<int, int> v2;
-	typedef apply<unpack_args<std::is_same<arg<0>, arg<1>>>, v2> a;
-	
-	std::cout << "5: " << demangle<a::type>() << '\n';
-	std::cout << "5: " << a::value << '\n';
+	typedef lambda<std_vector<arg<0>>>::type make_vector;
+	std::cout << "5: " << demangle<make_vector>() << '\n';
 	return 0;
 }

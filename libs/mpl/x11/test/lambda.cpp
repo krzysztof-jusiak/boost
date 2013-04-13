@@ -9,31 +9,39 @@
 #define BOOST_TEST_MODULE mpl
 #include <boost/test/included/unit_test.hpp>
 
+#include <boost/mpl/x11/lambda.hpp>
 #include <boost/mpl/x11/sizeof.hpp>
-#include <boost/mpl/x11/arg.hpp>
 #include <boost/mpl/x11/logical.hpp>
 #include <boost/mpl/x11/comparison.hpp>
-#include <boost/mpl/x11/lambda.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace test {
-	struct my {
-		char a[100];
-	};
+
+struct my {
+	char a[100];
+};
+
+struct UDT {};
+typedef int UDT::* mem_ptr;
+typedef int (UDT::* mem_fun_ptr)();
+
+struct incomplete;
+class abstract {
+	public: virtual ~abstract() = 0;
+};
+
 }
 
 BOOST_AUTO_TEST_CASE(lambda_0)
 {
-	/* !(x == char) && !(x == double) || sizeof(x) > 8 */
+	// !(x == char) && !(x == double) || sizeof(x) > 8
 	typedef lambda<or_<
 		and_<
 			not_<std::is_same<arg<0>, char>>,
 			not_<std::is_floating_point<arg<0>>>
 		>,
-		greater<sizeof_<arg<0>>, size_t<8>>
+		greater<sizeof_<arg<0>>, x11::size_t<8>>
 	>>::type f;
-
-	typedef apply_wrap<f, test::my> x;
 
 	BOOST_CHECK(!(apply_wrap<f, char>::type::value));
 	BOOST_CHECK(!(apply_wrap<f, double>::type::value));
@@ -43,7 +51,7 @@ BOOST_AUTO_TEST_CASE(lambda_0)
 
 BOOST_AUTO_TEST_CASE(lambda_1)
 {
-	 /* x == y || x == my || sizeof(x) == sizeof(y) */
+	// x == y || x == my || sizeof(x) == sizeof(y)
 	typedef lambda<or_<
 		std::is_same<arg<0>, arg<1>>,
 		std::is_same<arg<1>, test::my>,
@@ -60,11 +68,42 @@ BOOST_AUTO_TEST_CASE(lambda_1)
 
 BOOST_AUTO_TEST_CASE(lambda_2)
 {
-	/* bind <-> lambda interaction */
+	// bind <-> lambda interaction
 	typedef lambda<less<arg<0>, arg<1>>>::type pred;
 	typedef bind<pred, arg<0>, int_<4>> f;
 
-	BOOST_CHECK((apply_wrap<f, int_<3>>::type::value));
+	BOOST_CHECK((apply_wrap<f, int_<3>>::type::value ));
 }
 
+BOOST_AUTO_TEST_CASE(lambda_3)
+{
+#define AUX_LAMBDA_TEST(T)                                                    \
+	{ BOOST_CHECK((                                                       \
+		apply<lambda<std::is_same<arg<-1>, T>>::type, T>::type::value \
+	)); }                                                                 \
+	{ BOOST_CHECK((                                                       \
+		apply<lambda<std::is_same<T, arg<-1>>>::type, T>::type::value \
+	)); }                                                                 \
+	{ BOOST_CHECK((                                                       \
+		apply<lambda<                                                 \
+			std::is_same<arg<-1>, arg<-1>>>::type, T, T           \
+		>::type::value)); }
+
+	AUX_LAMBDA_TEST(test::UDT);
+	AUX_LAMBDA_TEST(test::abstract);
+	AUX_LAMBDA_TEST(boost::noncopyable);
+	AUX_LAMBDA_TEST(test::incomplete);
+	AUX_LAMBDA_TEST(int);
+	AUX_LAMBDA_TEST(void);
+	AUX_LAMBDA_TEST(double);
+	AUX_LAMBDA_TEST(int &);
+	AUX_LAMBDA_TEST(int *);
+
+	AUX_LAMBDA_TEST(int[]);
+
+	AUX_LAMBDA_TEST(int[10]);
+	AUX_LAMBDA_TEST(int (*)())
+	AUX_LAMBDA_TEST(test::mem_ptr);
+	AUX_LAMBDA_TEST(test::mem_fun_ptr);
+}
 }}}

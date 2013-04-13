@@ -8,20 +8,14 @@
 #if !defined(MPL_X11_ALWAYS_APR_05_2013_1325)
 #define MPL_X11_ALWAYS_APR_05_2013_1325
 
+#include <boost/mpl/x11/apply.hpp>
+
 namespace boost { namespace mpl { namespace x11 {
 
 template <typename Value>
 struct always {
-	template <typename...>
-	struct apply;
-
-	template <typename T0>
-	struct apply<T0> {
-		typedef Value type;
-	};
-
-	template <typename T0, typename... Tn>
-	struct apply<T0, Tn...> {
+	template <typename... Tn>
+	struct apply {
 		typedef Value type;
 	};
 };

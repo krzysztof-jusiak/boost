@@ -9,7 +9,7 @@
 #define MPL_X11_DETAIL_TEMPLATE_ARITY_APR_04_2013_1700
 
 #include <boost/mpl/x11/detail/type_wrapper.hpp>
-#include <boost/mpl/x11/arithmetic.hpp>
+#include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
@@ -36,7 +36,7 @@ struct arity_count<T0> {
 
 template <typename T0, typename... Tn>
 struct arity_count<T0, Tn...> {
-	typedef increment<typename arity_count<Tn...>::type> type;
+	typedef long_<arity_count<Tn...>::type::value + 1> type;
 };
 
 template <

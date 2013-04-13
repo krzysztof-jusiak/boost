@@ -21,16 +21,12 @@ struct size<> {
 template <typename Sequence>
 struct size<Sequence> : detail::size_impl<
 	typename sequence_tag<Sequence>::type
->::template apply<Sequence>::type
-{
-	typedef detail::integral_c_tag tag;
-};
+>::template apply<Sequence>::type {};
 
 template <typename Sequence>
 struct empty : detail::empty_impl<
 	typename sequence_tag<Sequence>::type
->::template apply<Sequence>::type
-{};
+>::template apply<Sequence>::type {};
 
 }}}
 

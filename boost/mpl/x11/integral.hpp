@@ -18,14 +18,23 @@ struct integral_c_tag {
 
 }
 
+template <typename T, T v>
+struct integral_constant : std::integral_constant<T, v> {
+	typedef integral_constant type;
+	typedef detail::integral_c_tag tag;
+};
+
 template <bool value>
-using bool_ = std::integral_constant<bool, value>;
+using bool_ = integral_constant<bool, value>;
+
+typedef bool_<false> false_type;
+typedef bool_<true> true_type;
 
 template <int value>
-using int_ = std::integral_constant<int, value>;
+using int_ = integral_constant<int, value>;
 
 template <long value>
-using long_ = std::integral_constant<long, value>;
+using long_ = integral_constant<long, value>;
 
 }}}
 
