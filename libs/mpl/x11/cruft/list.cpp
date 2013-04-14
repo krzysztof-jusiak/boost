@@ -3,6 +3,7 @@
 #include <cxxabi.h>
 
 #if defined(X11)
+#include <boost/mpl/x11/package.hpp>
 #include <boost/mpl/x11/map.hpp>
 #include <boost/mpl/x11/vector.hpp>
 #include <boost/mpl/x11/begin_end.hpp>

@@ -1,4 +1,6 @@
 /*=============================================================================
+    Copyright (c) 2001-2002 Peter Dimov
+    Copyright (c) 2001-2004 Aleksey Gurtovoy
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying

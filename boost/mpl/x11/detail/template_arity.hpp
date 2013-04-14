@@ -8,49 +8,18 @@
 #if !defined(MPL_X11_DETAIL_TEMPLATE_ARITY_APR_04_2013_1700)
 #define MPL_X11_DETAIL_TEMPLATE_ARITY_APR_04_2013_1700
 
-#include <boost/mpl/x11/detail/type_wrapper.hpp>
 #include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
 template <typename...>
-struct arity_helper;
+struct template_arity;
 
-template <typename F>
-struct arity_helper<F> {
-	typedef long_<0> type;
-};
+template <typename T>
+struct template_arity<T> : long_<0> {};
 
-template <typename...>
-struct arity_count;
-
-template <>
-struct arity_count<> {
-	typedef long_<0> type;
-};
-
-template <typename T0>
-struct arity_count<T0> {
-	typedef long_<1> type;
-};
-
-template <typename T0, typename... Tn>
-struct arity_count<T0, Tn...> {
-	typedef long_<arity_count<Tn...>::type::value + 1> type;
-};
-
-template <
-	template <typename... Pn> class F,
-	typename... Tn
-> struct arity_helper<F<Tn...>> {
-	typedef typename arity_count<Tn...>::type type;
-};
-
-template <typename F>
-struct template_arity {
-	typedef typename arity_helper<F>::type type;
-	static long const value = type::value;
-};
+template <template <typename...> class F, typename... Tn>
+struct template_arity<F<Tn...>> : long_<sizeof...(Tn)> {};
 
 }}}}
 

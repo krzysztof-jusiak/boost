@@ -17,10 +17,14 @@ namespace boost { namespace mpl { namespace x11 {
 BOOST_AUTO_TEST_CASE(unpack_args_0)
 {
 	typedef vector<int, int> v2;
+	typedef vector<int, char, char, char, int> v5;
 
-	BOOST_CHECK((                                                       \
-		apply<unpack_args<std::is_same<arg<0>, arg<1>>>, v2>::type::value \
-	));
+	BOOST_CHECK((apply<                                   \
+		unpack_args<std::is_same<arg<0>, arg<1>>>, v2 \
+	>::type::value));
+	BOOST_CHECK((apply<                                   \
+		unpack_args<std::is_same<arg<0>, arg<4>>>, v5 \
+	>::type::value));
 }
 
 }}}
