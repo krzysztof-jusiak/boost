@@ -6,6 +6,7 @@
 #include <boost/mpl/x11/set.hpp>
 
 using namespace boost::mpl::x11;
+
 #else
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/set_c.hpp>
@@ -13,6 +14,7 @@ using namespace boost::mpl::x11;
 #include <boost/mpl/begin_end.hpp>
 
 using namespace boost::mpl;
+
 #endif
 
 template <typename T>
@@ -30,16 +32,20 @@ struct std_vector {};
 int main(int argc, char **argv)
 {
 	//typedef set_c<char, 'a'>::type s2;
-	//typedef set_c<char, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'>::type s2;
-	typedef set<char, int, long, short> s2;
+	typedef set_c<char, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'>::type s2;
 
 	typedef begin<s2>::type first2;
 	typedef end<s2>::type last2;
 
+	typedef has_key<s2, char> y;
+	typedef has_key<s2, int> n;
 	typedef distance<first2, last2> d;
-	std::cout << "1: " << demangle<first2>() << '\n';
-	std::cout << "1.1: " << demangle<next<first2>::type>() << '\n';
-	std::cout << "2: " << demangle<last2>() << '\n';
+	std::cout << "1.1: " << demangle<s2>() << "\n\n";
+	std::cout << "1.2: " << demangle<first2>() << "\n\n";
+	std::cout << "1.3: " << demangle<next<first2>::type>() << "\n\n";
+	std::cout << "2.1: " << demangle<y::type>() << "\n\n";
+	std::cout << "2.2: " << demangle<n::type>() << "\n\n";
+	std::cout << "3.1: " << demangle<d::type>() << "\n\n";
 
 	return 0;
 }

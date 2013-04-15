@@ -15,12 +15,12 @@ namespace boost { namespace mpl { namespace x11 {
 template <typename Iterator, typename N>
 struct advance
 : detail::advance_impl<typename tag<Iterator>::type>
-	::template apply<Iterator,N> {};
+	::template apply<Iterator, N> {};
 
 template <typename Iterator, long N>
 struct advance_c
 : detail::advance_impl<typename tag<Iterator>::type>
-	::template apply<Iterator,long_<N>> {};
+	::template apply<Iterator, long_<N>> {};
 
 }}}
 

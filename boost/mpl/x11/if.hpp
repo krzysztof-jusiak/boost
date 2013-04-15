@@ -12,9 +12,6 @@
 
 namespace boost { namespace mpl { namespace x11 {
 
-/* "typedef" template aliases won't quite do because of partial specializations
- * elsewhere.
- */
 template <bool C, typename T0, typename T1>
 struct if_c {
 	typedef typename std::conditional<C, T0, T1>::type type;

@@ -43,7 +43,7 @@ struct s_item : Base {
 	static order_tag_ order_by_key_(s_item const&, type_wrapper<T>*);
 	using Base::order_by_key_;
 
-	static false_type is_masked_(s_item const&, type_wrapper<T>*);
+	static true_type is_masked_(s_item const&, type_wrapper<T>*);
 	using Base::is_masked_;
 };
 
@@ -55,7 +55,7 @@ struct s_mask : Base {
 	typedef Base base;
 	typedef typename decrement<typename Base::size>::type size;
 
-	static true_type is_masked_(s_mask const&, type_wrapper<T>*);
+	static false_type is_masked_(s_mask const&, type_wrapper<T>*);
 	using Base::is_masked_;
 };
 
@@ -67,7 +67,7 @@ struct s_unmask : Base {
 	typedef Base base;
 	typedef typename increment<typename Base::size>::type size;
 
-	static false_type is_masked_(s_unmask const&, type_wrapper<T>*);
+	static true_type is_masked_(s_unmask const&, type_wrapper<T>*);
 	using Base::is_masked_;
 };
 
@@ -76,7 +76,7 @@ struct s_iter;
 
 template <typename Set, typename Tail>
 struct s_iter_get : eval_if<
-	has_key<Set, typename Tail::item_type_>,
+	x11::has_key<Set, typename Tail::item_type_>,
 	identity<s_iter<Set, Tail>>,
 	next<s_iter<Set, Tail>>
 > {};
@@ -106,7 +106,7 @@ struct set<> {
 	typedef char (&order_tag_)[1];
  
 	static order_tag_ order_by_key_(set<> const &, void const volatile *);
-	static true_type is_masked_(set<> const &, void const volatile *);
+	static false_type is_masked_(set<> const &, void const volatile *);
 };
 
 template <typename T0>
@@ -129,14 +129,15 @@ struct set_c<T> : set<> {
 };
 
 template <typename T, T C0>
-struct set_c<T, C0> : detail::s_item<integral_constant<T, C0>, set_c<T>> {
+struct set_c<T, C0>
+: detail::s_item<integral_constant<T, C0>, typename set_c<T>::item_> {
 	typedef set_c type;
 	typedef T value_type;
 };
 
 template <typename T, T C0, T... Cn>
 struct set_c<T, C0, Cn...>
-: detail::s_item<integral_constant<T, C0>, set_c<T, Cn...>> {
+: detail::s_item<integral_constant<T, C0>, typename set_c<T, Cn...>::item_> {
 	typedef set_c type;
 	typedef T value_type;
 };

@@ -23,6 +23,8 @@ template <typename T, T v>
 struct integral_constant : std::integral_constant<T, v> {
 	typedef integral_constant type;
 	typedef detail::integral_c_tag tag;
+	typedef integral_constant<T, static_cast<T>((v + 1))> next;
+	typedef integral_constant<T, static_cast<T>((v - 1))> prior;
 };
 
 template <bool value>
@@ -30,6 +32,9 @@ using bool_ = integral_constant<bool, value>;
 
 typedef bool_<false> false_type;
 typedef bool_<true> true_type;
+
+template <char value>
+using char_ = integral_constant<char, value>;
 
 template <int value>
 using int_ = integral_constant<int, value>;

@@ -49,7 +49,7 @@ template <typename Sequence> struct clear;
 
 template <typename...> struct distance;
 
-template <typename Sequence, typename T> struct contains;
+template <typename...> struct contains;
 template <typename Sequence, typename T> struct count;
 
 template <typename Sequence> struct empty;

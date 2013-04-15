@@ -21,6 +21,7 @@
 #include <boost/mpl/x11/clear.hpp>
 #include <boost/mpl/x11/insert.hpp>
 #include <boost/mpl/x11/order.hpp>
+#include <boost/mpl/x11/contains.hpp>
 
 #include "data_types.hpp"
 
@@ -247,22 +248,22 @@ void find_test()
 	BOOST_CHECK_EQUAL((size<Set>::value), 3);
 
 	typedef typename end<Set>::type not_found;
-	BOOST_BOOST_CHECK(!(                                        \
+	BOOST_CHECK(!(                                              \
 		std::is_same<                                       \
 			typename find<Set, int>::type, not_found    \
 		>::value                                            \
 	));
-	BOOST_BOOST_CHECK(!(                                        \
+	BOOST_CHECK(!(                                              \
 		std::is_same<                                       \
 			typename find<Set, long>::type, not_found   \
 		>::value                                            \
 	));
-	BOOST_BOOST_CHECK(!(                                        \
+	BOOST_CHECK(!(                                              \
 		std::is_same<                                       \
 			typename find<Set, char>::type, not_found   \
 		>::value                                            \
 	));
-	BOOST_BOOST_CHECK((                                         \
+	BOOST_CHECK((                                               \
 		std::is_same<                                       \
 			typename find<Set, char *>::type, not_found \
 		>::value                                            \
@@ -330,10 +331,10 @@ BOOST_AUTO_TEST_CASE(set_3)
 	BOOST_CHECK((std::is_same<s3::value_type, bool>::value));
 	BOOST_CHECK((std::is_same<s2::value_type, bool>::value));
 
-	//BOOST_CHECK_EQUAL((test::at_c<s1, true>::value), true);
-	//BOOST_CHECK_EQUAL((test::at_c<s2, false>::value), false);
-	//BOOST_CHECK_EQUAL((test::at_c<s3, true>::value), true);
-	//BOOST_CHECK_EQUAL((test::at_c<s3, false>::value), false);
+	BOOST_CHECK_EQUAL((test::at_c<s1, true>::value), true);
+	BOOST_CHECK_EQUAL((test::at_c<s2, false>::value), false);
+	BOOST_CHECK_EQUAL((test::at_c<s3, true>::value), true);
+	BOOST_CHECK_EQUAL((test::at_c<s3, false>::value), false);
 
 	BOOST_CHECK((std::is_same<                          \
 		typename test::at_c<s1, false>::type, void_ \
@@ -344,15 +345,15 @@ BOOST_AUTO_TEST_CASE(set_3)
 
 	typedef begin<s1>::type first1;
 	typedef end<s1>::type last1;
-	//BOOST_CHECK_EQUAL((distance<first1, last1>::value), 1);
+	BOOST_CHECK_EQUAL((distance<first1, last1>::value), 1);
 
 	typedef begin<s2>::type first2;
 	typedef end<s2>::type last2;
-	//BOOST_CHECK_EQUAL((distance<first2, last2>::value), 1);
+	BOOST_CHECK_EQUAL((distance<first2, last2>::value), 1);
 
 	typedef begin<s3>::type first3;
 	typedef end<s3>::type last3;
-	//BOOST_CHECK_EQUAL((distance<first3, last3>::value), 2);
+	BOOST_CHECK_EQUAL((distance<first3, last3>::value), 2);
 }
 
 BOOST_AUTO_TEST_CASE(set_4)
@@ -366,21 +367,21 @@ BOOST_AUTO_TEST_CASE(set_4)
 	BOOST_CHECK((std::is_same<s1::value_type, char>::value));
 	BOOST_CHECK((std::is_same<s2::value_type, char>::value));
 
-	//BOOST_CHECK_EQUAL((test::at_c<s1, 'a'>::value), 'a');
-	//BOOST_CHECK_EQUAL((test::at_c<s2, 'a'>::value), 'a');
-	//BOOST_CHECK_EQUAL((test::at_c<s2, 'd'>::value), 'd');
-	//BOOST_CHECK_EQUAL((test::at_c<s2, 'h'>::value), 'h');
+	BOOST_CHECK_EQUAL((test::at_c<s1, 'a'>::value), 'a');
+	BOOST_CHECK_EQUAL((test::at_c<s2, 'a'>::value), 'a');
+	BOOST_CHECK_EQUAL((test::at_c<s2, 'd'>::value), 'd');
+	BOOST_CHECK_EQUAL((test::at_c<s2, 'h'>::value), 'h');
 
 	BOOST_CHECK((std::is_same<test::at_c<s1, 'z'>::type, void_>::value));
 	BOOST_CHECK((std::is_same<test::at_c<s2, 'k'>::type, void_>::value));
 
 	typedef begin<s1>::type first1;
 	typedef end<s1>::type last1;
-	//BOOST_CHECK_EQUAL((distance<first1, last1>::value), 1);
+	BOOST_CHECK_EQUAL((distance<first1, last1>::value), 1);
 
 	typedef begin<s2>::type first2;
 	typedef end<s2>::type last2;
-	//BOOST_CHECK_EQUAL((distance<first2, last2>::value), 8);
+	BOOST_CHECK_EQUAL((distance<first2, last2>::value), 8);
 }
 
 }}}
