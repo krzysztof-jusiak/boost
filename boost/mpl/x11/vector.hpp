@@ -24,7 +24,7 @@ struct vector_tag;
 
 struct v_iter_tag;
 
-template <typename T, typename Base, int at_front = 0>
+template <typename T, typename Base, bool at_front = false>
 struct v_item : Base {
 	typedef typename Base::upper_bound_ index_;
 	typedef typename increment<index_>::type upper_bound_;
@@ -37,7 +37,7 @@ struct v_item : Base {
 };
 
 template <typename T, typename Base>
-struct v_item<T, Base, 1> : Base {
+struct v_item<T, Base, true> : Base {
 	typedef typename decrement<typename Base::lower_bound_>::type index_;
 	typedef index_ lower_bound_;
 	typedef typename increment<typename Base::size>::type size;
@@ -48,7 +48,7 @@ struct v_item<T, Base, 1> : Base {
 	using Base::item_;
 };
 
-template <typename Base, int at_front>
+template <typename Base, bool at_front>
 struct v_mask : Base {
 	typedef typename decrement<typename Base::upper_bound_>::type index_;
 	typedef index_ upper_bound_;
@@ -61,7 +61,7 @@ struct v_mask : Base {
 };
 
 template <typename Base>
-struct v_mask<Base, 1> : Base {
+struct v_mask<Base, true> : Base {
 	typedef typename Base::lower_bound_ index_;
 	typedef typename increment<index_>::type lower_bound_;
 	typedef typename decrement<typename Base::size>::type size;
@@ -128,13 +128,29 @@ struct vector<> {
 };
 
 template <typename T0>
-struct vector<T0> : detail::v_item<T0, vector<>, 1> {
+struct vector<T0> : detail::v_item<T0, vector<>, true> {
 	typedef vector type;
 };
 
 template <typename T0, typename... Tn>
-struct vector<T0, Tn...> : detail::v_item<T0, vector<Tn...>, 1> {
+struct vector<T0, Tn...> : detail::v_item<T0, vector<Tn...>, true> {
 	typedef vector type;
+};
+
+template <typename T, T... Cn>
+struct vector_c;
+
+template <typename T>
+struct vector_c<T> : vector<> {
+	typedef vector_c type;
+	typedef T value_type;
+};
+
+template <typename T, T C0, T... Cn>
+struct vector_c<T, C0, Cn...>
+: detail::v_item<integral_constant<T, C0>, vector_c<T, Cn...>, true> {
+	typedef vector_c type;
+	typedef T value_type;
 };
 
 namespace detail {
@@ -194,6 +210,12 @@ struct front_impl<vector_tag> {
 };
 
 template <>
+struct O1_size_impl<vector_tag> {
+	template <typename Vector>
+	struct apply : Vector::size {};
+};
+
+template <>
 struct pop_back_impl<vector_tag> {
 	template <typename Vector>
 	struct apply {
@@ -229,8 +251,7 @@ template <>
 struct size_impl<vector_tag>
 {
 	template <typename Vector>
-	struct apply : Vector::size
-	{};
+	struct apply : Vector::size {};
 };
 
 }

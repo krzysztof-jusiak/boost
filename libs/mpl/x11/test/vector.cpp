@@ -117,4 +117,50 @@ BOOST_AUTO_TEST_CASE(vector_4)
 	BOOST_CHECK_EQUAL(size<v9>::value, 9);
 }
 
+BOOST_AUTO_TEST_CASE(vector_5)
+{
+	typedef vector_c<bool, true>::type v1;
+	typedef vector_c<bool, false>::type v2;
+
+	BOOST_CHECK((std::is_same<v1::value_type, bool>::value));
+	BOOST_CHECK((std::is_same<v2::value_type, bool>::value));
+
+	BOOST_CHECK_EQUAL((front<v1>::type::value), true);
+	BOOST_CHECK_EQUAL((front<v2>::type::value), false);
+}
+
+BOOST_AUTO_TEST_CASE(vector_6)
+{
+	typedef vector_c<int, -1> v1;
+	typedef vector_c<int, 0, 1> v2;
+	typedef vector_c<int, 1, 2, 3> v3;
+
+	BOOST_CHECK((std::is_same<v1::value_type, int>::value));
+	BOOST_CHECK((std::is_same<v2::value_type, int>::value));
+	BOOST_CHECK((std::is_same<v3::value_type, int>::value));
+
+	BOOST_CHECK_EQUAL((size<v1>::value), 1);
+	BOOST_CHECK_EQUAL((size<v2>::value), 2);
+	BOOST_CHECK_EQUAL((size<v3>::value), 3);
+
+	BOOST_CHECK_EQUAL((front<v1>::type::value), -1);
+	BOOST_CHECK_EQUAL((front<v2>::type::value), 0);
+	BOOST_CHECK_EQUAL((front<v3>::type::value), 1);
+}
+
+BOOST_AUTO_TEST_CASE(vector_7)
+{
+	typedef vector_c<unsigned, 0> v1;
+	typedef vector_c<unsigned, 1, 2> v2;
+
+	BOOST_CHECK((std::is_same<v1::value_type, unsigned>::value));
+	BOOST_CHECK((std::is_same<v2::value_type, unsigned>::value));
+
+	BOOST_CHECK_EQUAL((size<v1>::type::value), 1);
+	BOOST_CHECK_EQUAL((size<v2>::type::value), 2);
+
+	BOOST_CHECK_EQUAL((front<v1>::type::value), 0);
+	BOOST_CHECK_EQUAL((front<v2>::type::value), 1);
+}
+
 }}}

@@ -8,7 +8,7 @@
 #if !defined(MPL_X11_VOID_APR_03_2013_1445)
 #define MPL_X11_VOID_APR_03_2013_1445
 
-#include <type_traits>
+#include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
@@ -17,14 +17,14 @@ struct void_ {
 };
 
 template <typename T>
-struct is_void_ : std::false_type {};
+struct is_void_ : false_type {};
 
-template <> struct is_void_<void_> : std::true_type {};
+template <> struct is_void_<void_> : true_type {};
 
 template <typename T>
-struct is_not_void_ : std::true_type {};
+struct is_not_void_ : true_type {};
 
-template <> struct is_not_void_<void_> : std::false_type {};
+template <> struct is_not_void_<void_> : false_type {};
 
 }}}
 

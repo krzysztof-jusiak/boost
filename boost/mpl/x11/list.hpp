@@ -1,6 +1,6 @@
 /*=============================================================================
     Copyright (c) 2000-2004 Aleksey Gurtovoy
-    Copyright (c) 2013 Alex Dubov <oakad@yahoo.com>
+    Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -74,7 +74,7 @@ struct empty_impl<list_tag> {
 
 template <>
 struct end_impl<list_tag> {
-	template <typename>
+	template <typename List>
 	struct apply {
 		typedef l_iter<l_end> type;
         };
@@ -92,6 +92,12 @@ template <>
 struct has_push_back_impl<list_tag> {
 	template <typename Seq>
 	struct apply : std::false_type {};
+};
+
+template <>
+struct O1_size_impl<list_tag> {
+	template <typename List>
+	struct apply : List::size {};
 };
 
 template <>
@@ -131,6 +137,13 @@ struct next<detail::l_iter<Node>> {
 	typedef detail::l_iter<typename Node::next> type;
 };
 
+template <typename T, typename Tag>
+struct lambda<detail::l_iter<T>, Tag, int_<1>> {
+	typedef false_type is_le;
+	typedef detail::l_iter<T> result_;
+	typedef result_ type;
+};
+
 template <typename...>
 struct list;
 
@@ -141,20 +154,41 @@ struct list<> : detail::l_end {
 
 template <typename T0>
 struct list<T0> : detail::l_item<long_<1>, T0, detail::l_end> {
-	typedef list<T0> type;
+	typedef list type;
 };
 
-template <typename T0, typename T1>
-struct list<T0, T1> : detail::l_item<long_<2>, T0, list<T1>> {
-	typedef list<T0, T1> type;
-};
-
-template <typename T0, typename T1, typename... Tn>
-struct list<T0, T1, Tn...> : detail::l_item<
-	increment<typename list<T1, Tn...>::size>,
-	T0, list<T1, Tn...>
+template <typename T0, typename... Tn>
+struct list<T0, Tn...> : detail::l_item<
+	increment<typename list<Tn...>::size>,
+	T0, list<Tn...>
 > {
-	typedef list<T0, T1, Tn...> type;
+	typedef list type;
+};
+
+template <typename T, T... Cn>
+struct list_c;
+
+template <typename T>
+struct list_c<T> : detail::l_end {
+	typedef detail::l_end type;
+	typedef T value_type;
+};
+
+template <typename T, T C0>
+struct list_c<T, C0>
+: detail::l_item<long_<1>, integral_constant<T, C0>, detail::l_end> {
+	typedef list_c type;
+	typedef T value_type;
+};
+
+template <typename T, T C0, T... Cn>
+struct list_c<T, C0, Cn...>
+: detail::l_item<
+	increment<typename list_c<T, Cn...>::size>,
+	integral_constant<T, C0>, list_c<T, Cn...>
+> {
+	typedef list_c type;
+	typedef T value_type;
 };
 
 }}}

@@ -29,6 +29,7 @@ template <typename Tag> struct has_push_back_impl;
 template <typename Tag> struct insert_impl;
 template <typename Tag> struct insert_range_impl;
 template <typename Tag> struct key_type_impl;
+template <typename Tag> struct O1_size_impl;
 template <typename Tag> struct order_impl;
 template <typename Tag> struct pop_back_impl;
 template <typename Tag> struct pop_front_impl;
@@ -46,7 +47,7 @@ template <typename Sequence> struct back;
 template <typename Sequence> struct begin;
 template <typename Sequence> struct clear;
 
-template <typename First, typename Last> struct distance;
+template <typename...> struct distance;
 
 template <typename Sequence, typename T> struct contains;
 template <typename Sequence, typename T> struct count;
@@ -68,6 +69,8 @@ template <typename Sequence, typename Position, typename Range>
 struct insert_range;
 
 template <typename Sequence, typename T> struct key_type;
+
+template <typename...> struct O1_size;
 
 template <typename Sequence, typename Key> struct order;
 

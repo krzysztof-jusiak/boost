@@ -17,6 +17,8 @@
 #include <boost/mpl/x11/logical.hpp>
 #include <boost/mpl/x11/comparison.hpp>
 #include <boost/mpl/x11/lambda.hpp>
+#include <boost/mpl/x11/list.hpp>
+#include <boost/mpl/x11/begin_end.hpp>
 
 template <typename T>
 std::string demangle()
@@ -36,7 +38,14 @@ namespace test {
 
 void test1()
 {
+	typedef list_c<unsigned, 2, 1> l2;
+
+	typedef begin<l2>::type i1;
+	typedef next<i1>::type i2;
+	typedef next<i2>::type i3;
+
 	/* !(x == char) && !(x == double) || sizeof(x) > 8 */
+	/*
 	typedef lambda<or_<
 		and_<
 			not_<std::is_same<arg<0L>, char>>,
@@ -46,9 +55,10 @@ void test1()
 	>> f;
 
 	typedef apply_wrap<f::type, test::my> x;
-	std::cout << "1: " << demangle<f>() << '\n';
-	std::cout << "2: " << demangle<f::type>() << '\n';
-	std::cout << "3: " << demangle<x::type>() << '\n';
+	*/
+	std::cout << "1: " << demangle<i3>() << '\n';
+	std::cout << "2: " << demangle<end<l2>::type>() << '\n';
+//	std::cout << "3: " << demangle<x::type>() << '\n';
 	/*
 	printf("3: %s\n", typeid(f::x_tag).name());
 	printf("4: %s\n", typeid(f::l0::x_tag).name());

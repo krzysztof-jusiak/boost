@@ -212,12 +212,6 @@ struct contains_impl<map_tag> {
 	> {};
 };
 
-template <typename Map, typename Pair>
-struct map_insert_impl : if_<
-	contains_impl<map_tag>::apply<Map, Pair>,
-	Map,
-	m_item<typename Pair::first, typename Pair::second, Map>
-> {};
 
 template <>
 struct empty_impl<map_tag> {
@@ -269,14 +263,21 @@ struct erase_impl<map_tag> {
 
 template <>
 struct insert_impl<map_tag> {
+	template <typename Map, typename Pair>
+	struct apply_impl : if_<
+		contains_impl<map_tag>::apply<Map, Pair>,
+		Map,
+		m_item<typename Pair::first, typename Pair::second, Map>
+	> {};
+
 	template <typename...>
 	struct apply;
 
 	template <typename Map, typename Pos>
-	struct apply<Map, Pos> : map_insert_impl<Map, Pos> {};
+	struct apply<Map, Pos> : apply_impl<Map, Pos> {};
 
 	template <typename Map, typename Pos, typename T>
-	struct apply<Map, Pos, T> : map_insert_impl<Map, T> {};
+	struct apply<Map, Pos, T> : apply_impl<Map, T> {};
 };
 
 template <>

@@ -14,20 +14,13 @@
 #include <boost/mpl/x11/logical.hpp>
 #include <boost/mpl/x11/comparison.hpp>
 
+#include "data_types.hpp"
+
 namespace boost { namespace mpl { namespace x11 {
 namespace test {
 
 struct my {
 	char a[100];
-};
-
-struct UDT {};
-typedef int UDT::* mem_ptr;
-typedef int (UDT::* mem_fun_ptr)();
-
-struct incomplete;
-class abstract {
-	public: virtual ~abstract() = 0;
 };
 
 }
@@ -91,7 +84,7 @@ BOOST_AUTO_TEST_CASE(lambda_3)
 
 	AUX_LAMBDA_TEST(test::UDT);
 	AUX_LAMBDA_TEST(test::abstract);
-	AUX_LAMBDA_TEST(boost::noncopyable);
+	AUX_LAMBDA_TEST(test::noncopyable);
 	AUX_LAMBDA_TEST(test::incomplete);
 	AUX_LAMBDA_TEST(int);
 	AUX_LAMBDA_TEST(void);
