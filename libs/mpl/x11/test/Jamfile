@@ -25,4 +25,3 @@ run set.cpp : : test_case ;
 run template_arity.cpp : : test_case ;
 run unpack_args.cpp : : test_case ;
 run vector.cpp : : test_case ;
-
