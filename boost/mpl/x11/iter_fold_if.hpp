@@ -170,7 +170,7 @@ template <
 > struct iter_fold_if<Sequence, State, ForwardOp, ForwardPredicate>
 : iter_fold_if<
 	Sequence, State, ForwardOp, ForwardPredicate,
-	std::false_type, always<std::false_type>
+	false_type, always<false_type>
 > {};
 
 template <
@@ -179,7 +179,7 @@ template <
 > struct iter_fold_if<Sequence, State, ForwardOp, ForwardPredicate, BackwardOp>
 : iter_fold_if<
 	Sequence, State, ForwardOp, ForwardPredicate,
-	BackwardOp, always<std::true_type>
+	BackwardOp, always<true_type>
 > {};
 
 template <

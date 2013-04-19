@@ -16,12 +16,12 @@ namespace boost { namespace mpl { namespace x11 { namespace detail {
 template <typename T>
 struct has_begin {
 	template <typename U>
-	static std::true_type test(
+	static true_type test(
 		type_wrapper<U> const volatile *,
 		type_wrapper<typename U::begin> * = 0
 	);
 
-	static std::false_type test(...);
+	static false_type test(...);
 
 	typedef decltype(test(static_cast<type_wrapper<T> *>(nullptr))) type;
 

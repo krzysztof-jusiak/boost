@@ -65,7 +65,7 @@ struct unpack_args {
 
 template <typename T0, typename Tag>
 struct lambda<unpack_args<T0>, Tag, long_<1>> {
-	typedef std::false_type is_le;
+	typedef false_type is_le;
 	typedef unpack_args<T0> result_;
 	typedef result_ type;
 };

@@ -10,6 +10,7 @@
 #define MPL_X11_REVERSE_FOLD_APR_08_2013_1800
 
 #include <boost/mpl/x11/detail/reverse_fold.hpp>
+#include <boost/mpl/x11/O1_size.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
@@ -18,7 +19,7 @@ template <
 	typename ForwardOp = arg<0>
 > struct reverse_fold {
 	typedef typename detail::reverse_fold_impl<
-		size<Sequence>::value,
+		O1_size<Sequence>::value,
 		typename begin<Sequence>::type,
 		typename end<Sequence>::type,
 		State, BackwardOp, ForwardOp

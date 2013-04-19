@@ -11,6 +11,7 @@
 #include <boost/mpl/x11/arg.hpp>
 #include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/iter_fold_if.hpp>
+#include <boost/mpl/x11/detail/iter_apply.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
@@ -36,7 +37,7 @@ struct equal_impl {
 	typedef iter_fold_if_impl<
 		first1_, first2_, next<>,
 		protect<equal_pred<Predicate, last1_, last2_>>,
-		void_, always<std::false_type>
+		void_, always<false_type>
 	> fold_;
 
 	typedef typename fold_::iterator iter1_;
@@ -52,7 +53,7 @@ struct equal_impl {
 
 template <
 	typename Sequence1, typename Sequence2,
-	typename Predicate = is_same<arg<-1>, arg<-1>>
+	typename Predicate = std::is_same<arg<-1>, arg<-1>>
 > struct equal : detail::equal_impl<Sequence1, Sequence2, Predicate>::type
 {};
 

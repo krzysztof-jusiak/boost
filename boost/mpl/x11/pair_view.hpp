@@ -11,6 +11,10 @@
 
 #include <boost/mpl/x11/sequence_fwd.hpp>
 #include <boost/mpl/x11/pair.hpp>
+#include <boost/mpl/x11/deref.hpp>
+#include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/min_max.hpp>
+#include <boost/mpl/x11/iterator_category.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

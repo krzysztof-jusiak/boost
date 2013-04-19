@@ -19,7 +19,7 @@ template <
 > struct apply_wrap0 : F::template apply<> {};
 
 template <typename F>
-struct apply_wrap0<F, std::true_type> : F::apply {};
+struct apply_wrap0<F, true_type> : F::apply {};
 
 }
 

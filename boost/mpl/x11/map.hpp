@@ -149,7 +149,7 @@ struct map<> {
 		map<> const &, long_<1> *
 	);
 
-	static std::false_type order_by_key_(
+	static false_type order_by_key_(
 		map<> const &, void const volatile *
 	);
 };

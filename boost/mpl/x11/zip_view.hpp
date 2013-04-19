@@ -20,7 +20,7 @@ struct zip_iterator {
 	typedef typename transform1<IteratorSeq, deref<arg<0>>>::type type;
 
 	typedef zip_iterator<
-		typename transform1<IteratorSeq, next<arg<0>>>::type
+		typename transform1<IteratorSeq, x11::next<arg<0>>>::type
 	> next;
 };
 
@@ -42,8 +42,12 @@ struct lambda<zip_view<>, Tag, long_<-1>> {
 
 template <typename Sequences>
 struct zip_view<Sequences> {
-	typedef typename transform1<Sequences, begin<arg<0>>>::type first_ones_;
-	typedef typename transform1<Sequences, end<arg<0>>>::type last_ones_;
+	typedef typename transform1<
+		Sequences, x11::begin<arg<0>>
+	>::type first_ones_;
+	typedef typename transform1<
+		Sequences, x11::end<arg<0>>
+	>::type last_ones_;
 
 	typedef nested_begin_end_tag tag;
 	typedef zip_view type;

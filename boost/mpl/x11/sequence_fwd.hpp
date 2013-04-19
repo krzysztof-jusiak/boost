@@ -74,11 +74,11 @@ template <typename...> struct O1_size;
 
 template <typename Sequence, typename Key> struct order;
 
-template <typename Sequence> struct pop_back;
-template <typename Sequence> struct pop_front;
+template <typename...> struct pop_back;
+template <typename...> struct pop_front;
 
-template <typename Sequence, typename T> struct push_back;
-template <typename Sequence, typename T> struct push_front;
+template <typename...> struct push_back;
+template <typename...> struct push_front;
 
 template <typename...> struct size;
 

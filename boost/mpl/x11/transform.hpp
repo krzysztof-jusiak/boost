@@ -10,7 +10,13 @@
 #define MPL_X11_TRANSFORM_APR_18_2013_1645
 
 #include <boost/mpl/x11/bind.hpp>
+#include <boost/mpl/x11/lambda.hpp>
 #include <boost/mpl/x11/pair_view.hpp>
+#include <boost/mpl/x11/is_sequence.hpp>
+#include <boost/mpl/x11/clear.hpp>
+#include <boost/mpl/x11/inserter.hpp>
+#include <boost/mpl/x11/reverse_fold.hpp>
+#include <boost/mpl/x11/fold.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
@@ -85,7 +91,7 @@ struct transform1<P0, P1> : if_<
 >::type { };
 
 template <typename P0, typename P1, typename P2>
-struct transform1<P0, P1, P2 : detail::transform_impl<P0, P1, P2> {};
+struct transform1<P0, P1, P2> : detail::transform_impl<P0, P1, P2> {};
 
 template <typename...>
 struct reverse_transform1;
@@ -116,7 +122,7 @@ struct reverse_transform1<P0, P1> : if_<
 
 template <typename P0, typename P1, typename P2>
 struct reverse_transform1<P0, P1, P2>
-: detail::reverse_transform1_impl<P0, P1, P2> {};
+: detail::reverse_transform_impl<P0, P1, P2> {};
 
 template <typename...>
 struct transform2;
@@ -214,8 +220,8 @@ template <
 			is_lambda_expression<Seq1OrOperation>,
 			not_<is_sequence<Seq1OrOperation>>
 		>,
-		transform1<Seq1, Seq2OrOperation, OperationOrInserter>,
-		transform2<Seq1, Seq2OrOperation, OperationOrInserter>
+		transform1<Seq0, Seq1OrOperation, OperationOrInserter>,
+		transform2<Seq0, Seq1OrOperation, OperationOrInserter>
 	>::type type;
 };
 
@@ -228,8 +234,8 @@ template <
 			is_lambda_expression<Seq1OrOperation>,
 			not_<is_sequence<Seq1OrOperation>>
 		>,
-		transform1<Seq1, Seq2OrOperation, OperationOrInserter>,
-		transform2<Seq1, Seq2OrOperation, OperationOrInserter, Inserter>
+		transform1<Seq0, Seq1OrOperation, OperationOrInserter>,
+		transform2<Seq0, Seq1OrOperation, OperationOrInserter, Inserter>
 	>::type type;
 };
 
@@ -260,7 +266,7 @@ template <typename Seq0, typename Seq1OrOperation, typename OperationOrInserter>
 struct reverse_transform<Seq0, Seq1OrOperation, OperationOrInserter> {
 	typedef typename eval_if<
 		or_<
-			is_lambda_expression<Seq1OrOperation>
+			is_lambda_expression<Seq1OrOperation>,
 			not_<is_sequence<Seq1OrOperation>>
 		>,
 		reverse_transform1<Seq0, Seq1OrOperation, OperationOrInserter>,
@@ -276,7 +282,7 @@ template <
 > {
 	typedef typename eval_if<
 		or_<
-			is_lambda_expression<Seq1OrOperation>
+			is_lambda_expression<Seq1OrOperation>,
 			not_<is_sequence<Seq1OrOperation>>
 		>,
 		reverse_transform1<Seq0, Seq1OrOperation, OperationOrInserter>,

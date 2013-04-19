@@ -15,9 +15,11 @@
 #include <boost/mpl/x11/list.hpp>
 #include <boost/mpl/x11/transform_view.hpp>
 #include <boost/mpl/x11/filter_view.hpp>
-#include <boost/mpl/x11/max_element.hpp>
+#include <boost/mpl/x11/min_max_element.hpp>
 #include <boost/mpl/x11/zip_view.hpp>
 #include <boost/mpl/x11/unpack_args.hpp>
+#include <boost/mpl/x11/sizeof.hpp>
+#include <boost/mpl/x11/is_even.hpp>
 
 
 namespace boost { namespace mpl { namespace x11 {
@@ -31,7 +33,7 @@ BOOST_AUTO_TEST_CASE(transform_view_0)
 
 	BOOST_CHECK_EQUAL((deref<iter>::type::value), 50);
 }
-
+#if 0
 BOOST_AUTO_TEST_CASE(transform_view_1)
 {
 	typedef list<
@@ -47,7 +49,7 @@ BOOST_AUTO_TEST_CASE(transform_view_1)
 		std::is_same<deref<iter::base>::type, long double>::value \
 	));
 }
-
+#endif
 BOOST_AUTO_TEST_CASE(transform_view_2)
 {
 	typedef transform_view<
@@ -58,7 +60,7 @@ BOOST_AUTO_TEST_CASE(transform_view_2)
 
 	BOOST_CHECK((equal<result, filter_view<                \
 			range_c<int, 10, 30>, is_even<arg<-1>> \
-	>, equal_to<arg<-1>, arg<-1>>>::value));
+	>, equal_to<arg<-1>, arg<-1>>>>::value));
 
 	BOOST_CHECK((std::is_same<                           \
 		zip_view<vector<>>, zip_view<vector<>>::type \

@@ -91,7 +91,7 @@ struct front_impl<list_tag> {
 template <>
 struct has_push_back_impl<list_tag> {
 	template <typename Seq>
-	struct apply : std::false_type {};
+	struct apply : false_type {};
 };
 
 template <>

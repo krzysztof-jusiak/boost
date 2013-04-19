@@ -173,7 +173,7 @@ struct advance_impl {
 			advance_forward<offset_::value>
 		>::type f_;
 
-		typedef typename apply_wrap1<f_,Iterator>::type type;
+		typedef typename apply_wrap<f_,Iterator>::type type;
 	};
 };
 
