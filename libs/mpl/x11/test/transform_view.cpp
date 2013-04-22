@@ -20,6 +20,8 @@
 #include <boost/mpl/x11/unpack_args.hpp>
 #include <boost/mpl/x11/sizeof.hpp>
 #include <boost/mpl/x11/is_even.hpp>
+#include <boost/mpl/x11/equal.hpp>
+#include <boost/mpl/x11/comparison.hpp>
 
 
 namespace boost { namespace mpl { namespace x11 {
@@ -33,7 +35,7 @@ BOOST_AUTO_TEST_CASE(transform_view_0)
 
 	BOOST_CHECK_EQUAL((deref<iter>::type::value), 50);
 }
-#if 0
+
 BOOST_AUTO_TEST_CASE(transform_view_1)
 {
 	typedef list<
@@ -49,7 +51,7 @@ BOOST_AUTO_TEST_CASE(transform_view_1)
 		std::is_same<deref<iter::base>::type, long double>::value \
 	));
 }
-#endif
+
 BOOST_AUTO_TEST_CASE(transform_view_2)
 {
 	typedef transform_view<
@@ -60,7 +62,7 @@ BOOST_AUTO_TEST_CASE(transform_view_2)
 
 	BOOST_CHECK((equal<result, filter_view<                \
 			range_c<int, 10, 30>, is_even<arg<-1>> \
-	>, equal_to<arg<-1>, arg<-1>>>>::value));
+	>, equal_to<arg<-1>, arg<-1>>>::value));
 
 	BOOST_CHECK((std::is_same<                           \
 		zip_view<vector<>>, zip_view<vector<>>::type \

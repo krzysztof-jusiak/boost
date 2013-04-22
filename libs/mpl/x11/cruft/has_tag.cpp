@@ -37,14 +37,14 @@ int main(int argc, char **argv)
 			>
 		>, unpack_args<plus<>>
 	> result;
-	typedef equal<
+	typedef typename equal<
 		result,
 		filter_view<
 			range_c<int, 10, 30>,
 			is_even<arg<-1>>
 		>,
 		equal_to<arg<-1>, arg<-1>>
-	> x1;
+	>::type x1;
 
 	printf("x: %d, %d\n", t0::value, t1::value);
 	printf("x: %d\n", plus<_10, _10, _10, _10>::value);
