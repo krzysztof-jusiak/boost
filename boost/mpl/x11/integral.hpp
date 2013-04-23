@@ -36,6 +36,9 @@ typedef bool_<true> true_type;
 template <char value>
 using char_ = integral_constant<char, value>;
 
+template <short value>
+using short_ = integral_constant<short, value>;
+
 template <int value>
 using int_ = integral_constant<int, value>;
 

@@ -14,22 +14,56 @@
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
-struct has_push_arg;
+struct has_push_back_arg {};
+struct has_push_front_arg {};
+
+template <typename Tag>
+struct pop_back_impl {
+	template <typename Sequence>
+	struct apply;
+};
+
+template <>
+struct pop_back_impl<non_sequence_tag> {};
+
+template <typename Tag>
+struct pop_front_impl {
+	template <typename Sequence>
+	struct apply;
+};
+
+template <>
+struct pop_front_impl<non_sequence_tag> {};
+
+template <typename Tag>
+struct push_back_impl {
+	template <typename Sequence, typename T>
+	struct apply {};
+};
 
 template <typename Tag>
 struct has_push_back_impl {
 	template <typename Sequence>
-	struct apply : has_type<push_back<Sequence, has_push_arg>> {};
+	struct apply : has_type<push_back<Sequence, has_push_back_arg>> {};
+};
+
+template <typename Tag>
+struct push_front_impl {
+	template <typename Sequence, typename T>
+	struct apply {};
 };
 
 template <typename Tag>
 struct has_push_front_impl {
 	template <typename Sequence>
-	struct apply : has_type<push_front<Sequence, has_push_arg>> {};
+	struct apply : has_type<push_front<Sequence, has_push_front_arg>> {};
 };
 
-template <> struct has_push_back_impl<non_sequence_tag> {};
-template <> struct has_push_front_impl<non_sequence_tag> {};
+template <>
+struct has_push_back_impl<non_sequence_tag> {};
+
+template <>
+struct has_push_front_impl<non_sequence_tag> {};
 
 }}}}
 
