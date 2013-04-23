@@ -16,8 +16,11 @@
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
-template <long N> struct advance_backward;
-template <long N> struct advance_forward;
+template <long N>
+struct advance_backward;
+
+template <long N>
+struct advance_forward;
 
 template <>
 struct advance_backward<0> {

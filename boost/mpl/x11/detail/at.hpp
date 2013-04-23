@@ -8,7 +8,7 @@
 #if !defined(MPL_X11_DETAIL_AT_APR_04_2013_1225)
 #define MPL_X11_DETAIL_AT_APR_04_2013_1225
 
-#include <boost/mpl/x11/sequence_tag_fwd.hpp>
+#include <boost/mpl/x11/sequence_tag.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
 #include <boost/mpl/x11/deref.hpp>
 
