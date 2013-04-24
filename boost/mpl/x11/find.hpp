@@ -27,8 +27,24 @@ struct find_if_pred {
 
 }
 
+template <typename...>
+struct find_if;
+
+template <>
+struct find_if<> {
+	template <typename T0, typename T1, typename... Tn>
+	struct apply : find_if<T0, T1> {};
+};
+
+template <typename Tag>
+struct lambda<find_if<>, Tag, long_<-1>> {
+	typedef false_type is_le;
+	typedef find_if<> result_;
+	typedef find_if<> type;
+};
+
 template <typename Sequence, typename Predicate>
-struct find_if {
+struct find_if<Sequence, Predicate> {
 	typedef typename iter_fold_if<
 		Sequence, void, arg<0>,
 		protect<detail::find_if_pred<Predicate>>
@@ -37,8 +53,24 @@ struct find_if {
 	typedef typename second<result_>::type type;
 };
 
+template <typename...>
+struct find;
+
+template <>
+struct find<> {
+	template <typename T0, typename T1, typename... Tn>
+	struct apply : find<T0, T1> {};
+};
+
+template <typename Tag>
+struct lambda<find<>, Tag, long_<-1>> {
+	typedef false_type is_le;
+	typedef find<> result_;
+	typedef find<> type;
+};
+
 template <typename Sequence, typename T>
-struct find : find_if <Sequence, same_as<T>> {};
+struct find<Sequence, T> : find_if <Sequence, same_as<T>> {};
 
 }}}
 

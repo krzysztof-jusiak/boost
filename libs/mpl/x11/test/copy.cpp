@@ -4,7 +4,7 @@
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
-    file LICENSEtest::_1test::_0.txt or copy at http://www.boost.org/LICENSEtest::_1test::_0.txt)
+    file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 
 #define BOOST_TEST_MODULE mpl

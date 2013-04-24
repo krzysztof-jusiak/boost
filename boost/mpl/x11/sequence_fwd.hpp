@@ -50,12 +50,12 @@ template <typename Sequence> struct clear;
 template <typename...> struct distance;
 
 template <typename...> struct contains;
-template <typename Sequence, typename T> struct count;
+template <typename...> struct count;
 
 template <typename Sequence> struct empty;
 template <typename Sequence> struct end;
 
-template <typename Sequence, typename First, typename Last> struct erase;
+template <typename...> struct erase;
 
 template <typename Sequence, typename Key> struct erase_key;
 

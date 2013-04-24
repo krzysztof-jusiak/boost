@@ -12,6 +12,7 @@
 #include <boost/mpl/x11/apply.hpp>
 #include <boost/mpl/x11/O1_size.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/deref.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

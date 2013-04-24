@@ -18,6 +18,13 @@ struct size<> {
 	struct apply : size<T0> {};
 };
 
+template <typename Tag>
+struct lambda<size<>, Tag, long_<-1>> {
+	typedef false_type is_le;
+	typedef size<> result_;
+	typedef size<> type;
+};
+
 template <typename Sequence>
 struct size<Sequence> : detail::size_impl<
 	typename sequence_tag<Sequence>::type

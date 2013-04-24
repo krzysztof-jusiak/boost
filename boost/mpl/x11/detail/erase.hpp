@@ -12,19 +12,21 @@
 #include <boost/mpl/x11/sequence_fwd.hpp>
 #include <boost/mpl/x11/iterator_range.hpp>
 #include <boost/mpl/x11/reverse_fold.hpp>
+#include <boost/mpl/x11/push_pop.hpp>
+#include <boost/mpl/x11/clear.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
 
 template <typename Tag>
 struct erase_impl {
-	template <typename Sequence, typename First, typename Last = First>
-	struct apply {
-		/* 1st half: [begin, first) */
+	template <
+		typename Sequence, typename First,
+		typename Last = typename next<First>::type
+	> struct apply {
 		typedef iterator_range<
 			typename begin<Sequence>::type, First
 		> first_half_;
 
-		/* 2nd half: [last, end) ... that is, [last + 1, end) */
 		typedef iterator_range<
 			Last, typename end<Sequence>::type
 		> second_half_;

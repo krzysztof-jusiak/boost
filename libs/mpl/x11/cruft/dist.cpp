@@ -4,12 +4,20 @@
 
 #if defined(X11)
 #include <boost/mpl/x11/set.hpp>
+#include <boost/mpl/x11/list.hpp>
+#include <boost/mpl/x11/find.hpp>
+#include <boost/mpl/x11/erase.hpp>
+#include <boost/mpl/x11/size.hpp>
 
 using namespace boost::mpl::x11;
 
 #else
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/set_c.hpp>
+#include <boost/mpl/list.hpp>
+#include <boost/mpl/find.hpp>
+#include <boost/mpl/erase.hpp>
+#include <boost/mpl/size.hpp>
 #include <boost/mpl/distance.hpp>
 #include <boost/mpl/begin_end.hpp>
 
@@ -46,6 +54,12 @@ int main(int argc, char **argv)
 	std::cout << "2.1: " << demangle<y::type>() << "\n\n";
 	std::cout << "2.2: " << demangle<n::type>() << "\n\n";
 	std::cout << "3.1: " << demangle<d::type>() << "\n\n";
+
+	typedef list<int, char, long, short, char, long, double, long> types;
+	typedef find<types, short>::type iter;
+
+	typedef erase<types, iter>::type result;
+	std::cout << "4.1: " << demangle<result>() << "\n\n";
 
 	return 0;
 }
