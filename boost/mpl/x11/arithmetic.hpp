@@ -76,7 +76,7 @@ struct divides_impl
 	detail::cast1st_impl<divides_impl<Tag1, Tag1>, Tag0, Tag1>
 >::type {};
 
-template<>
+template <>
 struct divides_impl<integral_c_tag, integral_c_tag> {
 	template <typename N0, typename N1>
 	struct apply : integral_constant<
@@ -106,7 +106,7 @@ struct minus_impl
 	detail::cast1st_impl<minus_impl<Tag1, Tag1>, Tag0, Tag1>
 >::type {};
 
-template<>
+template <>
 struct minus_impl<integral_c_tag, integral_c_tag> {
 	template <typename N0, typename N1>
 	struct apply : integral_constant<
@@ -125,7 +125,7 @@ struct modulus_impl
 	detail::cast1st_impl<modulus_impl<Tag1, Tag1>, Tag0, Tag1>
 >::type {};
 
-template<>
+template <>
 struct modulus_impl<integral_c_tag, integral_c_tag> {
 	template <typename N0, typename N1>
 	struct apply : integral_constant<
@@ -173,7 +173,7 @@ struct times_impl
 	detail::cast1st_impl<times_impl<Tag1, Tag1>, Tag0, Tag1>
 >::type {};
 
-template<>
+template <>
 struct times_impl<integral_c_tag, integral_c_tag> {
 	template <typename N0, typename N1>
 	struct apply : integral_constant<
