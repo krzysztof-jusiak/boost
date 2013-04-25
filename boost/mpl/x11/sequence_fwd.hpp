@@ -65,8 +65,7 @@ template <typename Sequence, typename Key> struct has_key;
 
 template <typename...> struct insert;
 
-template <typename Sequence, typename Position, typename Range>
-struct insert_range;
+template <typename...> struct insert_range;
 
 template <typename Sequence, typename T> struct key_type;
 
