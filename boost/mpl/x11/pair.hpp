@@ -9,6 +9,7 @@
 #define MPL_X11_PAIR_APR_03_2013_2250
 
 #include <boost/mpl/x11/lambda_fwd.hpp>
+#include <boost/mpl/x11/detail/has_second.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
@@ -26,6 +27,12 @@ struct lambda<pair<>, Tag, long_<-1>> {
 	typedef false_type is_le;
 	typedef pair<> result_;
 	typedef pair<> type;
+};
+
+template <typename T0>
+struct pair<T0> {
+	typedef pair type;
+	typedef T0 first;
 };
 
 template <typename T0, typename T1>
@@ -72,11 +79,26 @@ struct lambda<second<>, Tag, long_<-1>> {
 	typedef second<> type;
 };
 
-template <typename T>
-struct second<T> {
+namespace detail {
+
+template <typename T, bool has_second_>
+struct second_impl {
 	typedef typename T::second type;
 };
 
+template <typename T>
+struct second_impl<T, false> {
+	typedef void_ type;
+};
+
+}
+
+template <typename T>
+struct second<T> {
+	typedef typename detail::second_impl<
+		T, detail::has_second<T>::value
+	>::type type;
+};
 
 }}}
 

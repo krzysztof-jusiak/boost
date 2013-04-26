@@ -22,7 +22,7 @@ namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
 struct list_tag;
-struct l_iter_tag;
+struct list_iterator_tag;
 
 template <typename Size, typename T, typename Next>
 struct l_item {
@@ -40,14 +40,14 @@ struct l_end {
 };
 
 template <typename Node>
-struct l_iter {
-	typedef l_iter_tag tag;
+struct list_iterator {
+	typedef list_iterator_tag tag;
 	typedef forward_iterator_tag category;
 };
 
 template <>
-struct l_iter<l_end> {
-	typedef l_iter_tag tag;
+struct list_iterator<l_end> {
+	typedef list_iterator_tag tag;
 	typedef forward_iterator_tag category;
 };
 
@@ -55,7 +55,7 @@ template <>
 struct begin_impl<list_tag> {
 	template <typename List>
 	struct apply {
-		typedef l_iter<typename List::type> type;
+		typedef list_iterator<typename List::type> type;
 	};
 };
 
@@ -76,7 +76,7 @@ template <>
 struct end_impl<list_tag> {
 	template <typename List>
 	struct apply {
-		typedef l_iter<l_end> type;
+		typedef list_iterator<l_end> type;
         };
 };
 
@@ -128,19 +128,19 @@ struct size_impl<list_tag> {
 }
 
 template <typename Node>
-struct deref<detail::l_iter<Node>> {
+struct deref<detail::list_iterator<Node>> {
 	typedef typename Node::item type;
 };
 
 template <typename Node>
-struct next<detail::l_iter<Node>> {
-	typedef detail::l_iter<typename Node::next> type;
+struct next<detail::list_iterator<Node>> {
+	typedef detail::list_iterator<typename Node::next> type;
 };
 
 template <typename T, typename Tag>
-struct lambda<detail::l_iter<T>, Tag, int_<1>> {
+struct lambda<detail::list_iterator<T>, Tag, int_<1>> {
 	typedef false_type is_le;
-	typedef detail::l_iter<T> result_;
+	typedef detail::list_iterator<T> result_;
 	typedef result_ type;
 };
 

@@ -22,7 +22,7 @@ namespace detail {
 
 struct vector_tag;
 
-struct v_iter_tag;
+struct vector_iterator_tag;
 
 template <typename T, typename Base, bool at_front = false>
 struct v_item : Base {
@@ -83,8 +83,8 @@ struct v_at : wrapped_type<typename v_at_impl<Vector, n_>::type>
 {};
 
 template <typename Vector, long n_>
-struct v_iter {
-	typedef v_iter_tag tag;
+struct vector_iterator {
+	typedef vector_iterator_tag tag;
 	typedef random_access_iterator_tag category;
 	typedef typename v_at<Vector, n_>::type type;
 
@@ -95,23 +95,25 @@ struct v_iter {
 }
 
 template <typename Vector, long n_>
-struct next <detail::v_iter<Vector, n_>> {
-	typedef detail::v_iter<Vector, (n_ + 1)> type;
+struct next <detail::vector_iterator<Vector, n_>> {
+	typedef detail::vector_iterator<Vector, (n_ + 1)> type;
 };
 
 template <typename Vector, long n_>
-struct prior<detail::v_iter<Vector, n_>> {
-	typedef detail::v_iter<Vector, (n_ - 1)> type;
+struct prior<detail::vector_iterator<Vector, n_>> {
+	typedef detail::vector_iterator<Vector, (n_ - 1)> type;
 };
 
 template <typename Vector, long n_, typename Distance>
-struct advance<detail::v_iter<Vector, n_>, Distance> {
-	typedef detail::v_iter<Vector, (n_ + Distance::value)> type;
+struct advance<detail::vector_iterator<Vector, n_>, Distance> {
+	typedef detail::vector_iterator<Vector, (n_ + Distance::value)> type;
 };
 
 template <typename Vector, long n_, long m_>
-struct distance<detail::v_iter<Vector, n_>, detail::v_iter<Vector, m_>>
-: long_<(m_ - n_)> {};
+struct distance<
+	detail::vector_iterator<Vector, n_>,
+	detail::vector_iterator<Vector, m_>
+> : long_<(m_ - n_)> {};
 
 template <typename...>
 struct vector;
@@ -174,7 +176,7 @@ template <>
 struct begin_impl<vector_tag> {
 	template <typename Vector>
 	struct apply {
-		typedef v_iter<Vector, 0> type;
+		typedef vector_iterator<Vector, 0> type;
 	};
 };
 
@@ -198,7 +200,7 @@ template <>
 struct end_impl<vector_tag> {
 	template <typename Vector>
 	struct apply {
-		typedef v_iter<Vector, Vector::size::value> type;
+		typedef vector_iterator<Vector, Vector::size::value> type;
 	};
 };
 
@@ -219,7 +221,7 @@ template <>
 struct pop_back_impl<vector_tag> {
 	template <typename Vector>
 	struct apply {
-		typedef v_mask<Vector, 0> type;
+		typedef v_mask<Vector, false> type;
 	};
 };
 
@@ -227,7 +229,7 @@ template <>
 struct pop_front_impl<vector_tag> {
 	template <typename Vector>
 	struct apply {
-		typedef v_mask<Vector, 1> type;
+		typedef v_mask<Vector, true> type;
 	};
 };
 
@@ -235,7 +237,7 @@ template <>
 struct push_back_impl<vector_tag> {
 	template <typename Vector, typename T>
 	struct apply {
-		typedef v_item<T, Vector, 0> type;
+		typedef v_item<T, Vector, false> type;
 	};
 };
 
@@ -243,7 +245,7 @@ template <>
 struct push_front_impl<vector_tag> {
 	template <typename Vector, typename T>
 	struct apply {
-		typedef v_item<T, Vector, 1> type;
+		typedef v_item<T, Vector, true> type;
 	};
 };
 

@@ -8,6 +8,11 @@
 #if !defined(MPL_X11_JOINT_VIEW_APR_25_2013_2300)
 #define MPL_X11_JOINT_VIEW_APR_25_2013_2300
 
+#include <boost/mpl/x11/sequence_fwd.hpp>
+#include <boost/mpl/x11/arithmetic.hpp>
+#include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/deref.hpp>
+
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 

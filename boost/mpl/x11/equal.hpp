@@ -18,7 +18,8 @@ namespace detail {
 
 template <typename Predicate, typename LastIterator1, typename LastIterator2>
 struct equal_pred {
-	template <typename Iterator2, typename Iterator1> struct apply {
+	template <typename Iterator2, typename Iterator1>
+	struct apply {
 		typedef typename and_<
 			not_<std::is_same<Iterator1, LastIterator1>>,
 			not_<std::is_same<Iterator2, LastIterator2>>,

@@ -20,17 +20,17 @@ namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
 struct half_open_range_tag;
-struct r_iter_tag;
+struct range_c_iterator_tag;
 
 template <typename N>
-struct r_iter {
-	typedef r_iter_tag tag;
+struct range_c_iterator {
+	typedef range_c_iterator_tag tag;
 	typedef random_access_iterator_tag category;
 	typedef N type;
 };
 
 template <>
-struct advance_impl<r_iter_tag> {
+struct advance_impl<range_c_iterator_tag> {
 	template <typename Iter, typename Dist>
 	struct apply {
 		typedef typename deref<Iter>::type n_;
@@ -40,7 +40,7 @@ struct advance_impl<r_iter_tag> {
 			typename n_::value_type, m_::value
 		> result_;
 
-		typedef r_iter<result_> type;
+		typedef range_c_iterator<result_> type;
 	};
 };
 
@@ -53,7 +53,7 @@ struct back_impl<half_open_range_tag> {
 };
 
 template <>
-struct distance_impl<r_iter_tag> {
+struct distance_impl<range_c_iterator_tag> {
 	template <typename Iter1, typename Iter2>
 	struct apply : minus<
 		typename Iter2::type, typename Iter1::type
@@ -91,13 +91,13 @@ struct O1_size_impl<half_open_range_tag> : size_impl<half_open_range_tag> {};
 }
 
 template <typename N>
-struct next<detail::r_iter<N>> {
-	typedef detail::r_iter<typename next<N>::type> type;
+struct next<detail::range_c_iterator<N>> {
+	typedef detail::range_c_iterator<typename next<N>::type> type;
 };
 
 template <typename N>
-struct prior<detail::r_iter<N>> {
-	typedef detail::r_iter<typename prior<N>::type> type;
+struct prior<detail::range_c_iterator<N>> {
+	typedef detail::range_c_iterator<typename prior<N>::type> type;
 };
 
 template <typename T, T Start, T Finish>
@@ -109,8 +109,8 @@ struct range_c {
 	typedef integral_constant<T, Start> start;
 	typedef integral_constant<T, Finish> finish;
 
-	typedef detail::r_iter<start> begin;
-	typedef detail::r_iter<finish> end;
+	typedef detail::range_c_iterator<start> begin;
+	typedef detail::range_c_iterator<finish> end;
 };
 
 }}}

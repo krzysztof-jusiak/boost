@@ -19,7 +19,9 @@ struct if_c {
 
 template <typename Tc, typename T0, typename T1>
 struct if_ {
-	typedef typename std::conditional<Tc::value, T0, T1>::type type;
+	typedef typename std::conditional<
+		static_cast<bool>(Tc::value), T0, T1
+	>::type type;
 };
 
 template <bool C, typename T0, typename T1>

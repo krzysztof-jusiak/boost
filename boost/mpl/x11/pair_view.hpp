@@ -19,28 +19,28 @@
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
-struct pair_iter_tag;
+struct pair_iterator_tag;
 
 template <typename Iter0, typename Iter1, typename Category>
-struct pair_iter {
-    typedef pair_iter_tag tag;
+struct pair_iterator {
+    typedef pair_iterator_tag tag;
     typedef Category category;
     typedef Iter0 first;
     typedef Iter1 second;
 };
 
 template <>
-struct advance_impl<pair_iter_tag> {
+struct advance_impl<pair_iterator_tag> {
 	template <typename Iter, typename D>
 	struct apply {
 		typedef typename advance<typename Iter::first, D>::type i0_;
 		typedef typename advance<typename Iter::second, D>::type i1_;
-		typedef pair_iter<i0_, i1_, typename Iter::category> type;
+		typedef pair_iterator<i0_, i1_, typename Iter::category> type;
 	};
 };
 
 template <>
-struct distance_impl<pair_iter_tag> {
+struct distance_impl<pair_iterator_tag> {
 	template <typename Iter0, typename Iter1>
 	struct apply {
 		typedef typename distance<
@@ -53,24 +53,24 @@ struct distance_impl<pair_iter_tag> {
 }
 
 template <typename Iter0, typename Iter1, typename C>
-struct deref<detail::pair_iter<Iter0, Iter1, C>> {
+struct deref<detail::pair_iterator<Iter0, Iter1, C>> {
 	typedef pair<
 		typename deref<Iter0>::type, typename deref<Iter1>::type
 	> type;
 };
 
 template <typename Iter0, typename Iter1, typename C>
-struct next<detail::pair_iter<Iter0, Iter1, C>> {
+struct next<detail::pair_iterator<Iter0, Iter1, C>> {
 	typedef typename next<Iter0>::type i0_;
 	typedef typename next<Iter1>::type i1_;
-	typedef detail::pair_iter<i0_, i1_, C> type;
+	typedef detail::pair_iterator<i0_, i1_, C> type;
 };
 
 template <typename Iter0, typename Iter1, typename C>
-struct prior<detail::pair_iter<Iter0, Iter1, C>> {
+struct prior<detail::pair_iterator<Iter0, Iter1, C>> {
 	typedef typename prior<Iter0>::type i0_;
 	typedef typename prior<Iter1>::type i1_;
-	typedef detail::pair_iter<i0_, i1_, C> type;
+	typedef detail::pair_iterator<i0_, i1_, C> type;
 };
 
 template <typename...>
@@ -101,9 +101,9 @@ struct pair_view<Sequence0, Sequence1> {
 		typename iterator_category<iter1_>::type
 	>::type category_;
 
-	typedef detail::pair_iter<iter0_, iter1_, category_> begin;
+	typedef detail::pair_iterator<iter0_, iter1_, category_> begin;
 
-	typedef detail::pair_iter<
+	typedef detail::pair_iterator<
 		typename end<Sequence0>::type,
 		typename end<Sequence1>::type,
 		category_

@@ -13,7 +13,8 @@ namespace boost { namespace mpl { namespace x11 {
 struct nested_begin_end_tag;
 struct non_sequence_tag;
 
-template <typename Sequence> struct sequence_tag;
+template <typename Sequence>
+struct sequence_tag;
 
 }}}
 
