@@ -9,9 +9,11 @@
 #if !defined(MPL_X11_COPY_APR_24_2013_1740)
 #define MPL_X11_COPY_APR_24_2013_1740
 
-#include <boost/mpl/x11/inserter.hpp>
-#include <boost/mpl/x11/fold.hpp>
 #include <boost/mpl/x11/reverse_fold.hpp>
+#include <boost/mpl/x11/inserter.hpp>
+#include <boost/mpl/x11/clear.hpp>
+#include <boost/mpl/x11/fold.hpp>
+
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

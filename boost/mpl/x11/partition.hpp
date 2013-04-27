@@ -7,8 +7,8 @@
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 
-#if !defined(MPL_X11_STABLE_PARTITION_APR_26_2013_1810)
-#define MPL_X11_STABLE_PARTITION_APR_26_2013_1810
+#if !defined(MPL_X11_PARTITION_APR_26_2013_1810)
+#define MPL_X11_PARTITION_APR_26_2013_1810
 
 #include <boost/mpl/x11/reverse_fold.hpp>
 #include <boost/mpl/x11/inserter.hpp>
@@ -158,6 +158,98 @@ struct reverse_stable_partition<P0, P1, P2> : if_<
 
 template <typename P0, typename P1, typename P2, typename P3>
 struct reverse_stable_partition<P0, P1, P2, P3>
+: detail::reverse_stable_partition_impl<P0, P1, P2, P3> {};
+
+template <typename...>
+struct partition;
+
+template <>
+struct partition<> {
+	template <
+		typename T0, typename T1 , typename T2 , typename T3,
+		typename... Tn
+	> struct apply : partition<T0, T1, T2, T3> {};
+};
+
+template <typename Tag>
+struct lambda<partition<>, Tag, long_<-1>> {
+	typedef false_type is_le;
+	typedef partition<> result_;
+	typedef partition<> type;
+};
+
+template <typename P0, typename P1>
+struct partition<P0, P1> : if_<
+	has_push_back<typename clear<P0>::type>,
+	detail::stable_partition_impl<
+		P0, P1, back_inserter<typename clear<P0>::type>,
+		back_inserter<typename clear<P0>::type>
+	>,
+	detail::reverse_stable_partition_impl<
+		P0, P1, front_inserter<typename clear<P0>::type>,
+		front_inserter<typename clear<P0>::type>
+	>
+>::type {};
+
+template <typename P0, typename P1, typename P2>
+struct partition<P0, P1, P2> : if_<
+	has_push_back<typename clear<P0>::type>,
+	detail::stable_partition_impl<
+		P0, P1, P2, back_inserter<typename clear<P0>::type>
+	>,
+	detail::reverse_stable_partition_impl<
+		P0, P1, P2, front_inserter<typename clear<P0>::type>
+	>
+>::type {};
+
+template <typename P0, typename P1, typename P2, typename P3>
+struct partition<P0, P1, P2, P3>
+: detail::stable_partition_impl<P0, P1, P2, P3> {};
+
+template <typename ...>
+struct reverse_partition;
+
+template <>
+struct reverse_partition<> {
+	template <
+		typename T0, typename T1 , typename T2 , typename T3,
+		typename... Tn
+	> struct apply : reverse_partition<T0, T1, T2, T3> {};
+};
+
+template <typename Tag>
+struct lambda<reverse_partition<>, Tag, long_<-1>> {
+	typedef false_type is_le;
+	typedef reverse_partition<> result_;
+	typedef reverse_partition<> type;
+};
+
+template <typename P0, typename P1>
+struct reverse_partition<P0, P1> : if_<
+	has_push_back<P0>,
+	detail::reverse_stable_partition_impl<
+		P0, P1, back_inserter<typename clear<P0>::type>,
+		back_inserter<typename clear<P0>::type>
+	>,
+	detail::stable_partition_impl<
+		P0, P1, front_inserter<typename clear<P0>::type>,
+		front_inserter<typename clear<P0>::type>
+	>
+>::type {};
+
+template <typename P0, typename P1, typename P2>
+struct reverse_partition<P0, P1, P2> : if_<
+	has_push_back<P0>,
+	detail::reverse_stable_partition_impl<
+		P0, P1, P2, back_inserter<typename clear<P0>::type>
+	>,
+	detail::stable_partition_impl<
+		P0, P1, P2, front_inserter<typename clear<P0>::type>
+	>
+>::type {};
+
+template <typename P0, typename P1, typename P2, typename P3>
+struct reverse_partition<P0, P1, P2, P3>
 : detail::reverse_stable_partition_impl<P0, P1, P2, P3> {};
 
 }}}

@@ -10,10 +10,12 @@
 #define BOOST_TEST_MODULE mpl
 #include <boost/test/included/unit_test.hpp>
 
-#include <boost/mpl/x11/stable_partition.hpp>
+#include <boost/mpl/x11/partition.hpp>
 #include <boost/mpl/x11/comparison.hpp>
 #include <boost/mpl/x11/vector.hpp>
 #include <boost/mpl/x11/equal.hpp>
+#include <boost/mpl/x11/range_c.hpp>
+#include <boost/mpl/x11/inserter.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace test {
@@ -22,9 +24,12 @@ typedef vector_c<int, 3, 4, 0, -5, 8, -1, 7>::type numbers;
 typedef vector_c<int, 0, -5, -1>::type manual_first;
 typedef vector_c<int, 3, 4, 8, 7>::type manual_second;
 
+template <typename N>
+struct is_odd : modulus<N, int_<2>> {};
+
 }
 
-BOOST_AUTO_TEST_CASE(stable_partition_0)
+BOOST_AUTO_TEST_CASE(partition_0)
 {
 	typedef stable_partition<
 		test::numbers, less<arg<-1>, int_<3>>
@@ -34,7 +39,7 @@ BOOST_AUTO_TEST_CASE(stable_partition_0)
 	BOOST_CHECK((equal<result::second, test::manual_second>::value));
 }
 
-BOOST_AUTO_TEST_CASE(stable_partition_1)
+BOOST_AUTO_TEST_CASE(partition_1)
 {
 	typedef stable_partition<
 		test::numbers, greater_equal<arg<-1>, int_<3>>
@@ -42,6 +47,17 @@ BOOST_AUTO_TEST_CASE(stable_partition_1)
 
 	BOOST_CHECK((equal<result::first, test::manual_second>::value));
 	BOOST_CHECK((equal<result::second, test::manual_first>::value));
+}
+
+BOOST_AUTO_TEST_CASE(partition_2)
+{
+	typedef partition<
+		range_c<int,0,10>, test::is_odd<arg<0>>,
+		back_inserter<vector<>>, back_inserter<vector<>>
+	>::type r;
+
+	BOOST_CHECK((equal<r::first, vector_c<int, 1, 3, 5, 7, 9>>::value));
+	BOOST_CHECK((equal<r::second, vector_c<int, 0, 2, 4, 6, 8>>::value));
 }
 
 }}}
