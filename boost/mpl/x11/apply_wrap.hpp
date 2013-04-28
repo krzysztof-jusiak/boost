@@ -29,11 +29,8 @@ struct apply_wrap;
 template <typename F>
 struct apply_wrap<F> : detail::apply_wrap0<F> {};
 
-template <typename F, typename T0>
-struct apply_wrap<F, T0> : F::template apply<T0> {};
-
-template <typename F, typename T0, typename... Tn>
-struct apply_wrap<F, T0, Tn...> : F::template apply<T0, Tn...> {};
+template <typename F, typename... Tn>
+struct apply_wrap<F, Tn...> : F::template apply<Tn...> {};
 
 }}}
 

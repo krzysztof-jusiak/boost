@@ -9,6 +9,7 @@
 #define MPL_X11_MIN_MAX_APR_19_2013_1130
 
 #include <boost/mpl/x11/comparison.hpp>
+#include <boost/mpl/x11/if.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 

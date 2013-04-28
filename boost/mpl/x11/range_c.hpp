@@ -8,6 +8,7 @@
 #if !defined(MPL_X11_RANGE_C_APR_15_2013_2300)
 #define MPL_X11_RANGE_C_APR_15_2013_2300
 
+#include <boost/mpl/x11/iterator_tags.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
 #include <boost/mpl/x11/comparison.hpp>
 #include <boost/mpl/x11/arithmetic.hpp>

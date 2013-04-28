@@ -19,12 +19,8 @@ struct apply;
 template <typename F>
 struct apply<F> : apply_wrap<typename lambda<F>::type> {};
 
-template <typename F, typename T0>
-struct apply<F, T0> : apply_wrap<typename lambda<F>::type, T0> {};
-
-template <typename F, typename T0, typename... Tn>
-struct apply<F, T0, Tn...>
-: apply_wrap<typename lambda<F>::type, T0, Tn...> {};
+template <typename F, typename... Tn>
+struct apply<F, Tn...> : apply_wrap<typename lambda<F>::type, Tn...> {};
 
 }}}
 

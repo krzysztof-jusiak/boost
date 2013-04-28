@@ -14,7 +14,8 @@ namespace boost { namespace mpl { namespace x11 {
 
 template <typename SourceTag, typename TargetTag>
 struct numeric_cast {
-	template <typename N> struct apply;
+	template <typename N>
+	struct apply;
 };
 
 namespace detail {
