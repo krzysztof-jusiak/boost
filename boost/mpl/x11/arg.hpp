@@ -56,6 +56,12 @@ struct arg<-1> {
 	};
 };
 
+template <typename T>
+struct is_placeholder : false_type {};
+
+template <long N>
+struct is_placeholder<arg<N, 0>> : true_type {};
+
 }}}
 
 #endif

@@ -9,9 +9,9 @@
 #if !defined(MPL_X11_MIN_MAX_ELEMENT_APR_19_2013_1700)
 #define MPL_X11_MIN_MAX_ELEMENT_APR_19_2013_1700
 
-#include <boost/mpl/x11/apply.hpp>
+#include <boost/mpl/x11/comparison.hpp>
 #include <boost/mpl/x11/iter_fold.hpp>
-#include <boost/mpl/x11/begin_end.hpp>
+#include <boost/mpl/x11/deref.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

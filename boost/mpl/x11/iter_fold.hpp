@@ -9,10 +9,10 @@
 #if !defined(MPL_X11_ITER_FOLD_APR_15_2013_1700)
 #define MPL_X11_ITER_FOLD_APR_15_2013_1700
 
-#include <boost/mpl/x11/apply.hpp>
-#include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/O1_size.hpp>
+#include <boost/mpl/x11/apply.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
