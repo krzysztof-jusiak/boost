@@ -166,27 +166,7 @@ struct list<T0, Tn...> : detail::l_item<
 };
 
 template <typename T, T... Cn>
-struct list_c;
-
-template <typename T>
-struct list_c<T> : detail::l_end {
-	typedef detail::l_end type;
-	typedef T value_type;
-};
-
-template <typename T, T C0>
-struct list_c<T, C0>
-: detail::l_item<long_<1>, integral_constant<T, C0>, detail::l_end> {
-	typedef list_c type;
-	typedef T value_type;
-};
-
-template <typename T, T C0, T... Cn>
-struct list_c<T, C0, Cn...>
-: detail::l_item<
-	increment<typename list_c<T, Cn...>::size>,
-	integral_constant<T, C0>, list_c<T, Cn...>
-> {
+struct list_c : list<integral_constant<T, Cn>...> {
 	typedef list_c type;
 	typedef T value_type;
 };

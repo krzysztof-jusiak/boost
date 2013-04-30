@@ -140,17 +140,7 @@ struct vector<T0, Tn...> : detail::v_item<T0, vector<Tn...>, true> {
 };
 
 template <typename T, T... Cn>
-struct vector_c;
-
-template <typename T>
-struct vector_c<T> : vector<> {
-	typedef vector_c type;
-	typedef T value_type;
-};
-
-template <typename T, T C0, T... Cn>
-struct vector_c<T, C0, Cn...>
-: detail::v_item<integral_constant<T, C0>, vector_c<T, Cn...>, true> {
+struct vector_c : vector<integral_constant<T, Cn>...> {
 	typedef vector_c type;
 	typedef T value_type;
 };
