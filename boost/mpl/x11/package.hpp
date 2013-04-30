@@ -9,6 +9,10 @@
 #if !defined(MPL_X11_PACKAGE_APR_30_2013_1745)
 #define MPL_X11_PACKAGE_APR_30_2013_1745
 
+#include <boost/mpl/x11/sequence_fwd.hpp>
+#include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/deref.hpp>
+
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
@@ -43,7 +47,7 @@ struct at_impl<package_tag> {
 	struct apply_impl;
 
 	template <typename T0, typename... Tn>
-	apply_impl<package<T0, Tn...>, 0> {
+	struct apply_impl<package<T0, Tn...>, 0> {
 		typedef T0 type;
 	};
 

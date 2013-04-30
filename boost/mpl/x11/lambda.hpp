@@ -20,9 +20,9 @@ namespace detail {
 template <bool...>
 struct lambda_or;
 
-template <bool C0>
-struct lambda_or<C0> {
-	typedef typename bool_<C0>::type type;
+template <>
+struct lambda_or<> {
+	typedef false_type type;
 };
 
 template <bool C0, bool... Cn>
@@ -32,113 +32,19 @@ struct lambda_or<C0, Cn...> {
 	>::type type;
 };
 
+
 template <
 	typename IsLE, typename Tag,
-	template <typename... Pn> class F, typename L0
-> struct le_result1 {
-	typedef F<typename L0::type> result_;
+	template <typename...> class F, typename... Tn
+> struct le_result {
+	typedef F<typename Tn::type...> result_;
 
 	typedef result_ type;
 };
 
-template <typename Tag, template <typename... Pn> class F, typename L0>
-struct le_result1<true_type, Tag, F, L0> {
-	typedef bind<quote<F, Tag>, typename L0::result_> result_;
-
-	typedef protect<result_> type;
-};
-
-template <
-	typename IsLE, typename Tag,
-	template <typename... Pn> class F, typename L0, typename L1
-> struct le_result2 {
-	typedef F<typename L0::type, typename L1::type> result_;
-
-	typedef result_ type;
-};
-
-template <
-	typename Tag, template <typename... Pn> class F,
-	typename L0, typename L1
-> struct le_result2<true_type, Tag, F, L0, L1> {
-	typedef bind<
-		quote<F, Tag>, typename L0::result_, typename L1::result_
-	> result_;
-
-	typedef protect<result_> type;
-};
-
-template <
-	typename IsLE, typename Tag,
-	template <typename... Pn> class F,
-	typename L0, typename L1, typename L2
-> struct le_result3 {
-	typedef F<
-		typename L0::type, typename L1::type, typename L2::type
-	> result_;
-
-	typedef result_ type;
-};
-
-template <
-	typename Tag, template <typename... Pn> class F,
-	typename L0, typename L1, typename L2
-> struct le_result3<true_type, Tag, F, L0, L1, L2> {
-	typedef bind<
-		quote<F, Tag>, typename L0::result_, typename L1::result_,
-		typename L2::result_
-        > result_;
-
-	typedef protect<result_> type;
-};
-
-template <
-	typename IsLE, typename Tag,
-	template <typename... Pn> class F,
-	typename L0, typename L1, typename L2, typename L3
-> struct le_result4 {
-	typedef F<
-		typename L0::type, typename L1::type, typename L2::type,
-		typename L3::type
-	> result_;
-
-	typedef result_ type;
-};
-
-template <
-	typename Tag,
-	template <typename... Pn> class F,
-	typename L0, typename L1, typename L2, typename L3
-> struct le_result4<true_type, Tag, F, L0, L1, L2, L3> {
-	typedef bind<
-		quote<F, Tag>, typename L0::result_, typename L1::result_,
-		typename L2::result_, typename L3::result_
-        > result_;
-
-	typedef protect<result_> type;
-};
-
-template <
-	typename IsLE, typename Tag,
-	template <typename... Pn> class F,
-	typename L0, typename L1, typename L2, typename L3, typename L4
-> struct le_result5 {
-	typedef F<
-		typename L0::type, typename L1::type, typename L2::type,
-		typename L3::type, typename L4::type
-	> result_;
-
-	typedef result_ type;
-};
-
-template <
-	typename Tag, template <typename... Pn> class F,
-	typename L0, typename L1, typename L2, typename L3, typename L4
-> struct le_result5<true_type, Tag, F, L0, L1, L2, L3, L4> {
-	typedef bind<
-		quote<F, Tag>, typename L0::result_, typename L1::result_,
-		typename L2::result_, typename L3::result_, typename L4::result_
-	> result_;
+template <typename Tag, template <typename...> class F, typename... Tn>
+struct le_result<true_type, Tag, F, Tn...> {
+	typedef bind<quote<F, Tag>, typename Tn::result_...> result_;
 
 	typedef protect<result_> type;
 };
@@ -190,7 +96,7 @@ struct lambda<F<T0>, Tag, long_<1>> {
 	typedef typename l0::is_le is_le0;
 	typedef typename detail::lambda_or<is_le0::value>::type is_le;
 
-	typedef detail::le_result1<is_le, Tag, F, l0> le_result_;
+	typedef detail::le_result<is_le, Tag, F, l0> le_result_;
 
 	typedef typename le_result_::result_ result_;
 	typedef typename le_result_::type type;
@@ -225,7 +131,7 @@ template <
 		is_le0::value, is_le1::value
 	>::type is_le;
 
-	typedef detail::le_result2<is_le, Tag, F, l0, l1> le_result_;
+	typedef detail::le_result<is_le, Tag, F, l0, l1> le_result_;
 
 	typedef typename le_result_::result_ result_;
 	typedef typename le_result_::type type;
@@ -254,7 +160,7 @@ template <
 		is_le0::value, is_le1::value, is_le2::value
 	>::type is_le;
 
-	typedef detail::le_result3<
+	typedef detail::le_result<
 		is_le, Tag, F, l0, l1, l2
 	> le_result_;
 
@@ -271,7 +177,7 @@ struct lambda<lambda<F, Tag0, Arity>, Tag1, long_<3>> {
 		quote<detail::template_arity>, typename l0::result_
 	> arity_;
 	typedef lambda<typename if_<is_le, arity_, Arity>::type, Tag1> l2;
-	typedef detail::le_result3<
+	typedef detail::le_result<
 		is_le, Tag1, x11::lambda, l0, l1, l2
 	> le_result_;
 	typedef typename le_result_::result_ result_;
@@ -305,7 +211,7 @@ template <
 		is_le0::value, is_le1::value, is_le2::value, is_le3::value
 	>::type is_le;
 
-	typedef detail::le_result4<
+	typedef detail::le_result<
 		is_le, Tag, F, l0, l1, l2, l3
 	> le_result_;
 
@@ -345,7 +251,7 @@ template <
 		is_le4::value
 	>::type is_le;
 
-	typedef detail::le_result5<
+	typedef detail::le_result<
 		is_le, Tag, F, l0, l1, l2, l3, l4
 	> le_result_;
 

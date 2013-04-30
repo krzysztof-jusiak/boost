@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2002-2004 Aleksey Gurtovoy
+    Copyright (c) 2009      Larry Evans
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -8,6 +8,7 @@
 #if !defined(MPL_X11_UNPACK_ARGS_APR_12_2013_1730)
 #define MPL_X11_UNPACK_ARGS_APR_12_2013_1730
 
+#include <boost/mpl/x11/package_range_c.hpp>
 #include <boost/mpl/x11/apply.hpp>
 #include <boost/mpl/x11/size.hpp>
 #include <boost/mpl/x11/at.hpp>
@@ -15,52 +16,25 @@
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {
 
-template <long size, typename F, typename Args>
+template <typename Tpack, typename F, typename Tn>
 struct unpack_args_impl;
 
-template <typename F, typename Args>
-struct unpack_args_impl<0, F, Args>
-: apply<F> {};
-
-template <typename F, typename Args>
-struct unpack_args_impl<1, F, Args>
-: apply<F, typename at_c<Args, 0>::type> {};
-
-template <typename F, typename Args>
-struct unpack_args_impl<2, F, Args>
-: apply<
-	F, typename at_c<Args, 0>::type, typename at_c<Args, 1>::type
-> {};
-
-template <typename F, typename Args>
-struct unpack_args_impl<3, F, Args>
-: apply<
-	F, typename at_c<Args, 0>::type, typename at_c<Args, 1>::type,
-	typename at_c<Args, 2>::type
-> {};
-
-template <typename F, typename Args>
-struct unpack_args_impl<4, F, Args>
-: apply<
-	F, typename at_c<Args, 0>::type, typename at_c<Args, 1>::type,
-	typename at_c<Args, 2>::type, typename at_c<Args, 3>::type
-> {};
-
-template <typename F, typename Args>
-struct unpack_args_impl<5, F, Args>
-: apply<
-	F, typename at_c<Args, 0>::type, typename at_c<Args, 1>::type,
-	typename at_c<Args, 2>::type, typename at_c<Args, 3>::type,
-	typename at_c<Args, 4>::type
+template <long... Cn, typename F, typename Tn>
+struct unpack_args_impl<package_c<long, Cn...>, F, Tn> : apply<
+	F, typename at_c<Tn, Cn>::type...
 > {};
 
 }
 
 template <typename F>
 struct unpack_args {
-	template <typename Args>
+	template <typename Tn>
 	struct apply
-	: detail::unpack_args_impl<size<Args>::value, F, Args> {};
+	: detail::unpack_args_impl<
+		typename package_range_c<
+			long, long(0), long(size<Tn>::value)
+		>::type, F, Tn
+	> {};
 };
 
 template <typename T0, typename Tag>

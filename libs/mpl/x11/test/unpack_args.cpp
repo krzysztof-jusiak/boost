@@ -9,8 +9,8 @@
 #define BOOST_TEST_MODULE mpl
 #include <boost/test/included/unit_test.hpp>
 
-#include <boost/mpl/x11/vector.hpp>
 #include <boost/mpl/x11/unpack_args.hpp>
+#include <boost/mpl/x11/vector.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
