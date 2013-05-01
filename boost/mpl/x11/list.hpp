@@ -171,6 +171,12 @@ struct list_c : list<integral_constant<T, Cn>...> {
 	typedef T value_type;
 };
 
+template <typename T>
+struct list_c<T> : detail::l_end {
+	typedef detail::l_end type;
+	typedef T value_type;
+};
+
 }}}
 
 #endif

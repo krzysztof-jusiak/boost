@@ -9,9 +9,10 @@
 #if !defined(MPL_X11_REVERSE_FOLD_APR_08_2013_1800)
 #define MPL_X11_REVERSE_FOLD_APR_08_2013_1800
 
-#include <boost/mpl/x11/apply.hpp>
-#include <boost/mpl/x11/O1_size.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
+#include <boost/mpl/x11/begin_end.hpp>
+#include <boost/mpl/x11/O1_size.hpp>
+#include <boost/mpl/x11/apply.hpp>
 #include <boost/mpl/x11/deref.hpp>
 
 namespace boost { namespace mpl { namespace x11 {

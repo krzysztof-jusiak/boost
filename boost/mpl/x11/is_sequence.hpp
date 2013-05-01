@@ -8,8 +8,8 @@
 #if !defined(MPL_X11_IS_SEQUENCE_APR_19_2013_1200)
 #define MPL_X11_IS_SEQUENCE_APR_19_2013_1200
 
-#include <boost/mpl/x11/lambda_fwd.hpp>
 #include <boost/mpl/x11/begin_end.hpp>
+#include <boost/mpl/x11/logical.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 

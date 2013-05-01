@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(copy_3)
 	>::type result;
 
 	BOOST_CHECK_EQUAL((size<result>::value), 5);
-	BOOST_CHECK((equal<result,answer>::value));
+	BOOST_CHECK((equal<result, answer>::value));
 }
 
 BOOST_AUTO_TEST_CASE(copy_4)

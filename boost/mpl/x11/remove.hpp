@@ -12,6 +12,7 @@
 
 #include <boost/mpl/x11/transform.hpp>
 #include <boost/mpl/x11/inserter.hpp>
+#include <boost/mpl/x11/same_as.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 namespace detail {

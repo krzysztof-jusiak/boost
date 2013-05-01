@@ -145,6 +145,12 @@ struct vector_c : vector<integral_constant<T, Cn>...> {
 	typedef T value_type;
 };
 
+template <typename T>
+struct vector_c<T> : vector<> {
+	typedef vector_c type;
+	typedef T value_type;
+};
+
 namespace detail {
 
 template <>
