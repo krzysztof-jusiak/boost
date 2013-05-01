@@ -3,3 +3,46 @@ boost
 
 Extensions/modifications of stock Boost components (mostly based on C++11
 standard).
+
+boost::mpl::x11
+---------------
+
+Original boost::mpl library was a major milestone in the evolution of C++
+programing language. But apart of being an example of advanced C++ thinking
+it also serves as example of hardcore preprocessor programming. Clearly,
+the goals of mpl could not be achieved in any other way back in early years
+of present century (mpl is more than 10 years old already, being developed
+since year 2000). Unfortunately, extensive use of preprocessor obstructs
+easy analysis and inspection of non-trivial library behavior.
+
+boost::mpl::x11 is a cosmetic rewrite of mpl library, featuring the
+following traits:
+
+1. It stays as close as possible to the original mpl implementation wise.
+2. All preprocessor and compiler dependent code is stripped outright.
+3. Variadic templates are used wherever possible without departing too much
+from p.1. This means that variadic templates are used for everything apart from
+mpl::bind and mpl::lambda classes (those are implemented in semy-variadic
+fashion). Larry Evans had proposed an alternative, fully variadic implementation
+in his prior work, but I decided not to pull it in for a time being.
+4. Some features of Larry Evans' work on boost.sandbox version of the mpl
+are taken advantage of (package<> sequence and argument sequence unpacking;
+more may follow).
+
+boost::mpl::x11 is tested to work with recent enough versions of g++ and
+clang++ compilers (this, basically, exhausts the list of sane, popular
+compilers; MSVC compiler is not worth bothering with in its present state).
+
+All unit tests present in the original implementation of mpl are ported over to
+mpl::x11 and found working.
+
+There's one important compatibility quirk between mpl::x11 and original mpl:
+I decided not to introduce shorthand placeholders for lambda args, thus
+instead of "_", "_1", "_2" and other placeholders like this, one is expected
+to use a more verbose "arg<-1>", "arg<0>", "arg<1>", etc. identifiers (
+"_1" corresponds to "arg<0>" in mpl::x11, as I like counting things from zero).
+It seems that in most practical programs shorthand placeholder names are
+less convenient than directly exposed placeholder template, because there are
+too many incompatible definitions of those in various namespaces (std
+placeholders, boost placeholders and whatever other placeholders defined by
+arbitrary libraries).

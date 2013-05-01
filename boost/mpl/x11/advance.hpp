@@ -9,6 +9,7 @@
 #define MPL_X11_ADVANCE_APR_04_2013_1225
 
 #include <boost/mpl/x11/detail/advance.hpp>
+#include <boost/mpl/x11/tag.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 

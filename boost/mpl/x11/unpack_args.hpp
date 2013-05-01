@@ -29,8 +29,7 @@ struct unpack_args_impl<package_c<long, Cn...>, F, Tn> : apply<
 template <typename F>
 struct unpack_args {
 	template <typename Tn>
-	struct apply
-	: detail::unpack_args_impl<
+	struct apply : detail::unpack_args_impl<
 		typename package_range_c<
 			long, long(0), long(size<Tn>::value)
 		>::type, F, Tn

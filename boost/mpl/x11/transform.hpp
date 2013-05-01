@@ -88,7 +88,7 @@ struct transform1<P0, P1> : if_<
 	detail::reverse_transform_impl<
 		P0, P1, front_inserter<typename clear<P0>::type>
 	>
->::type { };
+>::type {};
 
 template <typename P0, typename P1, typename P2>
 struct transform1<P0, P1, P2> : detail::transform_impl<P0, P1, P2> {};

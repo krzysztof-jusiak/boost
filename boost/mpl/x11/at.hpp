@@ -9,7 +9,6 @@
 #define MPL_X11_AT_APR_04_2013_1225
 
 #include <boost/mpl/x11/detail/at.hpp>
-#include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 

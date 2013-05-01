@@ -10,6 +10,8 @@
 
 #include <boost/mpl/x11/sequence_tag.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
+#include <boost/mpl/x11/begin_end.hpp>
+#include <boost/mpl/x11/advance.hpp>
 #include <boost/mpl/x11/deref.hpp>
 
 namespace boost { namespace mpl { namespace x11 { namespace detail {
