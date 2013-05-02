@@ -9,6 +9,7 @@
 #if !defined(MPL_X11_PACKAGE_APR_30_2013_1745)
 #define MPL_X11_PACKAGE_APR_30_2013_1745
 
+#include <boost/mpl/x11/iterator_tags.hpp>
 #include <boost/mpl/x11/sequence_fwd.hpp>
 #include <boost/mpl/x11/next_prior.hpp>
 #include <boost/mpl/x11/deref.hpp>

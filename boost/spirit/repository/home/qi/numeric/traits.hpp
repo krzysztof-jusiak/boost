@@ -7,34 +7,38 @@
 #if !defined(SPIRIT_REPOSITORY_QI_TRAITS_MAR_30_2013_2300)
 #define SPIRIT_REPOSITORY_QI_TRAITS_MAR_30_2013_2300
 
-#if defined(_MSC_VER)
-#pragma once
-#endif
+#include <boost/mpl/x11/list.hpp>
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
 
 /* Trait tags */
-struct with_extractor {
-};
+struct with_extractor {};
 
-struct with_mapper {
-};
+struct with_mapper {};
 
-struct with_inserter {
-};
+struct with_inserter {};
 
-struct with_sign {
-};
+struct with_sign {};
 
-struct with_separator {
-};
+struct with_separator {};
 
-struct enable_leading_dot {
-};
+struct enable_leading_dot {};
 
-struct with_exponent {
-};
+struct with_exponent {};
 
+namespace detail {
+
+typedef boost::mpl::x11::list<
+	with_extractor,
+	with_mapper,
+	with_inserter,
+	with_sign,
+	with_separator,
+	enable_leading_dot,
+	with_exponent
+> trait_tag_order;
+
+}
 }}}}
 
 #endif

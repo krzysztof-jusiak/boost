@@ -8,6 +8,7 @@
 #include <boost/mpl/x11/list.hpp>
 #include <boost/mpl/x11/erase.hpp>
 #include <boost/mpl/x11/vector.hpp>
+#include <boost/mpl/x11/has_key.hpp>
 #include <boost/mpl/x11/transform.hpp>
 #include <boost/mpl/x11/unpack_args.hpp>
 
@@ -70,18 +71,21 @@ struct Sx {
 		typedef T0 first_;
 		typedef T1 second_;
 		typedef val2 type;
+		static const int x_val = 14;
 	};
 
 	template <typename T0, typename T1>
 	struct apply<x11::package<key2, key0>, T0, T1> {
 		typedef T0 first_;
 		typedef T1 second_;
+		static const int x_val = 15;
 	};
 
 	template <typename T0, typename T1>
 	struct apply<x11::package<key3, key1>, T0, T1> {
 		typedef T0 first_;
 		typedef T1 second_;
+		static const int x_val = 16;
 	};
 
 	template <typename T0, typename T1, typename T2, typename T3>
@@ -108,7 +112,7 @@ struct unpack_map_impl<F, Map, x11::package<Tkey...>> : x11::apply<
 > {};
 
 template <typename F>
-struct unpack_map {
+struct unpack_map_un {
 	template <typename Map>
 	struct apply : unpack_map_impl<
 		F, Map, typename x11::transform1<
@@ -118,48 +122,80 @@ struct unpack_map {
         > {};
 };
 
+template <typename F, typename Ord>
+struct unpack_map_ord {
+	template <typename Map>
+	struct apply : unpack_map_impl<
+		F, Map, typename x11::fold<
+			Ord, x11::package<>,
+			x11::eval_if<
+				x11::has_key<Map, x11::arg<1>>,
+				x11::push_back<x11::arg<0>, x11::arg<1>>,
+				x11::identity<x11::arg<0>>
+			>
+		>::type
+        > {};
+};
+
 template <typename T>
 std::string demangle()
 {
-        auto *s(abi::__cxa_demangle(typeid(T).name(), 0, 0, 0));
-        std::string rv(s);
-        free(s);
-        return rv;
+	auto *s(abi::__cxa_demangle(typeid(T).name(), 0, 0, 0));
+	std::string rv(s);
+	free(s);
+	return rv;
 }
 
 typedef x11::map<x11::pair<key0, val0>, x11::pair<key2, val2>> map11_t;
+
 typedef x11::map<x11::pair<key1, val1>, x11::pair<key3, val3>> map12_t;
+typedef x11::map<x11::pair<key3, val3>, x11::pair<key1, val1>> map13_t;
 
 int main(int argc, char **argv)
 {
-	typedef typename x11::apply_wrap<unpack_map<Sx>, map1_t> a1;
-	typedef typename x11::apply_wrap<unpack_map<Sx>, map2_t> a2;
-	typedef typename x11::apply_wrap<unpack_map<Sx>, map3_t> a3;
-	typedef typename x11::apply_wrap<unpack_map<Sx>, map4_t> a4;
-	typedef typename x11::apply_wrap<unpack_map<Sx>, map11_t> a5;
-	typedef typename x11::apply_wrap<unpack_map<Sx>, map12_t> a6;
-	typedef typename x11::apply_wrap<unpack_map<Sx>, x11::erase_key<map4_t, key3>::type> a7;
-	
-	typedef typename x11::transform1<
-		map4_t, x11::first<x11::arg<0>>,
-		x11::back_inserter<x11::package<>>
-	>::type keys;
-	
-	std::cout << "w1: " << demangle<keys>() << '\n';
-	std::cout << "x1: " << demangle<typename a1::first_>() << '\n';
-	std::cout << "x1: " << demangle<typename a1::second_>() << '\n';
-	std::cout << "x2: " << demangle<typename a2::first_>() << '\n';
-	std::cout << "x2: " << demangle<typename a2::second_>() << '\n';
-	std::cout << "x3: " << demangle<typename a3::first_>() << '\n';
-	std::cout << "x3: " << demangle<typename a3::second_>() << '\n';
-	std::cout << "x4: " << demangle<typename a4::first_>() << '\n';
-	std::cout << "x4: " << demangle<typename a4::second_>() << '\n';
-	std::cout << "y4: " << demangle<typename a7::first_>() << '\n';
-	std::cout << "y4: " << demangle<typename a7::second_>() << '\n';
+	//typedef typename x11::apply_wrap<unpack_map<Sx>, map1_t> a1;
+	typedef x11::list<key3, key2, key1, key0> key_order;
 
-	std::cout << "x5: " << demangle<typename a5::first_>() << '\n';
-	std::cout << "x5: " << demangle<typename a5::second_>() << '\n';
-	std::cout << "x6: " << demangle<typename a6::first_>() << '\n';
-	std::cout << "x6: " << demangle<typename a6::second_>() << '\n';
+	typedef typename x11::apply_wrap<unpack_map_ord<Sx, key_order>, map11_t> a5;
+	typedef typename x11::apply_wrap<unpack_map_ord<Sx, key_order>, map12_t> a6;
+	typedef typename x11::apply_wrap<unpack_map_ord<Sx, key_order>, map13_t> a7;
+
+
+	typedef typename x11::transform1<
+		map13_t, x11::first<x11::arg<0>>,
+		x11::back_inserter<x11::package<>>
+	>::type keys11;
+
+	typedef typename x11::transform1<
+		map12_t, x11::first<x11::arg<0>>,
+		x11::back_inserter<x11::package<>>
+	>::type keys12;
+
+	typedef typename x11::fold<
+		key_order, x11::package<>,
+		x11::eval_if<
+			x11::has_key<map13_t, x11::arg<1>>,
+			x11::push_back<x11::arg<0>, x11::arg<1>>,
+			x11::identity<x11::arg<0>>
+		>
+	>::type keys21;
+
+	typedef typename x11::fold<
+		key_order, x11::package<>,
+		x11::eval_if<
+			x11::has_key<map12_t, x11::arg<1>>,
+			x11::push_back<x11::arg<0>, x11::arg<1>>,
+			x11::identity<x11::arg<0>>
+		>
+	>::type keys22;
+
+	std::cout << "w1: " << demangle<keys11>() << '\n';
+	std::cout << "w1: " << demangle<keys12>() << '\n';
+	std::cout << "w2: " << demangle<keys21>() << '\n';
+	std::cout << "w2: " << demangle<keys22>() << '\n';
+
+	std::cout << "x4: " << a5::x_val << '\n';
+	std::cout << "x5: " << a6::x_val << '\n';
+	std::cout << "x6: " << a7::x_val << '\n';
 	return 0;
 }
