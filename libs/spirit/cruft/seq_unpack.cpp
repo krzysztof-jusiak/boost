@@ -5,6 +5,7 @@
 #include <boost/spirit/repository/home/support/unpack_map.hpp>
 #include <boost/mpl/x11/map.hpp>
 #include <boost/mpl/x11/list.hpp>
+#include <boost/mpl/x11/insert.hpp>
 
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/repetition/enum.hpp>
@@ -106,10 +107,26 @@ int main(int argc, char **argv)
 		repo::unpack_map<map_apply, key_order>, map42_t
 	> a42;
 
+	typedef typename x11::insert<map32_t, x11::pair<key3, val3>>::type
+	map43_t;
+	typedef typename x11::apply_wrap<
+		repo::unpack_map<map_apply, key_order>, map43_t
+	> a43;
+	typedef typename x11::insert<
+		typename x11::insert<
+			map22_t, x11::pair<key3, val3>
+		>::type, x11::pair<key2, val2>
+	>::type map44_t;
+	typedef typename x11::apply_wrap<
+		repo::unpack_map<map_apply, key_order>, map44_t
+	> a44;
+
 	std::cout << "a21: " << demangle<typename a21::type>() << '\n';
 	std::cout << "a22: " << demangle<typename a22::type>() << '\n';
 	std::cout << "a31: " << demangle<typename a31::type>() << '\n';
 	std::cout << "a32: " << demangle<typename a32::type>() << '\n';
 	std::cout << "a41: " << demangle<typename a41::type>() << '\n';
 	std::cout << "a42: " << demangle<typename a42::type>() << '\n';
+	std::cout << "a43: " << demangle<typename a43::type>() << '\n';
+	std::cout << "a44: " << demangle<typename a44::type>() << '\n';
 }

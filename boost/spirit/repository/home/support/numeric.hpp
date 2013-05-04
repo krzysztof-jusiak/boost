@@ -15,7 +15,30 @@
 namespace boost { namespace spirit { namespace repository
 {
 
+#if 0
+BOOST_SPIRIT_TERMINAL(numeric)
+
+
 BOOST_SPIRIT_DEFINE_TERMINALS_NAME_EX(
+	( byte_, byte_type )
+	( word, word_type )
+	( big_word, big_word_type )
+	( little_word, little_word_type )
+	( dword, dword_type )
+	( big_dword, big_dword_type )
+	( little_dword, little_dword_type )
+	( qword, qword_type )
+	( big_qword, big_qword_type )
+	( little_qword, little_qword_type )
+	( bin_float, bin_float_type )
+	( big_bin_float, big_bin_float_type )
+	( little_bin_float, little_bin_float_type )
+	( bin_double, bin_double_type )
+	( big_bin_double, big_bin_double_type )
+	( little_bin_double, little_bin_double_type )
+	( bin_long_long_double, bin_long_double_type )
+	( big_bin_long_double, big_bin_long_double_type )
+	( little_bin_long_double, little_bin_long_double_type )
 	( ushort_, ushort_type )
 	( ulong_, ulong_type )
 	( uint_, uint_type )
@@ -28,7 +51,7 @@ BOOST_SPIRIT_DEFINE_TERMINALS_NAME_EX(
 	( double_, double_type )
 	( long_double, long_double_type )
 );
-
+#endif
 }}}
 
 #endif

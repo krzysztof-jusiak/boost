@@ -7,10 +7,10 @@
 #if !defined(SPIRIT_REPOSITORY_SUPPORT_UNPACK_MAP_MAY_02_2013_2300)
 #define SPIRIT_REPOSITORY_SUPPORT_UNPACK_MAP_MAY_02_2013_2300
 
-#include <boost/mpl/x11/at.hpp>
-#include <boost/mpl/x11/package.hpp>
-#include <boost/mpl/x11/has_key.hpp>
 #include <boost/mpl/x11/transform.hpp>
+#include <boost/mpl/x11/has_key.hpp>
+#include <boost/mpl/x11/package.hpp>
+#include <boost/mpl/x11/at.hpp>
 
 namespace boost { namespace spirit { namespace repository {
 namespace detail {
