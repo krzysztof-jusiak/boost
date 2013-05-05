@@ -9,7 +9,8 @@
 
 #include <boost/mpl/x11/list.hpp>
 
-namespace boost { namespace spirit { namespace repository { namespace qi {
+namespace boost { namespace spirit { namespace repository {
+namespace qi {
 
 /* Policy trait tags: minimal policy must feature at least "Extractor"
  * and "Inserter" methods.
@@ -22,7 +23,8 @@ struct with_extractor {};
 struct with_inserter {}; 
 
 /* "Mapper" transforms values produced by extractor to make them fit for
- * inserter. */
+ * inserter. Examples include removing decorations and enforcing policies.
+ */
 struct with_mapper {};
 
 /* "Sign" produces boolean value indicating that final value ought to be negated.
@@ -41,7 +43,6 @@ struct with_exponent {};
  */
 struct with_special {};
 
-
 namespace detail {
 
 typedef boost::mpl::x11::list<
@@ -55,6 +56,17 @@ typedef boost::mpl::x11::list<
 > trait_tag_order;
 
 }
-}}}}
+}
+
+namespace traits {
+
+template <typename T>
+inline T zero()
+{
+	return 0;
+}
+
+}
+}}}
 
 #endif

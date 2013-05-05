@@ -69,7 +69,7 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 		/* This case is called when Attribute is not T. */
 		T attr_;
 		if (parse(first, last, context, skipper, attr_)) {
-			traits::assign_to(attr_, attr_param);
+			spirit::traits::assign_to(attr_, attr_param);
 			return true;
 		}
 		return false;
@@ -112,7 +112,7 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 
 		if (extract::parse(first, last, attr_)
 		    && (attr_ == n_)) {
-			traits::assign_to(attr_, attr_param);
+			spirit::traits::assign_to(attr_, attr_param);
 			return true;
 		}
 
