@@ -29,11 +29,11 @@ struct numeric_impl {
 		);
 	};
 
-	template <typename Extractor, typename Inserter, typename Mapper>
+	template <typename Extractor, typename Inserter, typename Filter>
 	struct apply<
 		boost::mpl::x11::package<
-			with_extractor, with_inserter, with_mapper
-		>, Extractor, Inserter, Mapper
+			with_extractor, with_inserter, with_filter
+		>, Extractor, Inserter, Filter
 	> {
 		template <typename Iterator, typename Attribute>
 		static bool parse(
@@ -71,7 +71,7 @@ bool numeric_impl::apply<
 		if (!spirit::qi::parse(iter, last, e, c))
 			break;
 
-		if (i(c, v, v_flag)) {
+		if (i(optional<extractor_value_type>(c), v, v_flag)) {
 			first = iter;
 			continue;
 		} else
@@ -86,12 +86,12 @@ bool numeric_impl::apply<
 	return v_flag;
 }
 
-template <typename Extractor, typename Inserter, typename Mapper>
+template <typename Extractor, typename Inserter, typename Filter>
 template <typename Iterator, typename Attribute>
 bool numeric_impl::apply<
 	boost::mpl::x11::package<
-		with_extractor, with_inserter, with_mapper
-	>, Extractor, Inserter, Mapper
+		with_extractor, with_inserter, with_filter
+	>, Extractor, Inserter, Filter
 >::parse(Iterator &first, Iterator const &last, Attribute &attr)
 {
 	typedef typename spirit::result_of::compile<
@@ -106,9 +106,10 @@ bool numeric_impl::apply<
 
 	Extractor e;
 	Inserter i;
-	Mapper m;
+	Filter filt;
 	Iterator save(first), iter(first);
-	extractor_value_type c_in, c_out;
+	extractor_value_type c_in;
+	optional<extractor_value_type> c_out;
 	attribute_type v(traits::zero<attribute_type>());
 	bool v_flag(false);
 	bool skip_flag(false);
@@ -117,10 +118,7 @@ bool numeric_impl::apply<
 		if (!spirit::qi::parse(iter, last, e, c_in))
 			break;
 
-		if (
-			m(c_in, c_out, skip_flag)
-			&& (skip_flag || i(c_out, v, v_flag))
-		) {
+		if (filt(c_in, c_out) && i(c_out, v, v_flag)) {
 			first = iter;
 			continue;
 		} else

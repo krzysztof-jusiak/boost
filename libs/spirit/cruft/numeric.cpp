@@ -15,20 +15,10 @@ namespace qi_repo = boost::spirit::repository::qi;
 
 namespace x11 = boost::mpl::x11;
 
-struct positional {
-	bool operator()(char const &in, int &out, bool &valid)
-	{
-		printf("insert %c, %d\n", in, out);
-		out *= 10;
-		out += in;
-		return valid = true;
-	}
-};
-
 struct to_decimal {
-	bool operator()(char const &in, char &out, bool &skip)
+	bool operator()(char const &in, boost::optional<char> &out)
 	{
-		printf("map %c, %c\n", in, out);
+		printf("map %c, %c\n", in, *out);
 		if ((in & 0xf0) == 0x30) {
 			out = in & 0xf;
 			return true;
@@ -39,16 +29,19 @@ struct to_decimal {
 
 int main(int argc, char **argv)
 {
-	using boost::spirit::standard::char_type;
+	using boost::spirit::standard::digit_type;
 	using boost::spirit::standard::space_type;
 	using boost::spirit::standard::space;
 
-	std::string t_str("123, 2345, aa, 3, 4, 5");
+	std::string t_str("123, 12345, 45678, 3, 4, 5");
 	std::vector<int> res;
 	typedef x11::map<
-		x11::pair<qi_repo::with_extractor, char_type>,
-		x11::pair<qi_repo::with_inserter, positional>,
-		x11::pair<qi_repo::with_mapper, to_decimal>
+		x11::pair<qi_repo::with_extractor, digit_type>,
+		x11::pair<
+			qi_repo::with_inserter,
+			qi_repo::detail::default_inserter<int>
+		>//,
+//		x11::pair<qi_repo::with_filter, to_decimal>
 	> int_policy;
 	qi_repo::numeric_parser<int, int_policy> uint1;
 

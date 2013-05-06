@@ -10,6 +10,16 @@
 #include <boost/mpl/x11/list.hpp>
 
 namespace boost { namespace spirit { namespace repository {
+namespace traits {
+
+template <typename T>
+inline T zero()
+{
+	return 0;
+}
+
+}
+
 namespace qi {
 
 /* Policy trait tags: minimal policy must feature at least "Extractor"
@@ -22,10 +32,10 @@ struct with_extractor {};
 /* "Inserter" modifies parsed value using optionally transformed value token. */
 struct with_inserter {}; 
 
-/* "Mapper" transforms values produced by extractor to make them fit for
- * inserter. Examples include removing decorations and enforcing policies.
+/* "Filter" transforms values produced by extractor into values, fit for
+ * consumption by inserter.
  */
-struct with_mapper {};
+struct with_filter {};
 
 /* "Sign" produces boolean value indicating that final value ought to be negated.
  * It is reused for exponent sing.
@@ -48,24 +58,37 @@ namespace detail {
 typedef boost::mpl::x11::list<
 	with_extractor,
 	with_inserter,
-	with_mapper,
+	with_filter,
 	with_sign,
 	with_fraction,
 	with_exponent,
 	with_special
 > trait_tag_order;
 
-}
-}
-
-namespace traits {
+template <typename... Tn>
+struct default_inserter;
 
 template <typename T>
-inline T zero()
-{
-	return 0;
-}
+struct default_inserter<T> {
+	typedef mpl::x11::long_<6> max_digits;
+	long digit_count = 0;
 
+	bool operator()(boost::optional<char> const &in, T &out, bool &valid)
+	{
+		if (in) {
+			if (digit_count < max_digits::value) {
+				out = out * 10 + T(*in & 0xf);
+				++digit_count;
+				return valid = true;
+			} else
+				return valid = false;
+		}
+
+		return valid = true;
+	}
+};
+
+}
 }
 }}}
 
