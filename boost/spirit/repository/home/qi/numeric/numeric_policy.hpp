@@ -8,6 +8,7 @@
 #define SPIRIT_REPOSITORY_QI_NUMERIC_POLICY_MAR_30_2013_2300
 
 #include <boost/mpl/x11/list.hpp>
+#include <boost/integer/static_log2.hpp>
 
 namespace boost { namespace spirit { namespace repository {
 namespace traits {
@@ -70,21 +71,16 @@ struct default_inserter;
 
 template <typename T>
 struct default_inserter<T> {
-	typedef mpl::x11::long_<6> max_digits;
-	long digit_count = 0;
-
 	bool operator()(boost::optional<char> const &in, T &out, bool &valid)
 	{
 		if (in) {
-			if (digit_count < max_digits::value) {
-				out = out * 10 + T(*in & 0xf);
-				++digit_count;
-				return valid = true;
-			} else
-				return valid = false;
-		}
+			T ref(out);
+			out = out * 10 + T(*in & 0xf);
+			valid = (out > ref);
+		} else
+			valid = true;
 
-		return valid = true;
+		return valid;
 	}
 };
 
