@@ -1,0 +1,11 @@
+project spirit-numeric-benchmark
+: requirements
+	<include>.
+	<include>../../../..
+	<library>../../../..//random
+	<linkflags>-lrt
+:
+:
+;
+
+exe uint_parser : uint_parser.cpp ;

@@ -112,7 +112,6 @@ bool numeric_impl::apply<
 	optional<extractor_value_type> c_out;
 	attribute_type v(traits::zero<attribute_type>());
 	bool v_flag(false);
-	bool skip_flag(false);
 
 	while (iter != last) {
 		if (!spirit::qi::parse(iter, last, e, c_in))
