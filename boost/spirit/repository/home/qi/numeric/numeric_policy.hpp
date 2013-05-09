@@ -76,7 +76,7 @@ struct default_inserter<T> {
 		if (in) {
 			T ref(out);
 			out = out * 10 + T(*in & 0xf);
-			valid = (out > ref);
+			valid = (out >= ref);
 		} else
 			valid = true;
 

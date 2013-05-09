@@ -25,12 +25,13 @@ namespace qi_repo = boost::spirit::repository::qi;
 
 struct random_device {
 	static boost::random_device src;
-	typedef unsigned int result_type;
+	typedef int result_type;
 
-	unsigned int operator()()
+	int operator()()
 	{
 		unsigned int v1(src()), v2(src());
-		return v1 % __gnu_cxx::power(10, v2 % 10);
+		int sign(0x80000000 & v2 ? -1 : 1);
+		return sign * (v1 % __gnu_cxx::power(10, v2 % 10));
 	}
 };
 
@@ -42,14 +43,14 @@ void make_numbers(
 	std::basic_string<T> const &delim
 )
 {
-	using karma::uint_;
+	using karma::int_;
 	using karma::lit;
 
 	random_device r;
 
 	karma::generate(
 		std::back_inserter(out),
-		uint_ % lit(delim),
+		int_ % lit(delim),
 		boost::make_iterator_range(
 			boost::make_function_input_iterator(r, size_t(0)),
 			boost::make_function_input_iterator(r, count)
@@ -58,12 +59,12 @@ void make_numbers(
 }
 
 std::vector<char> numbers;
-std::vector<unsigned int> result1, result2;
+std::vector<int> result1, result2;
 
-struct qi_uint_test : test::base {
+struct qi_int_test : test::base {
 	static qi::rule<
 		std::vector<char>::const_iterator,
-		std::vector<unsigned int>(),
+		std::vector<int>(),
 		boost::spirit::standard::space_type
         > p;
 
@@ -82,12 +83,12 @@ struct qi_uint_test : test::base {
 	}
 };
 
-decltype(qi_uint_test::p) qi_uint_test::p = qi::uint_ % ',';
-
-struct qi_repo_uint_test : test::base {
+decltype(qi_int_test::p) qi_int_test::p = qi::int_ % ',';
+#if 0
+struct qi_repo_int_test : test::base {
 	static qi::rule<
 		std::vector<char>::const_iterator,
-		std::vector<unsigned int>(),
+		std::vector<int>(),
 		boost::spirit::standard::space_type
         > p;
 
@@ -106,8 +107,8 @@ struct qi_repo_uint_test : test::base {
 	}
 };
 
-decltype(qi_repo_uint_test::p) qi_repo_uint_test::p = qi_repo::uint_ % ',';
-
+decltype(qi_repo_int_test::p) qi_repo_int_test::p = qi_repo::int_ % ',';
+#endif
 int main(int argc, char **argv)
 {
 	int count(5);
@@ -124,20 +125,20 @@ int main(int argc, char **argv)
 	make_numbers(numbers, count, std::string(", "));
 	numbers.push_back(0);
 	std::cout << "Numbers to test: " << &numbers.front() << '\n';
-	BOOST_SPIRIT_TEST_BENCHMARK(1000, (qi_uint_test)(qi_repo_uint_test));
-#if 0
+	BOOST_SPIRIT_TEST_BENCHMARK(1, (qi_int_test));
+
 	using karma::lit;
-	using karma::uint_;
+	using karma::int_;
 
 	karma::generate(
 		std::ostream_iterator<char>(std::cout),
-		lit("result1: ") << (uint_ % lit(", ")) << lit('\n'),
+		lit("result1: ") << (int_ % lit(", ")) << lit('\n'),
 		result1
 	);
-
+#if 0
 	karma::generate(
 		std::ostream_iterator<char>(std::cout),
-		lit("result2: ") << (uint_ % lit(", ")) << lit('\n'),
+		lit("result2: ") << (int_ % lit(", ")) << lit('\n'),
 		result2
 	);
 #endif
