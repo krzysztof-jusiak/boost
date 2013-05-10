@@ -44,6 +44,7 @@ run lambda.cpp : : test_case ;
 run largest_int.cpp : : test_case ;
 run list.cpp : : test_case ;
 run logical.cpp : : test_case ;
+run make_value.cpp : : test_case ;
 run map.cpp : : test_case ;
 run min_max.cpp : : test_case ;
 run min_max_element.cpp : : test_case ;
