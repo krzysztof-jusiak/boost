@@ -24,12 +24,12 @@ BOOST_AUTO_TEST_CASE(static_lit_0)
 	typedef list_c<wchar_t, 'x'> s4;
 	
 	BOOST_CHECK((test::parse("abcde", static_string<s1>())));
-	BOOST_CHECK((test::parse(L"abcde", static_string<s2>())));
-
 	BOOST_CHECK((test::parse(                                         \
-		"x",                                                      \
-		static_string<s3, spirit::char_encoding::standard_wide>() \
+		L"abcde",                                                 \
+		static_string<s2, spirit::char_encoding::standard_wide>() \
 	)));
+
+	BOOST_CHECK((test::parse("x", static_string<s3>())));
 	BOOST_CHECK((test::parse(                                         \
 		L"x",                                                     \
 		static_string<s4, spirit::char_encoding::standard_wide>() \
