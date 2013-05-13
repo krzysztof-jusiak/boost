@@ -8,7 +8,6 @@
 #define SPIRIT_REPOSITORY_QI_NUMERIC_POLICY_MAR_30_2013_2300
 
 #include <boost/mpl/x11/list.hpp>
-#include <boost/integer/static_log2.hpp>
 
 namespace boost { namespace spirit { namespace repository {
 namespace traits {

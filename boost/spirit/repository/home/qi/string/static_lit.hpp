@@ -7,6 +7,9 @@
 #if !defined(SPIRIT_REPOSITORY_QI_STATIC_LIT_MAY_11_2013_2300)
 #define SPIRIT_REPOSITORY_QI_STATIC_LIT_MAY_11_2013_2300
 
+#include <boost/mpl/x11/make_value.hpp>
+#include <boost/spirit/home/qi/string/lit.hpp>
+
 namespace boost { namespace spirit { namespace repository {
 namespace tag {
 
@@ -19,10 +22,16 @@ struct static_string {
 
 namespace qi {
 
+template <
+	typename Sequence,
+	typename CharEncoding = spirit::char_encoding::standard
+>
+struct static_string : terminal<tag::static_string<Sequence, CharEncoding>> {};
+
 template <typename Sequence, typename CharEncoding>
 struct make_static_string {
 	typedef typename CharEncoding::char_type char_type;
-	typename spirit::qi::literal_string<
+	typedef typename spirit::qi::literal_string<
 		std::basic_string<char_type>, false
 	> result_type;
 
