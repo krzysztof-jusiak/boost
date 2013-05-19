@@ -43,8 +43,8 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 
 	template <typename Iterator, typename Context, typename Skipper>
 	bool parse(
-		Iterator& first, Iterator const& last, Context& /*context*/,
-		Skipper const& skipper , T& attr_
+		Iterator &first, Iterator const &last, Context &ctx,
+		Skipper const &skipper , T &attr_
 	) const
 	{
 		typedef mpl::x11::apply_wrap<
@@ -62,8 +62,8 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 		typename Iterator, typename Context, typename Skipper,
 		typename Attribute
 	> bool parse(
-		Iterator& first, Iterator const& last, Context& context,
-		Skipper const& skipper, Attribute& attr_param
+		Iterator &first, Iterator const &last, Context &ctx,
+		Skipper const &skipper, Attribute &attr_param
 	) const
 	{
 		/* This case is called when Attribute is not T. */
@@ -76,7 +76,7 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 	}
 
 	template <typename Context>
-	info what(Context& /*context*/) const
+	info what(Context &ctx) const
 	{
 		return info("numeric");
 	}
@@ -96,8 +96,8 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 		typename Iterator, typename Context, typename Skipper,
 		typename Attribute
 	> bool parse(
-		Iterator& first, Iterator const& last, Context&,
-		Skipper const& skipper, Attribute& attr_param
+		Iterator &first, Iterator const &last, Context &ctx,
+		Skipper const &skipper, Attribute &attr_param
 	) const
 	{
 		typedef mpl::x11::apply_wrap<
@@ -121,7 +121,7 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 	}
 
 	template <typename Context>
-	info what(Context& /*context*/) const
+	info what(Context &ctx) const
 	{
 		return info("numeric");
 	}
@@ -144,7 +144,7 @@ struct make_direct_numeric {
 	typedef literal_numeric_parser<T, Policy, false> result_type;
 
 	template <typename Terminal>
-	result_type operator()(Terminal const& term, unused_type) const
+	result_type operator()(Terminal const &term, unused_type) const
 	{
 		return result_type(fusion::at_c<0>(term.args));
 	}
@@ -193,8 +193,10 @@ struct make_primitive<
 
 template <typename T, typename Policy, typename A0, typename Modifiers>
 struct make_primitive<
-	terminal_ex<spirit::repository::tag::numeric_parser<T, Policy>, fusion::vector1<A0>>,
-	Modifiers
+	terminal_ex<
+		spirit::repository::tag::numeric_parser<T, Policy>,
+		fusion::vector1<A0>
+	>, Modifiers
 > : spirit::repository::qi::make_direct_numeric<T, Policy> {};
 
 }
