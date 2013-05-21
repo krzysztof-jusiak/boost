@@ -7,11 +7,9 @@
 #if !defined(SPIRIT_REPOSITORY_QI_STATIC_VARIANT_MAY_18_2013_1930)
 #define SPIRIT_REPOSITORY_QI_STATIC_VARIANT_MAY_18_2013_1930
 
-#include <boost/spirit/home/qi/detail/enable_lit.hpp>
-#include <boost/spirit/home/qi/meta_compiler.hpp>
-#include <boost/spirit/home/qi/skip_over.hpp>
-#include <boost/spirit/home/qi/parser.hpp>
+#include <boost/mpl/x11/pair.hpp>
 #include <boost/spirit/home/qi/parse.hpp>
+#include <boost/spirit/home/qi/detail/enable_lit.hpp>
 
 namespace boost { namespace spirit { namespace repository {
 namespace tag {
@@ -28,16 +26,16 @@ namespace qi {
 template <typename... Parser>
 struct static_variant : terminal<tag::static_variant<Parser...>> {};
 
-template <long Index, typename... Pn>
+template <typename... Pn>
 struct static_variant_parser;
 
-template <long Index, typename P0>
-struct static_variant_parser<Index, P0> : spirit::qi::primitive_parser<
-	static_variant_parser<Index, P0>
+template <typename P0>
+struct static_variant_parser<P0> : spirit::qi::primitive_parser<
+	static_variant_parser<P0>
 > {
 	template <typename Context, typename Iterator>
 	struct attribute {
-		typedef long type;
+		typedef typename mpl::x11::second<P0>::type type;
 	};
 
 	template <
@@ -52,11 +50,13 @@ struct static_variant_parser<Index, P0> : spirit::qi::primitive_parser<
 		Iterator iter(first);
 		spirit::qi::skip_over(iter, last, skipper);
 
-		P0 p;
+		typename mpl::x11::first<P0>::type p;
 
 		if (spirit::qi::parse(iter, last, p)) {
 			first = iter;
-			spirit::traits::assign_to(Index, attr_);
+			spirit::traits::assign_to(
+				mpl::x11::second<P0>::type::value, attr_
+			);
 			return true;
 		} else
 			return false;
@@ -69,13 +69,13 @@ struct static_variant_parser<Index, P0> : spirit::qi::primitive_parser<
 	}
 };
 
-template <long Index, typename P0, typename... Pn>
-struct static_variant_parser<Index, P0, Pn...> : spirit::qi::primitive_parser<
-	static_variant_parser<Index, P0, Pn...>
+template <typename P0, typename... Pn>
+struct static_variant_parser<P0, Pn...> : spirit::qi::primitive_parser<
+	static_variant_parser<P0, Pn...>
 > {
 	template <typename Context, typename Iterator>
 	struct attribute {
-		typedef long type;
+		typedef typename mpl::x11::second<P0>::type type;
 	};
 
 	 template <
@@ -89,14 +89,16 @@ struct static_variant_parser<Index, P0, Pn...> : spirit::qi::primitive_parser<
 		Iterator iter(first);
 		spirit::qi::skip_over(iter, last, skipper);
 
-		P0 p;
+		typename mpl::x11::first<P0>::type p;
 
 		if (spirit::qi::parse(iter, last, p)) {
 			first = iter;
-			spirit::traits::assign_to(Index, attr_);
+			spirit::traits::assign_to(
+				mpl::x11::second<P0>::type::value, attr_
+			);
 			return true;
 		} else {
-			static_variant_parser<Index + 1, Pn...> pn;
+			static_variant_parser<Pn...> pn;
 			return pn.parse(first, last, ctx, skipper, attr_);
 		}
 	}
@@ -110,7 +112,7 @@ struct static_variant_parser<Index, P0, Pn...> : spirit::qi::primitive_parser<
 
 template <typename... Parser>
 struct make_static_variant {
-	typedef static_variant_parser<0, Parser...> result_type;
+	typedef static_variant_parser<Parser...> result_type;
 
 	result_type operator()(unused_type, unused_type) const
         {

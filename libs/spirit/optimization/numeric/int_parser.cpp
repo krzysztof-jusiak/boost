@@ -14,7 +14,7 @@
 #include <boost/spirit/include/karma.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/iterator/function_input_iterator.hpp>
-#include <boost/spirit/repository/home/qi/numeric/uint.hpp>
+#include <boost/spirit/repository/home/qi/numeric/int.hpp>
 
 #include "../measure.hpp"
 
@@ -84,7 +84,7 @@ struct qi_int_test : test::base {
 };
 
 decltype(qi_int_test::p) qi_int_test::p = qi::int_ % ',';
-#if 0
+
 struct qi_repo_int_test : test::base {
 	static qi::rule<
 		std::vector<char>::const_iterator,
@@ -108,14 +108,14 @@ struct qi_repo_int_test : test::base {
 };
 
 decltype(qi_repo_int_test::p) qi_repo_int_test::p = qi_repo::int_ % ',';
-#endif
+
 int main(int argc, char **argv)
 {
 	int count(5);
 
 	if (argc > 1) {
 		if (!qi::parse(
-			argv[1], argv[1] + strlen(argv[1]), qi_repo::uint_,
+			argv[1], argv[1] + strlen(argv[1]), qi_repo::int_,
 			count
 		)) return -1;
 	}
@@ -125,7 +125,8 @@ int main(int argc, char **argv)
 	make_numbers(numbers, count, std::string(", "));
 	numbers.push_back(0);
 	std::cout << "Numbers to test: " << &numbers.front() << '\n';
-	BOOST_SPIRIT_TEST_BENCHMARK(1, (qi_int_test));
+	//BOOST_SPIRIT_TEST_BENCHMARK(1, (qi_int_test));
+	BOOST_SPIRIT_TEST_BENCHMARK(1, (qi_repo_int_test));
 
 	using karma::lit;
 	using karma::int_;
@@ -135,12 +136,12 @@ int main(int argc, char **argv)
 		lit("result1: ") << (int_ % lit(", ")) << lit('\n'),
 		result1
 	);
-#if 0
+
 	karma::generate(
 		std::ostream_iterator<char>(std::cout),
 		lit("result2: ") << (int_ % lit(", ")) << lit('\n'),
 		result2
 	);
-#endif
+
 	return test::live_code != 0;
 }

@@ -18,6 +18,12 @@ inline T zero()
 	return 0;
 }
 
+template <typename T>
+inline T negate(bool neg, T const &n)
+{
+	return neg ? -n : n;
+}
+
 }
 
 namespace qi {
