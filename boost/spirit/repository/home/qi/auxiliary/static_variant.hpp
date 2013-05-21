@@ -7,6 +7,12 @@
 #if !defined(SPIRIT_REPOSITORY_QI_STATIC_VARIANT_MAY_18_2013_1930)
 #define SPIRIT_REPOSITORY_QI_STATIC_VARIANT_MAY_18_2013_1930
 
+#include <boost/spirit/home/qi/detail/enable_lit.hpp>
+#include <boost/spirit/home/qi/meta_compiler.hpp>
+#include <boost/spirit/home/qi/skip_over.hpp>
+#include <boost/spirit/home/qi/parser.hpp>
+#include <boost/spirit/home/qi/parse.hpp>
+
 namespace boost { namespace spirit { namespace repository {
 namespace tag {
 
@@ -124,8 +130,10 @@ namespace qi {
 template <typename... Parser>
 struct make_primitive<
 	spirit::repository::tag::static_variant<Parser...>,
-	Modifiers
+	unused_type
 > : spirit::repository::qi::make_static_variant<Parser...> {};
 
 }
 }}
+
+#endif
