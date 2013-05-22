@@ -19,9 +19,9 @@ inline T zero()
 }
 
 template <typename T>
-inline T negate(bool neg, T const &n)
+inline void negate(T &n)
 {
-	return neg ? -n : n;
+	n = -n;
 }
 
 }

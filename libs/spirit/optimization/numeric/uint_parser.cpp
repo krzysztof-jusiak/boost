@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 	numbers.push_back(0);
 	std::cout << "Numbers to test: " << &numbers.front() << '\n';
 	BOOST_SPIRIT_TEST_BENCHMARK(1000, (qi_uint_test)(qi_repo_uint_test));
-#if 0
+
 	using karma::lit;
 	using karma::uint_;
 
@@ -140,6 +140,6 @@ int main(int argc, char **argv)
 		lit("result2: ") << (uint_ % lit(", ")) << lit('\n'),
 		result2
 	);
-#endif
+
 	return test::live_code != 0;
 }

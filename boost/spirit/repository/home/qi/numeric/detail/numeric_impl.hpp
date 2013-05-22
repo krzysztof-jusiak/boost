@@ -173,7 +173,9 @@ bool numeric_impl::apply<
 	> next;
 
 	if (next::parse(iter, last, attr)) {
-		traits::negate(neg, attr);
+		if (neg)
+			traits::negate(attr);
+
 		first = iter;
 		return true;
 	} else

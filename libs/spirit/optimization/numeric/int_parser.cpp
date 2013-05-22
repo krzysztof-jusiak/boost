@@ -125,8 +125,8 @@ int main(int argc, char **argv)
 	make_numbers(numbers, count, std::string(", "));
 	numbers.push_back(0);
 	std::cout << "Numbers to test: " << &numbers.front() << '\n';
-	//BOOST_SPIRIT_TEST_BENCHMARK(1, (qi_int_test));
-	BOOST_SPIRIT_TEST_BENCHMARK(1, (qi_repo_int_test));
+
+	BOOST_SPIRIT_TEST_BENCHMARK(1000, (qi_int_test)(qi_repo_int_test));
 
 	using karma::lit;
 	using karma::int_;

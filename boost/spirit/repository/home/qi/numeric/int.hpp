@@ -12,7 +12,7 @@
 #include <boost/mpl/x11/map.hpp>
 #include <boost/mpl/x11/list.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
-#include <boost/spirit/repository/home/qi/string/static_string.hpp>
+#include <boost/spirit/repository/home/qi/char/static_char.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
 
 namespace boost { namespace spirit {
@@ -34,11 +34,11 @@ using int_policy = mpl::x11::map<
 	mpl::x11::pair<with_inserter, default_inserter<T>>,
 	mpl::x11::pair<with_sign, static_variant<
 		mpl::x11::pair<
-			static_string<mpl::x11::list_c<char, '-'>>,
+			static_char<mpl::x11::char_<'-'>>,
 			mpl::x11::true_type
 		>,
 		mpl::x11::pair<
-			static_string<mpl::x11::list_c<char, '+'>>,
+			static_char<mpl::x11::char_<'+'>>,
 			mpl::x11::false_type
 		>
 	>>
