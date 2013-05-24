@@ -28,7 +28,7 @@ namespace detail {
 template <typename T>
 using uint_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_inserter, default_inserter<T>>
+	mpl::x11::pair<with_integral, default_inserter<T>>
 >;
 
 }

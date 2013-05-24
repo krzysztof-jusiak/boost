@@ -35,27 +35,42 @@ namespace qi {
 /* "Extractor" produces value tokens from input stream. */
 struct with_extractor {};
 
-/* "Inserter" modifies parsed value using optionally transformed value token. */
-struct with_inserter {}; 
+/* "Integral" is an attribute mutating function affecting integral part of
+ * the attribute using "Extractor" supplied token.
+ */
+struct with_integral {}; 
 
-/* "Filter" transforms values produced by extractor into values, fit for
- * consumption by inserter.
+/* "Filter" is a variety of special-purpose skipper function which can validate
+ * and remove non-numeric "decorations" from the input stream.
  */
 struct with_filter {};
 
-/* "Sign" produces boolean value indicating that final value ought to be negated.
- * It is reused for exponent sing.
+/* "Sign" is a parser type which can parse the sign representing
+ * tokens (parser attribute must be boolean). Two variants are possible:
+ * compulsory, which must always succeed and optional, whereupon sign parser
+ * failure will be regarded as "positive" sign value.
  */
+template <bool Compulsory>
 struct with_sign {};
 
-/* "Fraction" identifies beginning of fractional part of the number. */
-struct with_fraction {};
+/* "Fractional" is a pair<parser, function>, whereupon parser part is
+ * used to detect transition into fractional part parsing and function is
+ * an attribute mutator affecting fractional part of the attribute using the
+ * "Extractor" supplied token. Two variants are possible: one that expects a
+ * compulsory integral part and one which can start parsing from the beginning
+ * of the input;
+ */
+template <bool AllowLeading>
+struct with_fractional {};
 
-/* "Exponent" identifies beginning of exponent specification. */
+/* "Exponent" is a pair<parser, function> analogous to "Fractional" but
+ * affecting the exponent of the attribute.
+ */
 struct with_exponent {};
 
-/* "Special" is tried to identify presence of special values, such as Nan or
- * Inf.
+/* "Special" is a variety of special-purpose skipper function which is applied
+ * after sign to the whole input to establish, whether it matches any sort
+ * of special value, such as NaN or Inf.
  */
 struct with_special {};
 
@@ -63,10 +78,12 @@ namespace detail {
 
 typedef boost::mpl::x11::list<
 	with_extractor,
-	with_inserter,
+	with_integral,
 	with_filter,
-	with_sign,
-	with_fraction,
+	with_sign<false>,
+	with_sign<true>,
+	with_fractional<false>,
+	with_fractional<true>,
 	with_exponent,
 	with_special
 > trait_tag_order;
@@ -76,16 +93,11 @@ struct default_inserter;
 
 template <typename T>
 struct default_inserter<T> {
-	bool operator()(boost::optional<char> const &in, T &out, bool &valid)
+	bool operator()(char in, T &out)
 	{
-		if (in) {
-			T ref(out);
-			out = out * 10 + T(*in & 0xf);
-			valid = (out >= ref);
-		} else
-			valid = true;
-
-		return valid;
+		T ref(out);
+		out = out * 10 + T(in & 0xf);
+		return (out >= ref);
 	}
 };
 
