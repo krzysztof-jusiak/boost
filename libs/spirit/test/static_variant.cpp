@@ -14,15 +14,16 @@
 #include <boost/spirit/repository/home/qi/string/static_string.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
 
-
 #include "test.hpp"
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
 namespace test {
-	typedef mpl::x11::list_c<char, 'a', 'b', 'c', 'd', 'e'> s1;
-	typedef mpl::x11::list_c<char, 'f', 'g', 'h', 'i', 'j'> s2;
-	typedef mpl::x11::list_c<char, 'k', 'l', 'm', 'n', 'o'> s3;
-	typedef mpl::x11::list_c<char, 'p', 'q', 'r', 's', 't'> s4;
+
+typedef mpl::x11::list_c<char, 'a', 'b', 'c', 'd', 'e'> s1;
+typedef mpl::x11::list_c<char, 'f', 'g', 'h', 'i', 'j'> s2;
+typedef mpl::x11::list_c<char, 'k', 'l', 'm', 'n', 'o'> s3;
+typedef mpl::x11::list_c<char, 'p', 'q', 'r', 's', 't'> s4;
+
 }
 
 BOOST_AUTO_TEST_CASE(static_variant_0)

@@ -44,19 +44,7 @@ struct numeric_impl {
 	template <typename Extractor, typename IntegralF, typename SignP>
 	struct apply<
 		boost::mpl::x11::package<
-			with_extractor, with_integral, with_sign<false>
-		>, Extractor, IntegralF, SignP
-	> {
-		template <typename Iterator, typename Attribute>
-		static bool parse(
-			Iterator &first, Iterator const &last, Attribute &attr
-		);
-	};
-
-	template <typename Extractor, typename IntegralF, typename SignP>
-	struct apply<
-		boost::mpl::x11::package<
-			with_extractor, with_integral, with_sign<true>
+			with_extractor, with_integral, with_sign
 		>, Extractor, IntegralF, SignP
 	> {
 		template <typename Iterator, typename Attribute>
@@ -95,7 +83,7 @@ bool numeric_impl::apply<
 			break;
 
 		if (!i(c, v))
-			break;
+			return false;
 		else
 			iter = next;
 	}
@@ -160,7 +148,7 @@ bool numeric_impl::apply<
 
 		
 		if (!i(c, v)) {
-			v_flag = (first != iter);
+			v_flag = false;
 			break;
 		} else
 			iter = next;
@@ -176,7 +164,7 @@ template <typename Extractor, typename IntegralF, typename SignP>
 template <typename Iterator, typename Attribute>
 bool numeric_impl::apply<
 	boost::mpl::x11::package<
-		with_extractor, with_integral, with_sign<false>
+		with_extractor, with_integral, with_sign
 	>, Extractor, IntegralF, SignP
 >::parse(Iterator &first, Iterator const &last, Attribute &attr)
 {
@@ -195,58 +183,33 @@ bool numeric_impl::apply<
 	bool neg(false);
 	spirit::qi::parse(iter, last, s, neg);
 
-	typedef typename numeric_impl::apply<
-		boost::mpl::x11::package<with_extractor, with_integral>,
-		Extractor, IntegralF
-	> next;
+	if (neg) {
+		typedef typename numeric_impl::apply<
+			boost::mpl::x11::package<
+				with_extractor, with_integral
+			>,
+			Extractor, typename IntegralF::opposite_inserter
+		> next;
 
-	if (next::parse(iter, last, attr)) {
-		if (neg)
-			traits::negate(attr);
+		if (next::parse(iter, last, attr)) {
+			first = iter;
+			return true;
+		}
+	} else {
+		typedef typename numeric_impl::apply<
+			boost::mpl::x11::package<
+				with_extractor, with_integral
+			>,
+			Extractor, IntegralF
+		> next;
 
-		first = iter;
-		return true;
-	} else
-		return false;
-}
+		if (next::parse(iter, last, attr)) {
+			first = iter;
+			return true;
+		}
+	}
 
-template <typename Extractor, typename IntegralF, typename SignP>
-template <typename Iterator, typename Attribute>
-bool numeric_impl::apply<
-	boost::mpl::x11::package<
-		with_extractor, with_integral, with_sign<true>
-	>, Extractor, IntegralF, SignP
->::parse(Iterator &first, Iterator const &last, Attribute &attr)
-{
-	typedef typename spirit::result_of::compile<
-		spirit::qi::domain, Extractor
-	>::type extractor_expr_type;
-	typedef typename spirit::traits::attribute_of<
-		extractor_expr_type, spirit::unused_type, Iterator
-	>::type extractor_value_type;
-	typedef typename spirit::traits::attribute_type<
-		Attribute
-	>::type attribute_type;
-
-	SignP s;
-	Iterator iter(first);
-	bool neg(false);
-	if (!spirit::qi::parse(iter, last, s, neg))
-		return false;
-
-	typedef typename numeric_impl::apply<
-		boost::mpl::x11::package<with_extractor, with_integral>,
-		Extractor, IntegralF
-	> next;
-
-	if (next::parse(iter, last, attr)) {
-		if (neg)
-			traits::negate(attr);
-
-		first = iter;
-		return true;
-	} else
-		return false;
+	return false;
 }
 
 }

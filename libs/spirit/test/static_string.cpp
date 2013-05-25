@@ -12,15 +12,16 @@
 #include <boost/spirit/repository/home/qi/string/static_string.hpp>
 #include <boost/spirit/home/qi/char.hpp>
 
-
 #include "test.hpp"
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
 namespace test {
-	typedef mpl::x11::list_c<char, 'a', 'b', 'c', 'd', 'e'> s1;
-	typedef mpl::x11::list_c<wchar_t, 'a', 'b', 'c', 'd', 'e'> s2;
-	typedef mpl::x11::list_c<char, 'x'> s3;
-	typedef mpl::x11::list_c<wchar_t, 'x'> s4;
+
+typedef mpl::x11::list_c<char, 'a', 'b', 'c', 'd', 'e'> s1;
+typedef mpl::x11::list_c<wchar_t, 'a', 'b', 'c', 'd', 'e'> s2;
+typedef mpl::x11::list_c<char, 'x'> s3;
+typedef mpl::x11::list_c<wchar_t, 'x'> s4;
+
 }
 
 BOOST_AUTO_TEST_CASE(static_string_0)
