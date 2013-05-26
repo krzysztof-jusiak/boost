@@ -9,8 +9,9 @@
 #if !defined(SPIRIT_REPOSITORY_QI_UINT_MAY_09_2013_1730)
 #define SPIRIT_REPOSITORY_QI_UINT_MAY_09_2013_1730
 
-#include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
 #include <boost/mpl/x11/map.hpp>
+#include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
+#include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
 namespace boost { namespace spirit {
 namespace repository {
@@ -28,7 +29,7 @@ namespace detail {
 template <typename T>
 using uint_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral, default_inserter<T>>
+	mpl::x11::pair<with_integral, small_radix_inserter<T, 10>>
 >;
 
 }

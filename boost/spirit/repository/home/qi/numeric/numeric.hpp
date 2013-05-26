@@ -11,7 +11,6 @@
 
 #include <boost/spirit/repository/home/qi/numeric/detail/numeric_impl.hpp>
 #include <boost/spirit/repository/home/support/unpack_map.hpp>
-#include <boost/spirit/repository/home/support/numeric.hpp>
 #include <boost/spirit/home/qi/detail/enable_lit.hpp>
 #include <boost/spirit/home/qi/meta_compiler.hpp>
 #include <boost/spirit/home/qi/skip_over.hpp>
