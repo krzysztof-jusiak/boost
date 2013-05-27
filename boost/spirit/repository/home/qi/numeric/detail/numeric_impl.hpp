@@ -39,6 +39,12 @@ struct numeric_impl {
 		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
+
+		template <typename Iterator, typename Attribute>
+		static bool parse(
+			Iterator &first, Iterator const &last, Attribute &attr,
+			Filter &filt
+		);
 	};
 
 	template <typename Extractor, typename IntegralF, typename SignP>
@@ -50,6 +56,26 @@ struct numeric_impl {
 		template <typename Iterator, typename Attribute>
 		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
+		);
+	};
+
+	template <
+		typename Extractor, typename IntegralF, typename Filter,
+		typename SignP
+	> struct apply<
+		boost::mpl::x11::package<
+			with_extractor, with_integral, with_filter, with_sign
+		>, Extractor, IntegralF, Filter, SignP
+	> {
+		template <typename Iterator, typename Attribute>
+		static bool parse(
+			Iterator &first, Iterator const &last, Attribute &attr
+		);
+
+		template <typename Iterator, typename Attribute>
+		static bool parse(
+			Iterator &first, Iterator const &last, Attribute &attr,
+			Filter &filt
 		);
 	};
 };
@@ -104,6 +130,18 @@ bool numeric_impl::apply<
 	>, Extractor, IntegralF, Filter
 >::parse(Iterator &first, Iterator const &last, Attribute &attr)
 {
+	Filter filt;
+	return parse(first, last, attr, filt);
+}
+
+template <typename Extractor, typename IntegralF, typename Filter>
+template <typename Iterator, typename Attribute>
+bool numeric_impl::apply<
+	boost::mpl::x11::package<
+		with_extractor, with_integral, with_filter
+	>, Extractor, IntegralF, Filter
+>::parse(Iterator &first, Iterator const &last, Attribute &attr, Filter &filt)
+{
 	typedef typename spirit::result_of::compile<
 		spirit::qi::domain, Extractor
 	>::type extractor_expr_type;
@@ -116,7 +154,6 @@ bool numeric_impl::apply<
 
 	Extractor e;
 	IntegralF i;
-	Filter filt;
 	Iterator iter(first), next(first);
 	extractor_value_type c;
 	attribute_type v(traits::zero<attribute_type>());
@@ -132,11 +169,11 @@ bool numeric_impl::apply<
 				if (!filt(next, last, cnt))
 					return false;
 				else {
+					cnt = 0;
 					if (next == iter) {
 						v_flag = true;
 						break;
 					} else {
-						cnt = 0;
 						iter = next;
 						continue;
 					}
@@ -146,16 +183,19 @@ bool numeric_impl::apply<
 		} else
 			++cnt;
 
-		
-		if (!i(c, v)) {
-			v_flag = false;
-			break;
-		} else
+		if ((v_flag = i(c, v)))
 			iter = next;
+		else
+			break;
 	}
 
-	if (v_flag)
+	if (v_flag && cnt)
+		v_flag = filt(iter, last, cnt);
+
+	if (v_flag) {
 		spirit::traits::assign_to(v, attr);
+		first = iter;
+	}
 
 	return v_flag;
 }
@@ -204,6 +244,75 @@ bool numeric_impl::apply<
 		> next;
 
 		if (next::parse(iter, last, attr)) {
+			first = iter;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+template <
+	typename Extractor, typename IntegralF, typename Filter, typename SignP
+>
+template <typename Iterator, typename Attribute>
+bool numeric_impl::apply<
+	boost::mpl::x11::package<
+		with_extractor, with_integral, with_filter, with_sign
+	>, Extractor, IntegralF, Filter, SignP
+>::parse(Iterator &first, Iterator const &last, Attribute &attr)
+{
+	Filter filt;
+	return parse(first, last, attr, filt);
+}
+
+template <
+	typename Extractor, typename IntegralF, typename Filter, typename SignP
+>
+template <typename Iterator, typename Attribute>
+bool numeric_impl::apply<
+	boost::mpl::x11::package<
+		with_extractor, with_integral, with_filter, with_sign
+	>, Extractor, IntegralF, Filter, SignP
+>::parse(Iterator &first, Iterator const &last, Attribute &attr, Filter &filt)
+{
+	typedef typename spirit::result_of::compile<
+		spirit::qi::domain, Extractor
+	>::type extractor_expr_type;
+	typedef typename spirit::traits::attribute_of<
+		extractor_expr_type, spirit::unused_type, Iterator
+	>::type extractor_value_type;
+	typedef typename spirit::traits::attribute_type<
+		Attribute
+	>::type attribute_type;
+
+	SignP s;
+	Iterator iter(first);
+	bool neg(false);
+	spirit::qi::parse(iter, last, s, neg);
+
+	if (neg) {
+		typedef typename numeric_impl::apply<
+			boost::mpl::x11::package<
+				with_extractor, with_integral, with_filter
+			>,
+			Extractor, typename IntegralF::opposite_inserter,
+			Filter
+		> next;
+
+		if (next::parse(iter, last, attr, filt)) {
+			first = iter;
+			return true;
+		}
+	} else {
+		typedef typename numeric_impl::apply<
+			boost::mpl::x11::package<
+				with_extractor, with_integral, with_filter
+			>,
+			Extractor, IntegralF, Filter
+		> next;
+
+		if (next::parse(iter, last, attr, filt)) {
 			first = iter;
 			return true;
 		}

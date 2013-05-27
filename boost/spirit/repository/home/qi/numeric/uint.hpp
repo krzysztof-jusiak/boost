@@ -17,9 +17,14 @@ namespace boost { namespace spirit {
 namespace repository {
 namespace tag {
 
-struct uint_ {
-	BOOST_SPIRIT_IS_TAG()
-};
+struct ushort_ { BOOST_SPIRIT_IS_TAG() };
+struct uint_ { BOOST_SPIRIT_IS_TAG() };
+struct ulong_ { BOOST_SPIRIT_IS_TAG() };
+struct ulong_long { BOOST_SPIRIT_IS_TAG() };
+
+struct bin { BOOST_SPIRIT_IS_TAG() };
+struct oct { BOOST_SPIRIT_IS_TAG() };
+struct hex { BOOST_SPIRIT_IS_TAG() };
 
 }
 
@@ -30,6 +35,30 @@ template <typename T>
 using uint_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integral, small_radix_inserter<T, 10>>
+>;
+/*
+template <typename T>
+using bin_policy = mpl::x11::map<
+	mpl::x11::pair<
+		with_extractor,
+		static_char_range<'0', '1', char_encoding::standard>
+	>,
+	mpl::x11::pair<with_integral, small_radix_inserter<T, 2>>
+>;
+
+template <typename T>
+using oct_policy = mpl::x11::map<
+	mpl::x11::pair<
+		with_extractor,
+		static_char_range<'0', '7', char_encoding::standard>
+	>,
+	mpl::x11::pair<with_integral, small_radix_inserter<T, 8>>
+>;
+*/
+template <typename T>
+using hex_policy = mpl::x11::map<
+	mpl::x11::pair<with_extractor, standard::xdigit_type>,
+	mpl::x11::pair<with_integral, hex_inserter<T>>
 >;
 
 }

@@ -19,10 +19,96 @@
 #include <boost/spirit/repository/home/qi/char/static_char.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
 
-namespace boost { namespace spirit { namespace repository { namespace qi {
-namespace detail {
+namespace boost { namespace spirit { namespace repository {
 
-template <typename T, int Radix, bool Negative = false>
+template <typename T>
+struct value_wrapper {
+	T value;
+
+	operator T() const
+	{
+		return value;
+	}
+};
+
+template <typename T>
+value_wrapper<T> _r(T v)
+{
+	return value_wrapper<T>({v});
+}
+
+namespace qi { namespace detail {
+
+template <typename T>
+struct hex_inserter {
+	template <typename CharType>
+	static T hex_digit(CharType in)
+	{
+		return T(
+			(in & 0xf) + (in > CharType('9') ? 9 : 0)
+		);
+	}
+
+	template <typename CharType>
+	bool operator()(CharType in, T &out)
+	{
+		static T const max((std::numeric_limits<T>::max)());
+		static T const val(max >> 4);
+
+		if (out > val)
+			return false;
+
+		out <<= 4;
+
+		T digit(hex_digit(in));
+
+		if (out > max - digit)
+			return false;
+
+		out += digit;
+		return true;
+	}
+
+};
+
+template <typename T, T Radix, bool Negative = false>
+struct unchecked_small_radix_inserter {
+	typedef unchecked_small_radix_inserter<
+		T, Radix, !Negative
+	>opposite_inserter;
+
+	template <typename CharType, bool Negative_ = false>
+	struct impl {
+		bool operator()(CharType in, T &out)
+		{
+			T digit(in & 0xf);
+			out *= Radix;
+			out += digit;
+			return true;
+		}
+	};
+
+	template <typename CharType>
+	struct impl<CharType, true> {
+		bool operator()(CharType in, T &out)
+		{
+			T digit(in & 0xf);
+			out *= Radix;
+			out -= digit;
+			return true;
+		}
+	};
+
+	template <typename CharType>
+	bool operator()(CharType in, T &out)
+	{
+		return impl<CharType, Negative>()(in, out);
+	}
+
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+};
+
+template <typename T, T Radix, bool Negative = false>
 struct small_radix_inserter {
 	typedef small_radix_inserter<T, Radix, !Negative> opposite_inserter;
 
@@ -44,7 +130,7 @@ struct small_radix_inserter {
 				return false;
 
 			out += digit;
-				return true;
+			return true;
 		}
 	};
 
@@ -76,8 +162,48 @@ struct small_radix_inserter {
 		return impl<CharType, Negative>()(in, out);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1);
-	BOOST_STATIC_ASSERT(Radix < 11);
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+};
+
+template <unsigned int...>
+struct length_filter;
+
+template <unsigned int MinDigits>
+struct length_filter<MinDigits> {
+	unsigned int pos;
+
+	length_filter()
+	: pos(0) {}
+
+	template <typename Iterator>
+	bool operator()(Iterator &first, Iterator const &last, int count)
+	{
+		if (count > 0) {
+			pos += count;
+			return pos >= MinDigits;
+		} else
+			return true;
+		
+	}
+};
+
+template <unsigned int MinDigits, unsigned int MaxDigits>
+struct length_filter<MinDigits, MaxDigits> {
+	unsigned int pos;
+
+	length_filter()
+	: pos(0) {}
+
+	template <typename Iterator>
+	bool operator()(Iterator &first, Iterator const &last, int count)
+	{
+		if (count > 0) {
+			pos += count;
+			return (pos >= MinDigits) && (pos <= MaxDigits);
+		} else
+			return true;
+		
+	}
 };
 
 template <typename CharType>
@@ -92,7 +218,7 @@ using default_sign = static_variant<
 	>
 >;
 
-}
-}}}}
+}}
+}}}
 
 #endif

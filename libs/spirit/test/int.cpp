@@ -11,6 +11,7 @@
 #define BOOST_TEST_MODULE spirit
 #include <boost/test/included/unit_test.hpp>
 
+#include <boost/mpl/x11/insert.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
@@ -291,6 +292,120 @@ BOOST_AUTO_TEST_CASE(int_10)
 	BOOST_CHECK(!test::parse_attr("41234", short_, i, false));
 }
 
+BOOST_AUTO_TEST_CASE(int_11)
+{
+	using boost::spirit::lit;
+	int i = 123456;
+
+	BOOST_CHECK( test::parse("123456", lit(_r(123456))));
+	BOOST_CHECK(!test::parse("123456", lit(_r(0))));
+	BOOST_CHECK( test::parse("123456", lit(_r(i))));
+	BOOST_CHECK(!test::parse("123456", lit(_r(-i))));
+	BOOST_CHECK( test::parse("+425", lit(_r(425))));
+	BOOST_CHECK(!test::parse("+425", lit(_r(17))));
+	BOOST_CHECK( test::parse("-2000", lit(_r(-2000))));
+	BOOST_CHECK(!test::parse("-2000", lit(_r(2000))));
+	BOOST_CHECK( test::parse(test::max_int, lit(_r(INT_MAX))));
+	BOOST_CHECK(!test::parse(test::max_int, lit(_r(INT_MIN))));
+
+	BOOST_CHECK( test::parse(test::min_int, lit(_r(INT_MIN))));
+	BOOST_CHECK(!test::parse(test::min_int, lit(_r(INT_MAX))));
+
+	BOOST_CHECK(!test::parse("-", lit(_r(8451))));
+	BOOST_CHECK(!test::parse("+", lit(_r(8451))));
+
+	BOOST_CHECK(test::parse("000000000098765", lit(_r(98765))));
+}
+
+BOOST_AUTO_TEST_CASE(int_12)
+{
+	using boost::spirit::lit;
+	short s = 12345;
+	long l = 1234567890L;
+
+	BOOST_CHECK(test::parse("12345", lit(_r(12345))));
+	BOOST_CHECK(!test::parse("12345", lit(_r(-12345))));
+	BOOST_CHECK(test::parse("12345", lit(_r(s))));
+	BOOST_CHECK(!test::parse("12345", lit(_r(-s))));
+	BOOST_CHECK(test::parse("-12345", lit(_r(-12345))));
+	BOOST_CHECK(!test::parse("-12345", lit(_r(12345))));
+	BOOST_CHECK(test::parse("-12345", lit(_r(-s))));
+	BOOST_CHECK(!test::parse("-12345", lit(_r(s))));
+
+	BOOST_CHECK(test::parse("1234567890", lit(_r(1234567890))));
+	BOOST_CHECK(!test::parse("1234567890", lit(_r(-1234567890))));
+	BOOST_CHECK(test::parse("1234567890", lit(_r(l))));
+	BOOST_CHECK(!test::parse("1234567890", lit(_r(-l))));
+	BOOST_CHECK(test::parse("-1234567890", lit(_r(-1234567890))));
+	BOOST_CHECK(!test::parse("-1234567890", lit(_r(1234567890))));
+	BOOST_CHECK(test::parse("-1234567890", lit(_r(-l))));
+	BOOST_CHECK(!test::parse("-1234567890", lit(_r(l))));
+}
+
+BOOST_AUTO_TEST_CASE(int_13)
+{
+	using boost::spirit::lit;
+	long long ll = 1234567890123456789LL;
+
+	BOOST_CHECK(test::parse(                                      \
+		"1234567890123456789", lit(_r(1234567890123456789LL)) \
+	));
+	BOOST_CHECK(!test::parse("1234567890123456789", lit(_r(-19LL))));
+	BOOST_CHECK(test::parse("1234567890123456789", lit(_r(ll))));
+	BOOST_CHECK(!test::parse("1234567890123456789", lit(_r(-ll))));
+	BOOST_CHECK(test::parse(                                \
+		"-100000000000000", lit(_r(-100000000000000LL)) \
+	));
+	BOOST_CHECK(!test::parse("-100000000000000", lit(_r(3243515525263LL))));
+	BOOST_CHECK(test::parse(test::max_long_long, lit(_r(LONG_LONG_MAX))));
+	BOOST_CHECK(!test::parse(test::max_long_long, lit(_r(LONG_LONG_MIN))));
+
+	BOOST_CHECK(test::parse(test::min_long_long, lit(_r(LONG_LONG_MIN))));
+	BOOST_CHECK(!test::parse(test::min_long_long, lit(_r(LONG_LONG_MAX))));
+}
+
+BOOST_AUTO_TEST_CASE(int_14)
+{
+	using boost::phoenix::ref;
+	using boost::spirit::qi::lit;
+	value_wrapper<int> n({123}), m({321});
+
+	BOOST_CHECK(test::parse("123", lit(ref(n))));
+	BOOST_CHECK(!test::parse("123", lit(ref(m))));
+}
+
+BOOST_AUTO_TEST_CASE(int_15)
+{
+	int i;
+	numeric_parser<
+		int,
+		typename mpl::x11::insert<
+			detail::int_policy<int>,
+			mpl::x11::pair<
+				with_filter, detail::length_filter<2, 4>
+			>
+		>::type
+	> int2;
+
+	BOOST_CHECK(!test::parse("1", int2));
+	BOOST_CHECK(test::parse_attr("12", int2, i));
+	BOOST_CHECK_EQUAL(i, 12);
+	BOOST_CHECK(test::parse_attr("123", int2, i));
+	BOOST_CHECK_EQUAL(i, 123);
+	BOOST_CHECK(test::parse_attr("1234", int2, i));
+	BOOST_CHECK_EQUAL(i, 1234);
+	BOOST_CHECK(!test::parse("12345", int2));
+
+	BOOST_CHECK(!test::parse("-1", int2));
+	BOOST_CHECK(test::parse_attr("-12", int2, i));
+	BOOST_CHECK_EQUAL(i, -12);
+	BOOST_CHECK(test::parse_attr("-123", int2, i));
+	BOOST_CHECK_EQUAL(i, -123);
+	BOOST_CHECK(test::parse_attr("-1234", int2, i));
+	BOOST_CHECK_EQUAL(i, -1234);
+	BOOST_CHECK(!test::parse("-12345", int2));
+
+}
 #if 0
 
 BOOST_AUTO_TEST_CASE(int_11)
@@ -302,104 +417,6 @@ BOOST_AUTO_TEST_CASE(int_11)
 	BOOST_CHECK(test::parse("-123456", any_int));
 	BOOST_CHECK(test::parse("-1234567890123456789", any_int));
 }
-
-BOOST_AUTO_TEST_CASE(int_6)
-{
-	using boost::spirit::qi::int_;
-        using boost::spirit::qi::int_parser;
-        custom_int i;
-
-        BOOST_CHECK(test::parse_attr("-123456", int_, i));
-        int_parser<custom_int, 10, 1, 2> int2;
-        BOOST_CHECK(test::parse_attr("-12", int2, i));
-	BOOST_CHECK(test::parse_attr("-123456", int_(-123456), i));
-        int_parser<custom_int, 10, 1, 2> int2;
-        BOOST_CHECK(test::parse_attr("-12", int2(-12), i));
-}
-
-BOOST_AUTO_TEST_CASE(int_7)
-{
-	using boost::spirit::lit;
-        int i = 123456;
-
-        BOOST_CHECK( test::parse("123456", lit(123456)));
-        BOOST_CHECK(!test::parse("123456", lit(0)));
-        BOOST_CHECK( test::parse("123456", lit(i)));
-        BOOST_CHECK(!test::parse("123456", lit(-i)));
-        BOOST_CHECK( test::parse("+425", lit(425)));
-        BOOST_CHECK(!test::parse("+425", lit(17)));
-        BOOST_CHECK( test::parse("-2000", lit(-2000)));
-        BOOST_CHECK(!test::parse("-2000", lit(2000)));
-        BOOST_CHECK( test::parse(test::max_int, lit(INT_MAX)));
-        BOOST_CHECK(!test::parse(test::max_int, lit(INT_MIN)));
-
-        BOOST_CHECK( test::parse(test::min_int, lit(INT_MIN)));
-        BOOST_CHECK(!test::parse(test::min_int, lit(INT_MAX)));
-
-        BOOST_CHECK(!test::parse("-", lit(8451)));
-        BOOST_CHECK(!test::parse("+", lit(8451)));
-
-        // with leading zeros
-        BOOST_CHECK(test::parse("000000000098765", lit(98765)));
-}
-
-BOOST_AUTO_TEST_CASE(int_8)
-{
-	using boost::spirit::lit;
-        boost::long_long_type ll = 1234567890123456789LL;
-
-        BOOST_CHECK( test::parse("1234567890123456789", lit(1234567890123456789LL)));
-        BOOST_CHECK(!test::parse("1234567890123456789", lit(-19LL)));
-        BOOST_CHECK( test::parse("1234567890123456789", lit(ll)));
-        BOOST_CHECK(!test::parse("1234567890123456789", lit(-ll)));
-        BOOST_CHECK( test::parse("-100000000000000", lit(-100000000000000LL)));
-        BOOST_CHECK(!test::parse("-100000000000000", lit(3243515525263LL)));
-        BOOST_CHECK( test::parse(max_long_long, lit(LONG_LONG_MAX)));
-        BOOST_CHECK(!test::parse(max_long_long, lit(LONG_LONG_MIN)));
-
-        BOOST_CHECK( test::parse(min_long_long, lit(LONG_LONG_MIN)));
-        BOOST_CHECK(!test::parse(min_long_long, lit(LONG_LONG_MAX)));
-}
-
-BOOST_AUTO_TEST_CASE(int_9)
-{
-	using boost::spirit::lit;
-        short s = 12345;
-        long l = 1234567890L;
-
-        BOOST_CHECK( test::parse("12345",  lit(12345)));
-        BOOST_CHECK(!test::parse("12345",  lit(-12345)));
-        BOOST_CHECK( test::parse("12345",  lit(s)));
-        BOOST_CHECK(!test::parse("12345",  lit(-s)));
-        BOOST_CHECK( test::parse("-12345", lit(-12345)));
-        BOOST_CHECK(!test::parse("-12345", lit(12345)));
-        BOOST_CHECK( test::parse("-12345", lit(-s)));
-        BOOST_CHECK(!test::parse("-12345", lit(s)));
-
-        BOOST_CHECK( test::parse("1234567890",  lit(1234567890)));
-        BOOST_CHECK(!test::parse("1234567890",  lit(-1234567890)));
-        BOOST_CHECK( test::parse("1234567890",  lit(l)));
-        BOOST_CHECK(!test::parse("1234567890",  lit(-l)));
-        BOOST_CHECK( test::parse("-1234567890", lit(-1234567890)));
-        BOOST_CHECK(!test::parse("-1234567890", lit(1234567890)));
-        BOOST_CHECK( test::parse("-1234567890", lit(-l)));
-        BOOST_CHECK(!test::parse("-1234567890", lit(l)));
-}
-
-BOOST_AUTO_TEST_CASE(int_10)
-{
-	using boost::phoenix::ref;
-        using boost::spirit::qi::lit;
-        int n = 123, m = 321;
-
-        BOOST_CHECK(test::parse("123", lit(ref(n))));
-        BOOST_CHECK(!test::parse("123", lit(ref(m))));
-}
-
-
-
-
-
 
 #endif
 }}}}

@@ -65,6 +65,14 @@ struct make_primitive<repository::tag::short_, Modifiers>
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<is_same<A0, repository::value_wrapper<short>>>::type
+> : repository::qi::make_literal_numeric<
+	short, repository::qi::detail::int_policy<short>
+> {};
+      
+template <typename Modifiers, typename A0>
+struct make_primitive<
 	terminal_ex<repository::tag::short_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
 	short, repository::qi::detail::int_policy<short>
@@ -74,6 +82,14 @@ struct make_primitive<
 template <typename Modifiers>
 struct make_primitive<repository::tag::int_, Modifiers>
 : repository::qi::make_numeric<
+	int, repository::qi::detail::int_policy<int>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<is_same<A0, repository::value_wrapper<int>>>::type
+> : repository::qi::make_literal_numeric<
 	int, repository::qi::detail::int_policy<int>
 > {};
 
@@ -93,6 +109,14 @@ struct make_primitive<repository::tag::long_, Modifiers>
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<is_same<A0, repository::value_wrapper<long>>>::type
+> : repository::qi::make_literal_numeric<
+	long, repository::qi::detail::int_policy<long>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
 	terminal_ex<repository::tag::long_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
 	long, repository::qi::detail::int_policy<long>
@@ -102,6 +126,16 @@ struct make_primitive<
 template <typename Modifiers>
 struct make_primitive<repository::tag::long_long, Modifiers>
 : repository::qi::make_numeric<
+	long long, repository::qi::detail::int_policy<long long>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<
+		is_same<A0, repository::value_wrapper<long long>>
+	>::type
+> : repository::qi::make_literal_numeric<
 	long long, repository::qi::detail::int_policy<long long>
 > {};
 
@@ -122,6 +156,12 @@ struct use_terminal<
 
 template <typename A0>
 struct use_terminal<
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<is_same<A0, repository::value_wrapper<short>>>::type
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
 	qi::domain, terminal_ex<repository::tag::short_, fusion::vector1<A0>>
 > : is_arithmetic<A0> {};
 
@@ -134,6 +174,12 @@ struct use_lazy_terminal<
 template <>
 struct use_terminal<
 	qi::domain, repository::tag::int_
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<is_same<A0, repository::value_wrapper<int>>>::type
 > : mpl::true_ {};
 
 template <typename A0>
@@ -154,6 +200,12 @@ struct use_terminal<
 
 template <typename A0>
 struct use_terminal<
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<is_same<A0, repository::value_wrapper<long>>>::type
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
 	qi::domain, terminal_ex<repository::tag::long_, fusion::vector1<A0>>
 > : is_arithmetic<A0> {};
 
@@ -166,6 +218,14 @@ struct use_lazy_terminal<
 template <>
 struct use_terminal<
 	qi::domain, repository::tag::long_long
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<
+		is_same<A0, repository::value_wrapper<long long>>
+	>::type
 > : mpl::true_ {};
 
 template <typename A0>
