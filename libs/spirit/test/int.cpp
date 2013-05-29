@@ -22,15 +22,15 @@
 namespace boost { namespace spirit { namespace repository { namespace qi {
 namespace test {
 
-char const* max_int = "2147483647";
-char const* int_overflow = "2147483648";
-char const* min_int = "-2147483648";
-char const* int_underflow = "-2147483649";
+char const *max_int = "2147483647";
+char const *int_overflow = "2147483648";
+char const *min_int = "-2147483648";
+char const *int_underflow = "-2147483649";
 
-char const* max_long_long = "9223372036854775807";
-char const* long_long_overflow = "9223372036854775808";
-char const* min_long_long = "-9223372036854775808";
-char const* long_long_underflow = "-9223372036854775809";
+char const *max_long_long = "9223372036854775807";
+char const *long_long_overflow = "9223372036854775808";
+char const *min_long_long = "-9223372036854775808";
+char const *long_long_underflow = "-9223372036854775809";
 
 }
 
@@ -220,8 +220,8 @@ BOOST_AUTO_TEST_CASE(int_5)
 
 BOOST_AUTO_TEST_CASE(int_6)
 {
-	using boost::phoenix::ref;
 	using boost::spirit::_1;
+	using boost::phoenix::ref;
 	using boost::spirit::standard::space;
 	int n, m;
 
@@ -236,8 +236,8 @@ BOOST_AUTO_TEST_CASE(int_6)
 
 BOOST_AUTO_TEST_CASE(int_7)
 {
-	using boost::phoenix::ref;
 	using boost::spirit::_1;
+	using boost::phoenix::ref;
 	using boost::spirit::standard::space;
 
 	int n, m;
@@ -370,8 +370,8 @@ BOOST_AUTO_TEST_CASE(int_14)
 	using boost::spirit::qi::lit;
 	value_wrapper<int> n({123}), m({321});
 
-	BOOST_CHECK(test::parse("123", lit(ref(n))));
-	BOOST_CHECK(!test::parse("123", lit(ref(m))));
+	BOOST_CHECK(test::parse("123", lit(ref(_r(n)))));
+	BOOST_CHECK(!test::parse("123", lit(ref(_r(m)))));
 }
 
 BOOST_AUTO_TEST_CASE(int_15)
