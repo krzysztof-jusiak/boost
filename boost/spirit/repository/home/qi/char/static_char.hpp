@@ -17,6 +17,11 @@ struct static_char {
         BOOST_SPIRIT_IS_TAG()
 };
 
+template <typename CharFrom, typename CharTo, typename CharEncoding>
+struct static_char_range {
+        BOOST_SPIRIT_IS_TAG()
+};
+
 }
 
 namespace qi {
@@ -41,12 +46,41 @@ struct make_static_char {
 	}
 };
 
+template <
+	typename CharFrom, typename CharTo,
+	typename CharEncoding = spirit::char_encoding::standard
+>
+struct static_char_range : terminal<
+	tag::static_char_range<CharFrom, CharTo, CharEncoding>
+> {};
+
+template <typename CharFrom, typename CharTo, typename CharEncoding>
+struct make_static_char_range {
+	typedef typename CharEncoding::char_type char_type;
+
+	typedef typename spirit::qi::char_range<
+		CharEncoding, false
+	> result_type;
+
+	result_type operator()(unused_type, unused_type) const
+        {
+		return result_type(CharFrom::value, CharTo::value);
+	}
+};
+
 }
 }
 
 template <typename CharValue, typename CharEncoding>
 struct use_terminal<
 	qi::domain, repository::tag::static_char<CharValue, CharEncoding>
+> : mpl::true_ {};
+
+template <typename CharFrom, typename CharTo, typename CharEncoding>
+struct use_terminal<
+	qi::domain, repository::tag::static_char_range<
+		CharFrom, CharTo, CharEncoding
+	>
 > : mpl::true_ {};
 
 namespace qi {
@@ -56,6 +90,17 @@ struct make_primitive<
 	spirit::repository::tag::static_char<CharValue, CharEncoding>,
 	Modifiers
 > : spirit::repository::qi::make_static_char<CharValue, CharEncoding> {};
+
+template <
+	typename CharFrom, typename CharTo, typename CharEncoding,
+	typename Modifiers
+> struct make_primitive<
+	spirit::repository::tag::static_char_range<
+		CharFrom, CharTo, CharEncoding
+	>, Modifiers
+> : spirit::repository::qi::make_static_char_range<
+	CharFrom, CharTo, CharEncoding
+> {};
 
 }
 }}

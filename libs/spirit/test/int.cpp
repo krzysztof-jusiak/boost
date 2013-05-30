@@ -366,16 +366,6 @@ BOOST_AUTO_TEST_CASE(int_13)
 
 BOOST_AUTO_TEST_CASE(int_14)
 {
-	using boost::phoenix::ref;
-	using boost::spirit::qi::lit;
-	value_wrapper<int> n({123}), m({321});
-
-	BOOST_CHECK(test::parse("123", lit(ref(_r(n)))));
-	BOOST_CHECK(!test::parse("123", lit(ref(_r(m)))));
-}
-
-BOOST_AUTO_TEST_CASE(int_15)
-{
 	int i;
 	numeric_parser<
 		int,
@@ -408,7 +398,7 @@ BOOST_AUTO_TEST_CASE(int_15)
 }
 #if 0
 
-BOOST_AUTO_TEST_CASE(int_11)
+BOOST_AUTO_TEST_CASE(int_15)
 {
 	using boost::spirit::unused_type;
 	numeric_parser<unused_type, detail::int_policy<unused_type>> any_int;

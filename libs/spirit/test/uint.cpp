@@ -8,7 +8,7 @@
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 
-#define BOOST_CHECK_MODULE spirit
+#define BOOST_TEST_MODULE spirit
 #include <boost/test/included/unit_test.hpp>
 
 #include <boost/mpl/x11/insert.hpp>
@@ -49,12 +49,12 @@ BOOST_AUTO_TEST_CASE(uint_0)
 	BOOST_CHECK(test::parse_attr("123456", uint_, u));
 	BOOST_CHECK_EQUAL(u, 123456);
 
-	BOOST_CHECK(test::parse(max_unsigned, uint_));
-	BOOST_CHECK(test::parse_attr(max_unsigned, uint_, u));
+	BOOST_CHECK(test::parse(test::max_unsigned, uint_));
+	BOOST_CHECK(test::parse_attr(test::max_unsigned, uint_, u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(unsigned_overflow, uint_));
-	BOOST_CHECK(!test::parse_attr(unsigned_overflow, uint_, u));
+	BOOST_CHECK(!test::parse(test::unsigned_overflow, uint_));
+	BOOST_CHECK(!test::parse_attr(test::unsigned_overflow, uint_, u));
 }
 
 BOOST_AUTO_TEST_CASE(uint_1)
@@ -65,12 +65,12 @@ BOOST_AUTO_TEST_CASE(uint_1)
 	BOOST_CHECK(test::parse_attr("11111110", bin, u));
 	BOOST_CHECK_EQUAL(u, 0xFE);
 
-	BOOST_CHECK(test::parse(max_binary, bin));
-	BOOST_CHECK(test::parse_attr(max_binary, bin, u));
-	BOOST_CHECK(u, UINT_MAX);
+	BOOST_CHECK(test::parse(test::max_binary, bin));
+	BOOST_CHECK(test::parse_attr(test::max_binary, bin, u));
+	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(binary_overflow, bin));
-	BOOST_CHECK(!test::parse_attr(binary_overflow, bin, u));
+	BOOST_CHECK(!test::parse(test::binary_overflow, bin));
+	BOOST_CHECK(!test::parse_attr(test::binary_overflow, bin, u));
 }
 
 BOOST_AUTO_TEST_CASE(uint_2)
@@ -81,12 +81,12 @@ BOOST_AUTO_TEST_CASE(uint_2)
 	BOOST_CHECK(test::parse_attr("12545674515", oct, u));
 	BOOST_CHECK_EQUAL(u, 012545674515);
 
-	BOOST_CHECK(test::parse(max_octal, oct));
-	BOOST_CHECK(test::parse_attr(max_octal, oct, u));
-	BOOST_CHECK(u, UINT_MAX);
+	BOOST_CHECK(test::parse(test::max_octal, oct));
+	BOOST_CHECK(test::parse_attr(test::max_octal, oct, u));
+	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(octal_overflow, oct));
-	BOOST_CHECK(!test::parse_attr(octal_overflow, oct, u));
+	BOOST_CHECK(!test::parse(test::octal_overflow, oct));
+	BOOST_CHECK(!test::parse_attr(test::octal_overflow, oct, u));
 }
 
 BOOST_AUTO_TEST_CASE(uint_3)
@@ -101,12 +101,12 @@ BOOST_AUTO_TEST_CASE(uint_3)
 	BOOST_CHECK(test::parse_attr("abcdef12", hex, u));
 	BOOST_CHECK_EQUAL(u, 0xabcdef12);
 
-	BOOST_CHECK(test::parse(max_hex, hex));
-	BOOST_CHECK(test::parse_attr(max_hex, hex, u));
+	BOOST_CHECK(test::parse(test::max_hex, hex));
+	BOOST_CHECK(test::parse_attr(test::max_hex, hex, u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(hex_overflow, hex));
-	BOOST_CHECK(!test::parse_attr(hex_overflow, hex, u));
+	BOOST_CHECK(!test::parse(test::hex_overflow, hex));
+	BOOST_CHECK(!test::parse_attr(test::hex_overflow, hex, u));
 }
 
 BOOST_AUTO_TEST_CASE(uint_4)
@@ -123,8 +123,8 @@ BOOST_AUTO_TEST_CASE(uint_4)
 		>::type
 	> uint3;
 
-	BOOST_CHECK(test::parse("123456", uint3, false));
-	BOOST_CHECK(test::parse_attr("123456", uint3, u, false));
+	BOOST_CHECK(!test::parse("123456", uint3));
+	BOOST_CHECK(test::parse_attr("123", uint3, u));
 	BOOST_CHECK_EQUAL(u, 123);
 
 	numeric_parser<
@@ -137,12 +137,10 @@ BOOST_AUTO_TEST_CASE(uint_4)
 		>::type
 	> uint4;
 
-	BOOST_CHECK(test::parse("123456", uint4, false));
-	BOOST_CHECK(test::parse_attr("123456", uint4, u, false));
+	BOOST_CHECK(!test::parse("1", uint4));
+	BOOST_CHECK(!test::parse("123456", uint4));
+	BOOST_CHECK(test::parse_attr("1234", uint4, u));
 	BOOST_CHECK_EQUAL(u, 1234);
-
-	char const *first = "0000000";
-	char const *last  = first + std::strlen(first);
 
 	numeric_parser<
 		unsigned int,
@@ -154,22 +152,10 @@ BOOST_AUTO_TEST_CASE(uint_4)
 		>::type
 	> uint_exact4;
 
-	BOOST_CHECK(qi::parse(first, last, uint_exact4, u));
-	BOOST_CHECK(first != last);
-	BOOST_CHECK_EQUAL(last - first, 3);
-	BOOST_CHECK_EQUAL(u, 0);
-
-	first = "0001400";
-	last  = first + std::strlen(first);
-	BOOST_CHECK(qi::parse(first, last, uint_exact4, u));
-	BOOST_CHECK(first != last);
-	BOOST_CHECK_EQUAL(last - first, 3);
-	BOOST_CHECK_EQUAL(u, 1);
-
-	BOOST_CHECK(!test::parse("1", uint4));
-	BOOST_CHECK(!test::parse_attr("1", uint4, u));
-	BOOST_CHECK(test::parse_attr("014567", uint4, u, false));
-	BOOST_CHECK_EQUAL(u, 145);
+	BOOST_CHECK(test::parse_attr("1234", uint_exact4, u));
+	BOOST_CHECK_EQUAL(u, 1234);
+	BOOST_CHECK(!test::parse("12345", uint_exact4));
+	BOOST_CHECK(!test::parse("123", uint_exact4));
 }
 
 BOOST_AUTO_TEST_CASE(uint_5)
@@ -249,7 +235,7 @@ BOOST_AUTO_TEST_CASE(uint_8)
 BOOST_AUTO_TEST_CASE(uint_9)
 {
 	using boost::spirit::lit;
-	long long ll = 1234567890123456789ULL;
+	unsigned long long ll = 1234567890123456789ULL;
 
 	BOOST_CHECK(test::parse(                                       \
 		"1234567890123456789", lit(_r(1234567890123456789ULL)) \
@@ -264,25 +250,17 @@ BOOST_AUTO_TEST_CASE(uint_9)
 BOOST_AUTO_TEST_CASE(uint_10)
 {
 	unsigned short s = 12345;
-	unsigned long l = 1234567890L;
+	unsigned long l = 1234567890UL;
 
 	BOOST_CHECK(test::parse("12345", lit(_r(s))));
-	BOOST_CHECK(!test::parse("12345", lit(_r(s - 1))));
+	BOOST_CHECK(!test::parse("12345", lit(_r<unsigned short>(s - 1))));
 	BOOST_CHECK(test::parse("1234567890", lit(_r(1234567890UL))));
 	BOOST_CHECK(!test::parse("1234567890", lit(_r(98765321UL))));
 	BOOST_CHECK(test::parse("1234567890", lit(_r(l))));
-	BOOST_CHECK(!test::parse("1234567890", lit(_r(l - 1))));
+	BOOST_CHECK(!test::parse("1234567890", lit(_r(l - 1UL))));
 }
 
 BOOST_AUTO_TEST_CASE(uint_11)
-{
-	unsigned int n = 123, m = 321;
-
-	BOOST_CHECK(test::parse("123", lit(ref(_r(n)))));
-	BOOST_CHECK(!test::parse("123", lit(ref(_r(m)))));
-}
-
-BOOST_AUTO_TEST_CASE(uint_12)
 {
 	unsigned int u;
 
@@ -292,12 +270,12 @@ BOOST_AUTO_TEST_CASE(uint_12)
 	BOOST_CHECK_EQUAL(u, 123456);
 	BOOST_CHECK(!test::parse_attr("123456", uint_(654321), u));
 
-	BOOST_CHECK(test::parse(max_unsigned, uint_(UINT_MAX)));
-	BOOST_CHECK(test::parse_attr(max_unsigned, uint_(UINT_MAX), u));
+	BOOST_CHECK(test::parse(test::max_unsigned, uint_(UINT_MAX)));
+	BOOST_CHECK(test::parse_attr(test::max_unsigned, uint_(UINT_MAX), u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 
-BOOST_AUTO_TEST_CASE(uint_13)
+BOOST_AUTO_TEST_CASE(uint_12)
 {
 	unsigned int u;
 
@@ -312,7 +290,7 @@ BOOST_AUTO_TEST_CASE(uint_13)
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 
-BOOST_AUTO_TEST_CASE(uint_14)
+BOOST_AUTO_TEST_CASE(uint_13)
 {
 	unsigned int u;
 
@@ -325,7 +303,7 @@ BOOST_AUTO_TEST_CASE(uint_14)
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 
-BOOST_AUTO_TEST_CASE(uint_15)
+BOOST_AUTO_TEST_CASE(uint_14)
 {
 	unsigned int u;
 
@@ -346,7 +324,7 @@ BOOST_AUTO_TEST_CASE(uint_15)
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 #if 0
-BOOST_AUTO_TEST_CASE(uint_16)
+BOOST_AUTO_TEST_CASE(uint_15)
 {
 	custom_uint u;
 

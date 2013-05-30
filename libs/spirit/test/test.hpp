@@ -18,7 +18,7 @@ namespace boost { namespace spirit { namespace repository { namespace qi {
 namespace test {
 
 template <typename Char, typename Parser>
-bool parse(Char const* in, Parser const& p, bool full_match = true)
+bool parse(Char const* in, Parser const& p)
 {
 	// we don't care about the result of the "what" function.
 	// we only care that all parsers have it:
@@ -27,14 +27,12 @@ bool parse(Char const* in, Parser const& p, bool full_match = true)
 	Char const* last = in;
 	while (*last)
 		last++;
-	return boost::spirit::qi::parse(in, last, p)
-		&& (!full_match || (in == last));
+	return boost::spirit::qi::parse(in, last, p);
 }
 
 template <typename Char, typename Parser, typename Skipper>
 bool parse(
-	Char const* in, Parser const& p, Skipper const& s,
-	bool full_match = true
+	Char const* in, Parser const& p, Skipper const& s
 )
 {
 	// we don't care about the result of the "what" function.
@@ -44,13 +42,12 @@ bool parse(
 	Char const* last = in;
 	while (*last)
 		last++;
-	return boost::spirit::qi::phrase_parse(in, last, p, s)
-		&& (!full_match || (in == last));
+	return boost::spirit::qi::phrase_parse(in, last, p, s);
 }
 
 template <typename Char, typename Parser, typename Attr>
 bool parse_attr(
-	Char const* in, Parser const& p, Attr& attr, bool full_match = true
+	Char const* in, Parser const& p, Attr& attr
 )
 {
 	// we don't care about the result of the "what" function.
@@ -60,14 +57,12 @@ bool parse_attr(
 	Char const* last = in;
 	while (*last)
 		last++;
-	return boost::spirit::qi::parse(in, last, p, attr)
-		&& (!full_match || (in == last));
+	return boost::spirit::qi::parse(in, last, p, attr);
 }
 
 template <typename Char, typename Parser, typename Attr, typename Skipper>
 bool parse_attr(
-	Char const* in, Parser const& p, Attr& attr, Skipper const& s,
-	bool full_match = true
+	Char const* in, Parser const& p, Attr& attr, Skipper const& s
 )
 {
 	// we don't care about the result of the "what" function.
@@ -77,8 +72,7 @@ bool parse_attr(
 	Char const* last = in;
 	while (*last)
 		last++;
-	return boost::spirit::qi::phrase_parse(in, last, p, s, attr)
-		&& (!full_match || (in == last));
+	return boost::spirit::qi::phrase_parse(in, last, p, s, attr);
 }
 
 struct printer {
