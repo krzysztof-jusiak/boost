@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(uint_6)
 }
 
 
-BOOST_AUTO_TEST_CASE(uint_8)
+BOOST_AUTO_TEST_CASE(uint_7)
 {
 	using boost::spirit::lit;
 	unsigned int i = 123456;
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(uint_8)
 	BOOST_CHECK(!test::parse("123456", lit(_r(i - 1U))));
 }
 
-BOOST_AUTO_TEST_CASE(uint_9)
+BOOST_AUTO_TEST_CASE(uint_8)
 {
 	using boost::spirit::lit;
 	unsigned long long ll = 1234567890123456789ULL;
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(uint_9)
 	));
 }
 
-BOOST_AUTO_TEST_CASE(uint_10)
+BOOST_AUTO_TEST_CASE(uint_9)
 {
 	unsigned short s = 12345;
 	unsigned long l = 1234567890UL;
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(uint_10)
 	BOOST_CHECK(!test::parse("1234567890", lit(_r(l - 1UL))));
 }
 
-BOOST_AUTO_TEST_CASE(uint_11)
+BOOST_AUTO_TEST_CASE(uint_10)
 {
 	unsigned int u;
 
@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE(uint_11)
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 
-BOOST_AUTO_TEST_CASE(uint_12)
+BOOST_AUTO_TEST_CASE(uint_11)
 {
 	unsigned int u;
 
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(uint_12)
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 
-BOOST_AUTO_TEST_CASE(uint_13)
+BOOST_AUTO_TEST_CASE(uint_12)
 {
 	unsigned int u;
 
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(uint_13)
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
 
-BOOST_AUTO_TEST_CASE(uint_14)
+BOOST_AUTO_TEST_CASE(uint_13)
 {
 	unsigned int u;
 
@@ -323,6 +323,27 @@ BOOST_AUTO_TEST_CASE(uint_14)
 	BOOST_CHECK(test::parse_attr(test::max_hex, hex(UINT_MAX), u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 }
+
+BOOST_AUTO_TEST_CASE(uint_14)
+{
+	numeric_parser<
+		unsigned int,
+		typename mpl::x11::insert<
+			detail::uint_policy<unsigned int>,
+			mpl::x11::pair<
+				with_filter, test::ts_filter
+			>
+		>::type
+	> uint_ts;
+
+	BOOST_CHECK(test::parse("1,234,567,890", uint_ts));
+	BOOST_CHECK(test::parse("12,345,678,900", uint_ts));
+	BOOST_CHECK(test::parse("123,456,789,000", uint_ts));
+	BOOST_CHECK(!test::parse("1000,234,567,890", uint_ts));
+	BOOST_CHECK(!test::parse("1,234,56,890", uint_ts));
+	BOOST_CHECK(!test::parse("1,66", uint_ts));
+}
+
 #if 0
 BOOST_AUTO_TEST_CASE(uint_15)
 {
