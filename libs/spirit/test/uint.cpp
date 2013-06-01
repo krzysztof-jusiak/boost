@@ -39,6 +39,34 @@ char const *octal_overflow = "100000000000";
 char const *max_hex = "FFFFFFFF";
 char const *hex_overflow = "100000000";
 
+struct ts_filter {
+	bool first_group = true;
+
+	template <typename Iterator>
+	bool operator()(Iterator &first, Iterator const &last, int count)
+	{
+		switch (count) {
+		case 0:
+			return true;
+		case 1:
+		case 2:
+			if (!first_group)
+				return false;
+			first_group = false;
+		case 3:
+			if (first == last)
+				return true;
+			else if (*first == ',') {
+				++first;
+				return true;
+			}
+		default:
+			return false;
+		};
+	}
+
+};
+
 }
 
 BOOST_AUTO_TEST_CASE(uint_0)
@@ -113,49 +141,61 @@ BOOST_AUTO_TEST_CASE(uint_4)
 {
 	unsigned int u;
 
-	numeric_parser<
-		unsigned int,
-		typename mpl::x11::insert<
-			detail::uint_policy<unsigned int>,
-			mpl::x11::pair<
-				with_filter, detail::length_filter<1, 3>
+	numeric_parser<unsigned int, mpl::x11::map<
+		mpl::x11::pair<with_extractor, standard::digit_type>,
+		mpl::x11::pair<
+			with_integral,
+			detail::fixed_small_radix_integral<
+				unsigned int, 10, 3
 			>
-		>::type
-	> uint3;
+		>,
+		mpl::x11::pair<with_filter, detail::length_filter<1>>
+	>> uint3;
 
-	BOOST_CHECK(!test::parse("123456", uint3));
-	BOOST_CHECK(test::parse_attr("123", uint3, u));
+	BOOST_CHECK(test::parse_attr("123456", uint3, u));
 	BOOST_CHECK_EQUAL(u, 123);
 
-	numeric_parser<
-		unsigned int,
-		typename mpl::x11::insert<
-			detail::uint_policy<unsigned int>,
-			mpl::x11::pair<
-				with_filter, detail::length_filter<2, 4>
+	numeric_parser<unsigned int, mpl::x11::map<
+		mpl::x11::pair<with_extractor, standard::digit_type>,
+		mpl::x11::pair<
+			with_integral,
+			detail::fixed_small_radix_integral<
+				unsigned int, 10, 4
 			>
-		>::type
-	> uint4;
+		>,
+		mpl::x11::pair<with_filter, detail::length_filter<2>>
+	>> uint4;
 
+	BOOST_CHECK(test::parse_attr("123456", uint4, u));
+	BOOST_CHECK_EQUAL(u, 1234);
 	BOOST_CHECK(!test::parse("1", uint4));
-	BOOST_CHECK(!test::parse("123456", uint4));
-	BOOST_CHECK(test::parse_attr("1234", uint4, u));
-	BOOST_CHECK_EQUAL(u, 1234);
+	BOOST_CHECK(test::parse_attr("014567", uint4, u));
+	BOOST_CHECK_EQUAL(u, 145);
 
-	numeric_parser<
-		unsigned int,
-		typename mpl::x11::insert<
-			detail::uint_policy<unsigned int>,
-			mpl::x11::pair<
-				with_filter, detail::length_filter<4, 4>
+	numeric_parser<unsigned int, mpl::x11::map<
+		mpl::x11::pair<with_extractor, standard::digit_type>,
+		mpl::x11::pair<
+			with_integral,
+			detail::fixed_small_radix_integral<
+				unsigned int, 10, 4
 			>
-		>::type
-	> uint_exact4;
+		>,
+		mpl::x11::pair<with_filter, detail::length_filter<4>>
+	>> uint_exact4;
 
-	BOOST_CHECK(test::parse_attr("1234", uint_exact4, u));
-	BOOST_CHECK_EQUAL(u, 1234);
-	BOOST_CHECK(!test::parse("12345", uint_exact4));
-	BOOST_CHECK(!test::parse("123", uint_exact4));
+	char const *first = "0000000";
+	char const *last  = first + std::strlen(first);
+	BOOST_CHECK(spirit::qi::parse(first, last, uint_exact4, u));
+	BOOST_CHECK(first != last);
+	BOOST_CHECK_EQUAL(last - first, 3);
+	BOOST_CHECK_EQUAL(u, 0);
+
+	first = "0001400";
+	last  = first + std::strlen(first);
+	BOOST_CHECK(spirit::qi::parse(first, last, uint_exact4, u));
+	BOOST_CHECK(first != last);
+	BOOST_CHECK_EQUAL(last - first, 3);
+	BOOST_CHECK_EQUAL(u, 1);
 }
 
 BOOST_AUTO_TEST_CASE(uint_5)
@@ -327,18 +367,23 @@ BOOST_AUTO_TEST_CASE(uint_13)
 BOOST_AUTO_TEST_CASE(uint_14)
 {
 	numeric_parser<
-		unsigned int,
+		unsigned long long,
 		typename mpl::x11::insert<
-			detail::uint_policy<unsigned int>,
+			detail::uint_policy<unsigned long long>,
 			mpl::x11::pair<
 				with_filter, test::ts_filter
 			>
 		>::type
 	> uint_ts;
 
-	BOOST_CHECK(test::parse("1,234,567,890", uint_ts));
-	BOOST_CHECK(test::parse("12,345,678,900", uint_ts));
-	BOOST_CHECK(test::parse("123,456,789,000", uint_ts));
+	unsigned long long u;
+
+	BOOST_CHECK(test::parse_attr("1,234,567,890", uint_ts, u));
+	BOOST_CHECK_EQUAL(u, 1234567890ULL);
+	BOOST_CHECK(test::parse_attr("12,345,678,900", uint_ts, u));
+	BOOST_CHECK_EQUAL(u, 12345678900ULL);
+	BOOST_CHECK(test::parse_attr("123,456,789,000", uint_ts, u));
+	BOOST_CHECK_EQUAL(u, 123456789000ULL);
 	BOOST_CHECK(!test::parse("1000,234,567,890", uint_ts));
 	BOOST_CHECK(!test::parse("1,234,56,890", uint_ts));
 	BOOST_CHECK(!test::parse("1,66", uint_ts));

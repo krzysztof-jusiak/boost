@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(real_3)
 		typename mpl::x11::insert<
 			detail::real_policy<double>,
 			mpl::x11::pair<
-				with_flags, mpl::x11::set<no_trailing_dot>
+				with_flags, mpl::x11::set<flag::no_trailing_dot>
 			>
 		>::type
 	> notrdot_real;
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(real_3)
 		typename mpl::x11::insert<
 			detail::real_policy<double>,
 			mpl::x11::pair<
-				with_flags, mpl::x11::set<no_leading_dot>
+				with_flags, mpl::x11::set<flag::no_leading_dot>
 			>
 		>::type
 	> nolddot_real;

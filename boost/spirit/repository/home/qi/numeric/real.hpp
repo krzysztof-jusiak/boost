@@ -9,236 +9,204 @@
 #if !defined(SPIRIT_REPOSITORY_QI_REAL_MAR_13_2013_2300)
 #define SPIRIT_REPOSITORY_QI_REAL_MAR_13_2013_2300
 
-#if defined(_MSC_VER)
-#pragma once
-#endif
-
+#include <boost/mpl/x11/map.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
-#include <boost/spirit/repository/home/qi/numeric/real_policy.hpp>
-#include <boost/mpl/set.hpp>
-
-namespace boost { namespace spirit { namespace repository { namespace qi
-{
-
-using repository::double_type;
-using repository::double_;
-
-///////////////////////////////////////////////////////////////////////
-// This is the class that the user can instantiate directly in
-// order to create a customized real parser
-template <
-	typename T = double,
-	typename Policy = typename detail::real_policy<T>::type
-> struct real_parser : spirit::terminal<
-	boost::spirit::tag::stateful_tag<Policy, repository::tag::double_, T>
-> {
-	typedef boost::spirit::tag::stateful_tag<
-		Policy, repository::tag::double_, T
-	> tag_type;
-
-	real_parser() {}
-
-	real_parser(Policy const &p) : spirit::terminal<tag_type>(p) {}
-};
-
-}}}}
+#include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
 namespace boost { namespace spirit {
-///////////////////////////////////////////////////////////////////////////
-// Enablers
-///////////////////////////////////////////////////////////////////////////
-template <> // enables float_
-struct use_terminal<qi::domain, repository::tag::float_>
-: mpl::true_ {};
+namespace repository {
+namespace tag {
 
-template <> // enables double_
-struct use_terminal<qi::domain, repository::tag::double_>
-: mpl::true_ {};
+struct float_ { BOOST_SPIRIT_IS_TAG() };
+struct double_ { BOOST_SPIRIT_IS_TAG() };
+struct long_double { BOOST_SPIRIT_IS_TAG() };
 
-template <> // enables long_double
-struct use_terminal<qi::domain, repository::tag::long_double>
-: mpl::true_ {};
+}
 
-///////////////////////////////////////////////////////////////////////////
-template <typename A0> // enables lit(n)
+namespace qi {
+namespace detail {
+
+template <typename T>
+using real_policy = mpl::x11::map<
+	mpl::x11::pair<with_extractor, standard::digit_type>,
+	mpl::x11::pair<with_integral, unchecked_small_radix_integral<T, 10>>,
+	mpl::x11::pair<
+		with_sign, default_sign<char_encoding::standard::char_type>
+	>,
+	mpl::x11::pair<with_fractional, mpl::x11::pair<
+		static_char<mpl::x11::integral_constant<
+			char_encoding::standard::char_type, '.'
+		>>, unchecked_small_radix_fraction<T, 10>
+	>>,
+	mpl::x11::pair<with_exponent, mpl::x11::pair<
+		default_exponent_separator<char_encoding::standard::char_type>,
+		unchecked_small_radix_exponent<T, 10>
+	>>
+>;
+
+}
+
+typedef terminal<tag::float_> float_type;
+typedef terminal<tag::double_> double_type;
+typedef terminal<tag::long_double> long_double_type;
+
+float_type const float_ = float_type();
+double_type const double_ = double_type();
+long_double_type const long_double = long_double_type();
+
+}
+}
+
+namespace qi {
+
+/*** float_ ***/
+template <typename Modifiers>
+struct make_primitive<repository::tag::float_, Modifiers>
+: repository::qi::make_numeric<
+	float, repository::qi::detail::real_policy<float>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<is_same<
+		A0, repository::value_wrapper<float>
+	>>::type
+> : repository::qi::make_literal_numeric<
+	float, repository::qi::detail::real_policy<float>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<repository::tag::float_, fusion::vector1<A0>>, Modifiers
+> : repository::qi::make_direct_numeric<
+	float, repository::qi::detail::real_policy<float>
+> {};
+
+/*** double_ ***/
+template <typename Modifiers>
+struct make_primitive<repository::tag::double_, Modifiers>
+: repository::qi::make_numeric<
+	double, repository::qi::detail::real_policy<double>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<is_same<
+		A0, repository::value_wrapper<double>
+	>>::type
+> : repository::qi::make_literal_numeric<
+	double, repository::qi::detail::real_policy<double>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<repository::tag::double_, fusion::vector1<A0>>, Modifiers
+> : repository::qi::make_direct_numeric<
+	double, repository::qi::detail::real_policy<double>
+> {};
+
+/*** long_double ***/
+template <typename Modifiers>
+struct make_primitive<repository::tag::long_double, Modifiers>
+: repository::qi::make_numeric<
+	long double, repository::qi::detail::real_policy<long double>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
+	typename enable_if<is_same<
+		A0, repository::value_wrapper<long double>
+	>>::type
+> : repository::qi::make_literal_numeric<
+	long double, repository::qi::detail::real_policy<long double>
+> {};
+
+template <typename Modifiers, typename A0>
+struct make_primitive<
+	terminal_ex<repository::tag::long_double, fusion::vector1<A0>>,
+	Modifiers
+> : repository::qi::make_direct_numeric<
+	long double, repository::qi::detail::real_policy<long double>
+> {};
+
+}
+
+/*** enable float_ ***/
+template <>
 struct use_terminal<
-	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0> >,
-	typename enable_if<is_same<A0, float> >::type
+	qi::domain, repository::tag::float_
 > : mpl::true_ {};
 
-template <typename A0> // enables lit(n)
+template <typename A0>
 struct use_terminal<
-	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0> >,
-	typename enable_if<is_same<A0, double> >::type
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<is_same<
+		A0, repository::value_wrapper<float>
+	>>::type
 > : mpl::true_ {};
 
-template <typename A0> // enables lit(n)
+template <typename A0>
 struct use_terminal<
-	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0> >,
-	typename enable_if<is_same<A0, long double> >::type
-> : mpl::true_ {};
+	qi::domain, terminal_ex<repository::tag::float_, fusion::vector1<A0>>
+> : is_arithmetic<A0> {};
 
-///////////////////////////////////////////////////////////////////////////
-template <typename A0> // enables float_(...)
-struct use_terminal<
-	qi::domain, terminal_ex<repository::tag::float_, fusion::vector1<A0> >
-> : mpl::true_ {};
-
-template <typename A0> // enables double_(...)
-struct use_terminal<
-	qi::domain, terminal_ex<repository::tag::double_, fusion::vector1<A0> >
-> : mpl::true_ {};
-
-template <typename A0> // enables long_double(...)
-struct use_terminal<
-	qi::domain, terminal_ex<
-		repository::tag::long_double, fusion::vector1<A0>
-	>
-> : mpl::true_ {};
-
-template <> // enables *lazy* float_(...)
-struct use_lazy_terminal<qi::domain, repository::tag::float_, 1>
-: mpl::true_ {};
-
-template <> // enables *lazy* double_(...)
-struct use_lazy_terminal<qi::domain, repository::tag::double_, 1>
-: mpl::true_ {};
-
-template <> // enables *lazy* long_double_(...)
-struct use_lazy_terminal<qi::domain, repository::tag::long_double, 1>
-: mpl::true_ {};
-
-///////////////////////////////////////////////////////////////////////////
-// enables custom real_parser
-template <typename T, typename Policy>
-struct use_terminal<
-	qi::domain, tag::stateful_tag<Policy, repository::tag::double_, T>
-> : mpl::true_ {};
-
-// enables custom real_parser(...)
-template <typename T, typename Policy, typename A0>
-struct use_terminal<qi::domain, terminal_ex<
-		tag::stateful_tag<
-			Policy, repository::tag::double_, T
-		>, fusion::vector1<A0>
-> > : mpl::true_ {};
-
-// enables *lazy* custom real_parser(...)
-template <typename T, typename Policy>
+template <>
 struct use_lazy_terminal<
+	qi::domain, repository::tag::float_, 1
+> : mpl::true_ {};
+
+/*** enable double_ ***/
+template <>
+struct use_terminal<
+	qi::domain, repository::tag::double_
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<is_same<
+		A0, repository::value_wrapper<double>
+	>>::type
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
+	qi::domain, terminal_ex<repository::tag::double_, fusion::vector1<A0>>
+> : is_arithmetic<A0> {};
+
+template <>
+struct use_lazy_terminal<
+	qi::domain, repository::tag::double_, 1
+> : mpl::true_ {};
+
+/*** enable long_double ***/
+template <>
+struct use_terminal<
+	qi::domain, repository::tag::long_double
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
+	qi::domain, terminal_ex<tag::lit, fusion::vector1<A0>>,
+	typename enable_if<is_same<
+		A0, repository::value_wrapper<long double>
+	>>::type
+> : mpl::true_ {};
+
+template <typename A0>
+struct use_terminal<
 	qi::domain,
-	tag::stateful_tag<Policy, repository::tag::double_, T>, 1 // arity
+	terminal_ex<repository::tag::long_double, fusion::vector1<A0>>
+> : is_arithmetic<A0> {};
+
+template <>
+struct use_lazy_terminal<
+	qi::domain, repository::tag::long_double, 1
 > : mpl::true_ {};
 
 }}
-
-namespace boost { namespace spirit { namespace qi {
-///////////////////////////////////////////////////////////////////////////
-// Parser generators: make_xxx function (objects)
-///////////////////////////////////////////////////////////////////////////
-template <
-	typename T,
-	typename Policy = typename repository::qi::detail::real_policy<T>::type
-> struct make_real {
-	typedef repository::qi::numeric_parser<T, Policy> result_type;
-
-	result_type operator()(unused_type, unused_type) const
-	{
-		return result_type();
-	}
-};
-
-template <
-	typename T,
-	typename Policy = typename repository::qi::detail::real_policy<T>::type
-> struct make_direct_real {
-	typedef repository::qi::literal_numeric_parser<T, Policy, false>
-	result_type;
-
-	template <typename Terminal>
-	result_type operator()(Terminal const& term, unused_type) const
-	{
-		return result_type(T(fusion::at_c<0>(term.args)));
-	}
-};
-
-template <
-	typename T,
-	typename Policy = typename repository::qi::detail::real_policy<T>::type
-> struct make_literal_real {
-	typedef repository::qi::literal_numeric_parser<T, Policy> result_type;
-
-	template <typename Terminal>
-	result_type operator()(Terminal const& term, unused_type) const
-	{
-		return result_type(fusion::at_c<0>(term.args));
-	}
-};
-
-///////////////////////////////////////////////////////////////////////////
-template <typename Modifiers, typename A0>
-struct make_primitive<
-	terminal_ex<tag::lit, fusion::vector1<A0> >, Modifiers,
-	typename enable_if<is_same<A0, float> >::type
-> : make_literal_real<float> {};
-
-template <typename Modifiers, typename A0>
-struct make_primitive<
-	terminal_ex<tag::lit, fusion::vector1<A0> >, Modifiers,
-	typename enable_if<is_same<A0, double> >::type
-> : make_literal_real<double> {};
-
-template <typename Modifiers, typename A0>
-struct make_primitive<
-	terminal_ex<tag::lit, fusion::vector1<A0> >, Modifiers,
-	typename enable_if<is_same<A0, long double> >::type
-> : make_literal_real<long double> {};
-
-///////////////////////////////////////////////////////////////////////////
-template <typename T, typename Policy, typename Modifiers>
-struct make_primitive<
-	tag::stateful_tag<Policy, repository::tag::double_, T>, Modifiers
-> : make_real<T, Policy> {};
-
-template <typename T, typename Policy, typename A0, typename Modifiers>
-struct make_primitive<
-	terminal_ex<
-		tag::stateful_tag<Policy, repository::tag::double_, T>,
-		fusion::vector1<A0>
-	>, Modifiers
-> : make_direct_real<T, Policy> {};
-
-///////////////////////////////////////////////////////////////////////////
-template <typename Modifiers>
-struct make_primitive<repository::tag::float_, Modifiers> : make_real<float> {};
-
-template <typename Modifiers, typename A0>
-struct make_primitive<
-	terminal_ex<repository::tag::float_, fusion::vector1<A0> >, Modifiers
-> : make_direct_real<float> {};
-
-///////////////////////////////////////////////////////////////////////////
-template <typename Modifiers>
-struct make_primitive<repository::tag::double_, Modifiers>
-: make_real<double> {};
-
-template <typename Modifiers, typename A0>
-struct make_primitive<
-	terminal_ex<repository::tag::double_, fusion::vector1<A0> >, Modifiers
-> : make_direct_real<double> {};
-
-///////////////////////////////////////////////////////////////////////////
-template <typename Modifiers>
-struct make_primitive<repository::tag::long_double, Modifiers>
-: make_real<long double> {};
-
-template <typename Modifiers, typename A0>
-struct make_primitive<
-	terminal_ex<
-		repository::tag::long_double, fusion::vector1<A0>
-	>, Modifiers
-> : make_direct_real<long double> {};
-
-}}}
 
 #endif

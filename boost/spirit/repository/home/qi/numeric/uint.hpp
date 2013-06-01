@@ -34,7 +34,7 @@ namespace detail {
 template <typename T>
 using uint_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral, small_radix_inserter<T, 10>>
+	mpl::x11::pair<with_integral, small_radix_integral<T, 10>>
 >;
 
 template <typename T>
@@ -46,7 +46,7 @@ using bin_policy = mpl::x11::map<
 			char_encoding::standard
 		>
 	>,
-	mpl::x11::pair<with_integral, small_radix_inserter<T, 2>>
+	mpl::x11::pair<with_integral, small_radix_integral<T, 2>>
 >;
 
 template <typename T>
@@ -58,13 +58,13 @@ using oct_policy = mpl::x11::map<
 			char_encoding::standard
 		>
 	>,
-	mpl::x11::pair<with_integral, small_radix_inserter<T, 8>>
+	mpl::x11::pair<with_integral, small_radix_integral<T, 8>>
 >;
 
 template <typename T>
 using hex_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::xdigit_type>,
-	mpl::x11::pair<with_integral, hex_inserter<T>>
+	mpl::x11::pair<with_integral, hex_integral<T>>
 >;
 
 }
@@ -106,7 +106,7 @@ struct make_primitive<
 		A0, repository::value_wrapper<unsigned short>
 	>>::type
 > : repository::qi::make_literal_numeric<
-        unsigned short, repository::qi::detail::uint_policy<unsigned short>
+	unsigned short, repository::qi::detail::uint_policy<unsigned short>
 > {};
 
 template <typename Modifiers, typename A0>

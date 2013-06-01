@@ -16,6 +16,7 @@
 
 #include <limits>
 #include <boost/static_assert.hpp>
+#include <boost/spirit/repository/home/support/radix_pow.hpp>
 #include <boost/spirit/repository/home/qi/char/static_char.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
 
@@ -40,7 +41,7 @@ value_wrapper<T> _r(T v)
 namespace qi { namespace detail {
 
 template <typename T>
-struct hex_inserter {
+struct hex_integral {
 	template <typename CharType>
 	static T hex_digit(CharType in)
 	{
@@ -71,11 +72,91 @@ struct hex_inserter {
 
 };
 
-template <typename T, T Radix, bool Negative = false>
-struct unchecked_small_radix_inserter {
-	typedef unchecked_small_radix_inserter<
+template <typename T, unsigned int Radix>
+struct unchecked_small_radix_integral {
+	typedef unchecked_small_radix_integral<
+		T, Radix
+	> opposite_type;
+
+	template <typename CharType>
+	bool operator()(CharType in, T &out)
+	{
+		out = (out * Radix) + T(in & 0xf);
+		return true;
+	}
+
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+};
+
+template <typename T, unsigned int Radix>
+struct unchecked_small_radix_fraction {
+
+	T pos = Radix;
+
+	template <typename CharType>
+	bool operator()(CharType in, T &out)
+	{
+		out += T(in & 0xf) / pos;
+		pos *= Radix;
+		return true;
+	}
+
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+};
+
+template <typename T, unsigned int Radix, bool Negative = false>
+struct unchecked_small_radix_exponent {
+	typedef unchecked_small_radix_exponent<
 		T, Radix, !Negative
-	>opposite_inserter;
+	> opposite_type;
+
+	template <typename CharType, bool Negative_ = false>
+	struct impl {
+		unsigned int last = 0;
+
+		bool operator()(CharType in, T &out)
+		{
+			unsigned int digit(in & 0xf);
+			unsigned int next = last * Radix + digit;
+
+			out *= radix_pow<T, Radix>(next - last);
+			last = next;
+			return true;
+		}
+
+	};
+
+	template <typename CharType>
+	struct impl<CharType, true> {
+		unsigned int last = 0;
+
+		bool operator()(CharType in, T &out)
+		{
+			unsigned int digit(in & 0xf);
+			unsigned int next = last * Radix + digit;
+
+			out /= radix_pow<T, Radix>(next - last);
+			last = next;
+			return true;
+		}
+	};
+
+	template <typename CharType>
+	bool operator()(CharType in, T &out)
+	{
+		return impl<CharType, Negative>()(in, out);
+	}
+
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+};
+
+template <typename T, unsigned int Radix, int MaxDigits, bool Negative = false>
+struct fixed_small_radix_integral {
+	typedef fixed_small_radix_integral<
+		T, Radix, MaxDigits, !Negative
+	> opposite_type;
+
+	int pos = 0;
 
 	template <typename CharType, bool Negative_ = false>
 	struct impl {
@@ -102,15 +183,18 @@ struct unchecked_small_radix_inserter {
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
-		return impl<CharType, Negative>()(in, out);
+		if (pos++ >= MaxDigits)
+			return false;
+		else
+			return impl<CharType, Negative>()(in, out);
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
 };
 
 template <typename T, T Radix, bool Negative = false>
-struct small_radix_inserter {
-	typedef small_radix_inserter<T, Radix, !Negative> opposite_inserter;
+struct small_radix_integral {
+	typedef small_radix_integral<T, Radix, !Negative> opposite_type;
 
 	template <typename CharType, bool Negative_ = false>
 	struct impl {
@@ -217,6 +301,19 @@ using default_sign = static_variant<
 		mpl::x11::false_type
 	>
 >;
+
+template <typename CharType>
+using default_exponent_separator = static_variant<
+	mpl::x11::pair<
+		static_char<mpl::x11::integral_constant<CharType, 'e'>>,
+		mpl::x11::true_type
+	>,
+	mpl::x11::pair<
+		static_char<mpl::x11::integral_constant<CharType, 'E'>>,
+		mpl::x11::true_type
+	>
+>;
+
 
 }}
 }}}

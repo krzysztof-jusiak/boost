@@ -189,7 +189,7 @@ bool numeric_impl::apply<
 			break;
 	}
 
-	if (v_flag && cnt)
+	if (cnt)
 		v_flag = filt(iter, last, cnt);
 
 	if (v_flag) {
@@ -228,7 +228,7 @@ bool numeric_impl::apply<
 			boost::mpl::x11::package<
 				with_extractor, with_integral
 			>,
-			Extractor, typename IntegralF::opposite_inserter
+			Extractor, typename IntegralF::opposite_type
 		> next;
 
 		if (next::parse(iter, last, attr)) {
@@ -296,7 +296,7 @@ bool numeric_impl::apply<
 			boost::mpl::x11::package<
 				with_extractor, with_integral, with_filter
 			>,
-			Extractor, typename IntegralF::opposite_inserter,
+			Extractor, typename IntegralF::opposite_type,
 			Filter
 		> next;
 

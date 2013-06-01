@@ -29,7 +29,7 @@ inline void negate(T &n)
 namespace qi {
 
 /* Policy trait tags: minimal policy must feature at least "Extractor"
- * and "Inserter" methods.
+ * and "Integral" methods.
  */
 
 /* "Extractor" produces value tokens from input stream. */
@@ -46,8 +46,8 @@ struct with_integral {};
 struct with_filter {};
 
 /* "Sign" is a parser type which can parse the sign representing
- * tokens (parser attribute must be boolean). Modifier directive affects
- * whether sign is compulsory.
+ * tokens (parser attribute must be boolean). Flag "compulsory_sign"
+ * can be used to force a compulsory sign presence in source value.
  */
 struct with_sign {};
 
@@ -64,12 +64,31 @@ struct with_fractional {};
  */
 struct with_exponent {};
 
+/* "Exponent_sign" is similar to "sign", however only applies to exponent part.
+ * If not specified, a normal "sign" is reused for exponent, if present
+ * (otherwise, the exponent will also be treated as unsigned).
+ */
+struct with_exponent_sign {};
+
 /* "Special" is a variety of special-purpose skipper function which is applied
  * after sign to the whole input to establish, whether it matches any sort
  * of special value, such as NaN or Inf.
  */
 struct with_special {};
 
+/* "Flags" is a set of type tags used to affect the actual parsing logic.
+ */
+struct with_flags {};
+
+namespace flag {
+
+struct compulsory_sign {};
+struct no_trailing_dot {};
+struct no_leading_dot {};
+
+};
+
+}
 namespace detail {
 
 typedef boost::mpl::x11::list<
@@ -79,36 +98,10 @@ typedef boost::mpl::x11::list<
 	with_sign,
 	with_fractional,
 	with_exponent,
-	with_special
+	with_exponent_sign,
+	with_special,
+	with_flags
 > trait_tag_order;
-
-template <typename T>
-struct default_inserter;
-
-template <typename T>
-struct default_negative_inserter {
-	typedef default_inserter<T> opposite_inserter;
-
-	bool operator()(char in, T &out)
-	{
-		T ref(out);
-		out = out * 10 - T(in & 0xf);
-		return (out <= ref);
-	}
-
-};
-
-template <typename T>
-struct default_inserter {
-	typedef default_negative_inserter<T> opposite_inserter;
-
-	bool operator()(char in, T &out)
-	{
-		T ref(out);
-		out = out * 10 + T(in & 0xf);
-		return (out >= ref);
-	}
-};
 
 }
 }

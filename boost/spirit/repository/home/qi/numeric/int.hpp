@@ -33,7 +33,7 @@ namespace detail {
 template <typename T>
 using int_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral, small_radix_inserter<T, 10, false>>,
+	mpl::x11::pair<with_integral, small_radix_integral<T, 10, false>>,
 	mpl::x11::pair<
 		with_sign, default_sign<char_encoding::standard::char_type>
 	>
