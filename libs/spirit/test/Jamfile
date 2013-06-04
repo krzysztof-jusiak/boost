@@ -7,6 +7,7 @@ alias test_case : : : : <include>../../..
                         <toolset>gcc:<cxxflags>-fmax-errors=4 ;
 
 run int.cpp : : test_case ;
+run real.cpp : : test_case ;
 run static_string.cpp : : test_case ;
 run static_variant.cpp : : test_case ;
 run uint.cpp : : test_case ;

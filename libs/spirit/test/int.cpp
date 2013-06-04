@@ -280,16 +280,16 @@ BOOST_AUTO_TEST_CASE(int_9)
 
 BOOST_AUTO_TEST_CASE(int_10)
 {
-	numeric_parser<int8_t, detail::int_policy<int8_t>> int8_;
+	numeric_parser<int8_t, int_policy<int8_t>> int8_;
 	char c;
 
 	BOOST_CHECK(test::parse_attr("99", int8_, c));
 	BOOST_CHECK(!test::parse_attr("999", int8_, c));
 
-	int i;
+	short i;
 	using boost::spirit::short_;
-	BOOST_CHECK(!test::parse_attr("32769", short_, i, false));
-	BOOST_CHECK(!test::parse_attr("41234", short_, i, false));
+	BOOST_CHECK(!test::parse_attr("32769", short_, i));
+	BOOST_CHECK(!test::parse_attr("41234", short_, i));
 }
 
 BOOST_AUTO_TEST_CASE(int_11)
@@ -370,8 +370,7 @@ BOOST_AUTO_TEST_CASE(int_14)
 	numeric_parser<
 		int,
 		typename mpl::x11::insert<
-			detail::int_policy<int>,
-			mpl::x11::pair<
+			int_policy<int>, mpl::x11::pair<
 				with_filter, detail::length_filter<2, 4>
 			>
 		>::type
@@ -401,7 +400,7 @@ BOOST_AUTO_TEST_CASE(int_14)
 BOOST_AUTO_TEST_CASE(int_15)
 {
 	using boost::spirit::unused_type;
-	numeric_parser<unused_type, detail::int_policy<unused_type>> any_int;
+	numeric_parser<unused_type, int_policy<unused_type>> any_int;
 
 	BOOST_CHECK(test::parse("123456", any_int));
 	BOOST_CHECK(test::parse("-123456", any_int));

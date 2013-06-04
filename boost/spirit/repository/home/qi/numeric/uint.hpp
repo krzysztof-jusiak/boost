@@ -29,12 +29,13 @@ struct hex { BOOST_SPIRIT_IS_TAG() };
 }
 
 namespace qi {
-namespace detail {
 
 template <typename T>
 using uint_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral, small_radix_integral<T, 10>>
+	mpl::x11::pair<
+		with_integral, detail::small_radix_integral<T, 10>
+	>
 >;
 
 template <typename T>
@@ -46,7 +47,7 @@ using bin_policy = mpl::x11::map<
 			char_encoding::standard
 		>
 	>,
-	mpl::x11::pair<with_integral, small_radix_integral<T, 2>>
+	mpl::x11::pair<with_integral, detail::small_radix_integral<T, 2>>
 >;
 
 template <typename T>
@@ -58,16 +59,14 @@ using oct_policy = mpl::x11::map<
 			char_encoding::standard
 		>
 	>,
-	mpl::x11::pair<with_integral, small_radix_integral<T, 8>>
+	mpl::x11::pair<with_integral, detail::small_radix_integral<T, 8>>
 >;
 
 template <typename T>
 using hex_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::xdigit_type>,
-	mpl::x11::pair<with_integral, hex_integral<T>>
+	mpl::x11::pair<with_integral, detail::hex_integral<T>>
 >;
-
-}
 
 typedef terminal<tag::ushort_> ushort_type;
 typedef terminal<tag::uint_> uint_type;
@@ -96,7 +95,7 @@ namespace qi {
 template <typename Modifiers>
 struct make_primitive<repository::tag::ushort_, Modifiers>
 : repository::qi::make_numeric<
-	unsigned short, repository::qi::detail::uint_policy<unsigned short>
+	unsigned short, repository::qi::uint_policy<unsigned short>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -106,21 +105,21 @@ struct make_primitive<
 		A0, repository::value_wrapper<unsigned short>
 	>>::type
 > : repository::qi::make_literal_numeric<
-	unsigned short, repository::qi::detail::uint_policy<unsigned short>
+	unsigned short, repository::qi::uint_policy<unsigned short>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::ushort_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	unsigned short, repository::qi::detail::uint_policy<unsigned short>
+	unsigned short, repository::qi::uint_policy<unsigned short>
 > {};
 
 /*** uint_ ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::uint_, Modifiers>
 : repository::qi::make_numeric<
-	unsigned int, repository::qi::detail::uint_policy<unsigned int>
+	unsigned int, repository::qi::uint_policy<unsigned int>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -130,21 +129,21 @@ struct make_primitive<
 		A0, repository::value_wrapper<unsigned int>
 	>>::type
 > : repository::qi::make_literal_numeric<
-        unsigned int, repository::qi::detail::uint_policy<unsigned int>
+        unsigned int, repository::qi::uint_policy<unsigned int>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::uint_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	unsigned int, repository::qi::detail::uint_policy<unsigned int>
+	unsigned int, repository::qi::uint_policy<unsigned int>
 > {};
 
 /*** ulong_ ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::ulong_, Modifiers>
 : repository::qi::make_numeric<
-	unsigned long, repository::qi::detail::uint_policy<unsigned long>
+	unsigned long, repository::qi::uint_policy<unsigned long>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -154,14 +153,14 @@ struct make_primitive<
 		A0, repository::value_wrapper<unsigned long>
 	>>::type
 > : repository::qi::make_literal_numeric<
-        unsigned long, repository::qi::detail::uint_policy<unsigned long>
+        unsigned long, repository::qi::uint_policy<unsigned long>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::ulong_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	unsigned long, repository::qi::detail::uint_policy<unsigned long>
+	unsigned long, repository::qi::uint_policy<unsigned long>
 > {};
 
 /*** ulong_long ***/
@@ -169,7 +168,7 @@ template <typename Modifiers>
 struct make_primitive<repository::tag::ulong_long, Modifiers>
 : repository::qi::make_numeric<
 	unsigned long long,
-	repository::qi::detail::uint_policy<unsigned long long>
+	repository::qi::uint_policy<unsigned long long>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -180,7 +179,7 @@ struct make_primitive<
 	>>::type
 > : repository::qi::make_literal_numeric<
         unsigned long long,
-	repository::qi::detail::uint_policy<unsigned long long>
+	repository::qi::uint_policy<unsigned long long>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -189,14 +188,14 @@ struct make_primitive<
 	Modifiers
 > : repository::qi::make_direct_numeric<
 	unsigned long long,
-	repository::qi::detail::uint_policy<unsigned long long>
+	repository::qi::uint_policy<unsigned long long>
 > {};
 
 /*** bin ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::bin, Modifiers>
 : repository::qi::make_numeric<
-	unsigned int, repository::qi::detail::bin_policy<unsigned int>
+	unsigned int, repository::qi::bin_policy<unsigned int>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -204,14 +203,14 @@ struct make_primitive<
 	terminal_ex<repository::tag::bin, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
 	unsigned int,
-	repository::qi::detail::bin_policy<unsigned int>
+	repository::qi::bin_policy<unsigned int>
 > {};
 
 /*** oct ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::oct, Modifiers>
 : repository::qi::make_numeric<
-	unsigned int, repository::qi::detail::oct_policy<unsigned int>
+	unsigned int, repository::qi::oct_policy<unsigned int>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -219,14 +218,14 @@ struct make_primitive<
 	terminal_ex<repository::tag::oct, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
 	unsigned int,
-	repository::qi::detail::oct_policy<unsigned int>
+	repository::qi::oct_policy<unsigned int>
 > {};
 
 /*** hex ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::hex, Modifiers>
 : repository::qi::make_numeric<
-	unsigned int, repository::qi::detail::hex_policy<unsigned int>
+	unsigned int, repository::qi::hex_policy<unsigned int>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -234,7 +233,7 @@ struct make_primitive<
 	terminal_ex<repository::tag::hex, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
 	unsigned int,
-	repository::qi::detail::hex_policy<unsigned int>
+	repository::qi::hex_policy<unsigned int>
 > {};
 
 }

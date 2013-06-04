@@ -28,18 +28,18 @@ struct long_long { BOOST_SPIRIT_IS_TAG() };
 }
 
 namespace qi {
-namespace detail {
 
 template <typename T>
 using int_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral, small_radix_integral<T, 10, false>>,
 	mpl::x11::pair<
-		with_sign, default_sign<char_encoding::standard::char_type>
+		with_integral, detail::small_radix_integral<T, 10, false>
+	>,
+	mpl::x11::pair<
+		with_sign,
+		detail::default_sign<char_encoding::standard::char_type>
 	>
 >;
-
-}
 
 typedef terminal<tag::short_> short_type;
 typedef terminal<tag::int_> int_type;
@@ -60,7 +60,7 @@ namespace qi {
 template <typename Modifiers>
 struct make_primitive<repository::tag::short_, Modifiers>
 : repository::qi::make_numeric<
-	short, repository::qi::detail::int_policy<short>
+	short, repository::qi::int_policy<short>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -68,21 +68,21 @@ struct make_primitive<
 	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
 	typename enable_if<is_same<A0, repository::value_wrapper<short>>>::type
 > : repository::qi::make_literal_numeric<
-	short, repository::qi::detail::int_policy<short>
+	short, repository::qi::int_policy<short>
 > {};
       
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::short_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	short, repository::qi::detail::int_policy<short>
+	short, repository::qi::int_policy<short>
 > {};
 
 /*** int_ ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::int_, Modifiers>
 : repository::qi::make_numeric<
-	int, repository::qi::detail::int_policy<int>
+	int, repository::qi::int_policy<int>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -90,21 +90,21 @@ struct make_primitive<
 	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
 	typename enable_if<is_same<A0, repository::value_wrapper<int>>>::type
 > : repository::qi::make_literal_numeric<
-	int, repository::qi::detail::int_policy<int>
+	int, repository::qi::int_policy<int>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::int_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	int, repository::qi::detail::int_policy<int>
+	int, repository::qi::int_policy<int>
 > {};
 
 /*** long_ ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::long_, Modifiers>
 : repository::qi::make_numeric<
-	long, repository::qi::detail::int_policy<long>
+	long, repository::qi::int_policy<long>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -112,21 +112,21 @@ struct make_primitive<
 	terminal_ex<tag::lit, fusion::vector1<A0>>, Modifiers,
 	typename enable_if<is_same<A0, repository::value_wrapper<long>>>::type
 > : repository::qi::make_literal_numeric<
-	long, repository::qi::detail::int_policy<long>
+	long, repository::qi::int_policy<long>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::long_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	long, repository::qi::detail::int_policy<long>
+	long, repository::qi::int_policy<long>
 > {};
 
 /*** long_long ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::long_long, Modifiers>
 : repository::qi::make_numeric<
-	long long, repository::qi::detail::int_policy<long long>
+	long long, repository::qi::int_policy<long long>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -136,14 +136,14 @@ struct make_primitive<
 		is_same<A0, repository::value_wrapper<long long>>
 	>::type
 > : repository::qi::make_literal_numeric<
-	long long, repository::qi::detail::int_policy<long long>
+	long long, repository::qi::int_policy<long long>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::long_long, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	long long, repository::qi::detail::int_policy<long long>
+	long long, repository::qi::int_policy<long long>
 > {};
 
 }

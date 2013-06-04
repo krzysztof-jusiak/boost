@@ -77,18 +77,12 @@ struct with_exponent_sign {};
 struct with_special {};
 
 /* "Flags" is a set of type tags used to affect the actual parsing logic.
+ * This is a sort of duplication of spirit modifier syntax, but without
+ * the need to define more specific directives.
+ * This may change in the future.
  */
 struct with_flags {};
 
-namespace flag {
-
-struct compulsory_sign {};
-struct no_trailing_dot {};
-struct no_leading_dot {};
-
-};
-
-}
 namespace detail {
 
 typedef boost::mpl::x11::list<
@@ -104,6 +98,19 @@ typedef boost::mpl::x11::list<
 > trait_tag_order;
 
 }
+
+namespace flag {
+
+struct compulsory_sign {};
+
+struct no_trailing_dot {};
+
+struct no_leading_dot {};
+
+struct expect_dot {};
+
+}
+
 }
 }}}
 

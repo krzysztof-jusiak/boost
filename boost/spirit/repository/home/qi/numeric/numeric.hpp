@@ -53,6 +53,7 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 			>, Policy
 		> extract;
 
+		attr_ = traits::zero<T>();
 		spirit::qi::skip_over(first, last, skipper);
 		return extract::parse(first, last, attr_);
 	}
@@ -66,7 +67,7 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 	) const
 	{
 		/* This case is called when Attribute is not T. */
-		T attr_;
+		T attr_(traits::zero<T>());;
 		if (parse(first, last, ctx, skipper, attr_)) {
 			spirit::traits::assign_to(attr_, attr_param);
 			return true;
@@ -107,7 +108,7 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 		> extract;
 		spirit::qi::skip_over(first, last, skipper);
 		Iterator save = first;
-		T attr_;
+		T attr_(traits::zero<T>());
 
 		if (extract::parse(first, last, attr_)
 		    && (attr_ == n_)) {

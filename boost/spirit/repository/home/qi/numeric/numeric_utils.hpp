@@ -303,6 +303,11 @@ using default_sign = static_variant<
 >;
 
 template <typename CharType>
+using default_fractional_separator = static_char<
+	mpl::x11::integral_constant<CharType, '.'>
+>;
+
+template <typename CharType>
 using default_exponent_separator = static_variant<
 	mpl::x11::pair<
 		static_char<mpl::x11::integral_constant<CharType, 'e'>>,

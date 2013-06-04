@@ -233,27 +233,21 @@ BOOST_AUTO_TEST_CASE(uint_5)
 BOOST_AUTO_TEST_CASE(uint_6)
 {
 	uint8_t u8;
-	numeric_parser<
-		uint8_t, detail::uint_policy<uint8_t>
-	> uint8_;
+	numeric_parser<uint8_t, uint_policy<uint8_t>> uint8_;
 
 	BOOST_CHECK(!test::parse_attr("999", uint8_, u8));
 	BOOST_CHECK(!test::parse_attr("256", uint8_, u8));
 	BOOST_CHECK(test::parse_attr("255", uint8_, u8));
 
 	uint16_t u16;
-	numeric_parser<
-		uint16_t, detail::uint_policy<uint16_t>
-	> uint16_;
+	numeric_parser<uint16_t, uint_policy<uint16_t>> uint16_;
 
 	BOOST_CHECK(!test::parse_attr("99999", uint16_, u16));
 	BOOST_CHECK(!test::parse_attr("65536", uint16_, u16));
 	BOOST_CHECK(test::parse_attr("65535", uint16_, u16));
 
 	uint32_t u32;
-	numeric_parser<
-		uint32_t, detail::uint_policy<uint32_t>
-	> uint32_;
+	numeric_parser<uint32_t, uint_policy<uint32_t>> uint32_;
 
 	BOOST_CHECK(!test::parse_attr("9999999999", uint32_, u32));
 	BOOST_CHECK(!test::parse_attr("4294967296", uint32_, u32));
@@ -369,7 +363,7 @@ BOOST_AUTO_TEST_CASE(uint_14)
 	numeric_parser<
 		unsigned long long,
 		typename mpl::x11::insert<
-			detail::uint_policy<unsigned long long>,
+			uint_policy<unsigned long long>,
 			mpl::x11::pair<
 				with_filter, test::ts_filter
 			>
