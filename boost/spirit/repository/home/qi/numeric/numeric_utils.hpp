@@ -72,33 +72,73 @@ struct hex_integral {
 
 };
 
-template <typename T, unsigned int Radix>
+template <typename T, unsigned int Radix, bool Negative = false>
 struct unchecked_small_radix_integral {
 	typedef unchecked_small_radix_integral<
-		T, Radix
+		T, Radix, !Negative
 	> opposite_type;
+
+	template <typename CharType, bool Negative_ = false>
+	struct impl {
+		bool operator()(CharType in, T &out)
+		{
+			out = (out * Radix) + T(in & 0xf);
+			return true;
+		}
+	};
+
+	template <typename CharType>
+	struct impl<CharType, true> {
+		bool operator()(CharType in, T &out)
+		{
+			out = (out * Radix) - T(in & 0xf);
+			return true;
+		}
+	};
 
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
-		out = (out * Radix) + T(in & 0xf);
+		return impl<CharType, Negative>()(in, out);
 		return true;
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
 };
 
-template <typename T, unsigned int Radix>
+template <typename T, unsigned int Radix, bool Negative = false>
 struct unchecked_small_radix_fraction {
+	typedef unchecked_small_radix_fraction<
+		T, Radix, !Negative
+	> opposite_type;
 
 	T pos = Radix;
+
+	template <typename CharType, bool Negative_ = false>
+	struct impl {
+		bool operator()(CharType in, T &out, T &pos)
+		{
+			out += T(in & 0xf) / pos;
+			pos *= Radix;
+			return true;
+		}
+	};
+
+	template <typename CharType>
+	struct impl<CharType, true> {
+		bool operator()(CharType in, T &out, T &pos)
+		{
+			out -= T(in & 0xf) / pos;
+			pos *= Radix;
+			return true;
+		}
+	};
+
 
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
-		out += T(in & 0xf) / pos;
-		pos *= Radix;
-		return true;
+		return impl<CharType, Negative>()(in, out, pos);
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
@@ -110,11 +150,11 @@ struct unchecked_small_radix_exponent {
 		T, Radix, !Negative
 	> opposite_type;
 
+	unsigned int last = 0;
+
 	template <typename CharType, bool Negative_ = false>
 	struct impl {
-		unsigned int last = 0;
-
-		bool operator()(CharType in, T &out)
+		bool operator()(CharType in, T &out, unsigned int &last)
 		{
 			unsigned int digit(in & 0xf);
 			unsigned int next = last * Radix + digit;
@@ -123,14 +163,13 @@ struct unchecked_small_radix_exponent {
 			last = next;
 			return true;
 		}
-
 	};
 
 	template <typename CharType>
 	struct impl<CharType, true> {
 		unsigned int last = 0;
 
-		bool operator()(CharType in, T &out)
+		bool operator()(CharType in, T &out, unsigned int &last)
 		{
 			unsigned int digit(in & 0xf);
 			unsigned int next = last * Radix + digit;
@@ -144,7 +183,7 @@ struct unchecked_small_radix_exponent {
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
-		return impl<CharType, Negative>()(in, out);
+		return impl<CharType, Negative>()(in, out, last);
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);

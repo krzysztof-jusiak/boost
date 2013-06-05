@@ -24,6 +24,16 @@ inline void negate(T &n)
 	n = -n;
 }
 
+template <typename T, unsigned int Radix>
+inline void scale(T &n, unsigned int s, bool neg)
+{
+	T m(radix_pow<T, Radix>(s));
+	if (!neg)
+		n *= m;
+	else
+		n /= m;
+}
+
 }
 
 namespace qi {

@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(real_0)
 	BOOST_CHECK(test::parse("1234.5678", udouble));
 	BOOST_CHECK(test::parse_attr("1234.5678", udouble, d));
 	BOOST_CHECK(test::compare(d, 1234.5678));
-#if 0
+
 	BOOST_CHECK(test::parse("1.2e3", udouble));
 	BOOST_CHECK(test::parse_attr("1.2e3", udouble, d));
 	BOOST_CHECK(test::compare(d, 1.2e3));
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(real_0)
 	BOOST_CHECK(test::parse("2", udouble));
 	BOOST_CHECK(test::parse_attr("2", udouble, d));
 	BOOST_CHECK(test::compare(d, 2));
-
+#if 0
 	using boost::math::fpclassify;
 	BOOST_CHECK(test::parse("inf", udouble));
 	BOOST_CHECK(test::parse("infinity", udouble));
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(real_0)
 	BOOST_CHECK(test::parse("NAN(...)", udouble));
 	BOOST_CHECK(test::parse_attr("NAN(...)", udouble, d));
 	BOOST_CHECK_EQUAL(FP_NAN, fpclassify(d));
-
+#endif
 	BOOST_CHECK(!test::parse("e3", udouble));
 	BOOST_CHECK(!test::parse_attr("e3", udouble, d));
 
@@ -114,7 +114,6 @@ BOOST_AUTO_TEST_CASE(real_0)
 
 	BOOST_CHECK(!test::parse("-.3", udouble));
 	BOOST_CHECK(!test::parse_attr("-.3", udouble, d));
-#endif
 }
 
 BOOST_AUTO_TEST_CASE(real_2)
@@ -132,7 +131,7 @@ BOOST_AUTO_TEST_CASE(real_2)
 	BOOST_CHECK(test::parse("-1234.5678", double_));
 	BOOST_CHECK(test::parse_attr("-1234.5678", double_, d));
 	BOOST_CHECK(test::compare(d, -1234.5678));
-#if 0
+
 	BOOST_CHECK(test::parse("-1.2e3", double_));
 	BOOST_CHECK(test::parse_attr("-1.2e3", double_, d));
 	BOOST_CHECK(test::compare(d, -1.2e3));
@@ -178,7 +177,7 @@ BOOST_AUTO_TEST_CASE(real_2)
 
 	BOOST_CHECK(test::parse_attr("2.0332938517515416e307", double_, d));
 	BOOST_CHECK_EQUAL(d, 2.0332938517515416e307);
-
+#if 0
 	using boost::math::fpclassify;
 	using boost::spirit::detail::signbit;
 
