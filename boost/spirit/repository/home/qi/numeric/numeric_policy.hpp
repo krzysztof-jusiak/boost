@@ -10,32 +10,6 @@
 #include <boost/mpl/x11/list.hpp>
 
 namespace boost { namespace spirit { namespace repository {
-namespace traits {
-
-template <typename T>
-inline T zero()
-{
-	return 0;
-}
-
-template <typename T>
-inline void negate(T &n)
-{
-	n = -n;
-}
-
-template <typename T, unsigned int Radix>
-inline void scale(T &n, unsigned int s, bool neg)
-{
-	T m(radix_pow<T, Radix>(s));
-	if (!neg)
-		n *= m;
-	else
-		n /= m;
-}
-
-}
-
 namespace qi {
 
 /* Policy trait tags: minimal policy must feature at least "Extractor"
@@ -61,6 +35,11 @@ struct with_filter {};
  */
 struct with_sign {};
 
+/* "Prefix" is a parser which must match the beginning of numeric string,
+ * prior to optional sign and engagement of filter.
+ */
+struct with_prefix {};
+
 /* "Fractional" is a pair<parser, function>, whereupon parser part is
  * used to detect transition into fractional part parsing and function is
  * an attribute mutator affecting fractional part of the attribute using the
@@ -69,16 +48,11 @@ struct with_sign {};
  */
 struct with_fractional {};
 
-/* "Exponent" is a pair<parser, function> analogous to "Fractional" but
- * affecting the exponent of the attribute.
+/* "Exponent" is a parser responsible for producing a signed integer
+ * representation of exponent. Can be defined in terms of numeric_parser
+ * itself.
  */
 struct with_exponent {};
-
-/* "Exponent_sign" is similar to "sign", however only applies to exponent part.
- * If not specified, a normal "sign" is reused for exponent, if present
- * (otherwise, the exponent will also be treated as unsigned).
- */
-struct with_exponent_sign {};
 
 /* "Special" is a variety of special-purpose skipper function which is applied
  * after sign to the whole input to establish, whether it matches any sort
@@ -100,9 +74,9 @@ typedef boost::mpl::x11::list<
 	with_integral,
 	with_filter,
 	with_sign,
+	with_prefix,
 	with_fractional,
 	with_exponent,
-	with_exponent_sign,
 	with_special,
 	with_flags
 > trait_tag_order;

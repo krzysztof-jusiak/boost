@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(real_0)
 	BOOST_CHECK(!test::parse_attr("-.3", udouble, d));
 }
 
-BOOST_AUTO_TEST_CASE(real_2)
+BOOST_AUTO_TEST_CASE(real_1)
 {
 	double  d;
 
@@ -165,6 +165,13 @@ BOOST_AUTO_TEST_CASE(real_2)
 
 	BOOST_CHECK(!test::parse("-1.2e", double_));
 	BOOST_CHECK(!test::parse_attr("-1.2e", double_, d));
+
+	BOOST_CHECK(test::parse_attr("-5.7222349715140557", double_, d));
+	BOOST_CHECK_EQUAL(d, -5.7222349715140557);
+	BOOST_CHECK(test::compare(d, -5.7222349715140557));
+
+	BOOST_CHECK(test::parse_attr("2.0332938517515416", double_, d));
+	BOOST_CHECK_EQUAL(d, 2.0332938517515416);
 
 	BOOST_CHECK(test::parse_attr("-5.7222349715140557e+307", double_, d));
 	BOOST_CHECK_EQUAL(d, -5.7222349715140557e+307);
@@ -224,7 +231,7 @@ BOOST_AUTO_TEST_CASE(real_2)
 #endif
 }
 #if 0
-BOOST_AUTO_TEST_CASE(real_3)
+BOOST_AUTO_TEST_CASE(real_2)
 {
 	numeric_parser<double, strict_ureal_policy<double>> strict_udouble;
 	numeric_parser<double, strict_real_policy<double>> strict_double;
@@ -271,7 +278,7 @@ BOOST_AUTO_TEST_CASE(real_3)
 	BOOST_CHECK(!test::parse(".1234", nolddot_real));
 }
 
-BOOST_AUTO_TEST_CASE(real_4)
+BOOST_AUTO_TEST_CASE(real_3)
 {
 	numeric_parser<
 		double,
@@ -303,7 +310,7 @@ BOOST_AUTO_TEST_CASE(real_4)
 }
 #endif
 
-BOOST_AUTO_TEST_CASE(real_5)
+BOOST_AUTO_TEST_CASE(real_4)
 {
 	using boost::math::concepts::real_concept;
 
@@ -354,7 +361,7 @@ BOOST_AUTO_TEST_CASE(real_5)
 	BOOST_CHECK(!test::parse_attr("-1.2e", custom_real, d));
 }
 
-BOOST_AUTO_TEST_CASE(real_6)
+BOOST_AUTO_TEST_CASE(real_5)
 {
 	double d;
 
@@ -383,7 +390,7 @@ BOOST_AUTO_TEST_CASE(real_6)
 	BOOST_CHECK(!test::parse_attr("-1.2e3", double_(1.2e3), d));
 }
 
-BOOST_AUTO_TEST_CASE(real_7)
+BOOST_AUTO_TEST_CASE(real_6)
 {
 	numeric_parser<double, ureal_policy<double>> udouble;
 
@@ -400,7 +407,7 @@ BOOST_AUTO_TEST_CASE(real_7)
 	BOOST_CHECK(!test::parse_attr("1.2e3", udouble(3.2e1), d));
 }
 
-BOOST_AUTO_TEST_CASE(real_8)
+BOOST_AUTO_TEST_CASE(real_7)
 {
 	numeric_parser<real_concept, real_policy<real_concept>> custom_real;
 	real_concept d;
@@ -418,7 +425,7 @@ BOOST_AUTO_TEST_CASE(real_8)
 	BOOST_CHECK(!test::parse_attr("1.2e3", custom_real(-3.2e1), d));
 }
 
-BOOST_AUTO_TEST_CASE(real_11)
+BOOST_AUTO_TEST_CASE(real_7)
 {
 	BOOST_CHECK(test::parse("+1.2e3", lit(_r(1.2e3))));
 	BOOST_CHECK(!test::parse("+1.2e3", lit(_r(-1.2e3))));

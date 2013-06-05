@@ -16,7 +16,6 @@
 
 #include <limits>
 #include <boost/static_assert.hpp>
-#include <boost/spirit/repository/home/support/radix_pow.hpp>
 #include <boost/spirit/repository/home/qi/char/static_char.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
 
@@ -112,33 +111,27 @@ struct unchecked_small_radix_fraction {
 		T, Radix, !Negative
 	> opposite_type;
 
-	T pos = Radix;
+	T scale;
+	unchecked_small_radix_integral<T, Radix, Negative> i;
 
-	template <typename CharType, bool Negative_ = false>
-	struct impl {
-		bool operator()(CharType in, T &out, T &pos)
-		{
-			out += T(in & 0xf) / pos;
-			pos *= Radix;
-			return true;
-		}
-	};
-
-	template <typename CharType>
-	struct impl<CharType, true> {
-		bool operator()(CharType in, T &out, T &pos)
-		{
-			out -= T(in & 0xf) / pos;
-			pos *= Radix;
-			return true;
-		}
-	};
-
+	unchecked_small_radix_fraction()
+	: scale(1) {}
 
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
-		return impl<CharType, Negative>()(in, out, pos);
+		if(i(in, out)) {
+			scale *= Radix;
+			return true;
+		} else
+			return false;
+		
+	}
+
+	static bool adjust(unchecked_small_radix_fraction &self, T &out)
+	{
+		out /= self.scale;
+		return true;
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
