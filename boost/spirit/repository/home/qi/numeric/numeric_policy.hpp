@@ -35,22 +35,14 @@ struct with_filter {};
  */
 struct with_sign {};
 
-/* "Prefix" is a parser which must match the beginning of numeric string,
- * prior to optional sign and engagement of filter.
- */
-struct with_prefix {};
-
-/* "Fractional" is a pair<parser, function>, whereupon parser part is
- * used to detect transition into fractional part parsing and function is
- * an attribute mutator affecting fractional part of the attribute using the
- * "Extractor" supplied token. Modifier directive affects whether integral
- * part is compulsory.
+/* "Fractional" is a pair of separator parser and attribute mutating
+ * function, similar to integral above.
  */
 struct with_fractional {};
 
-/* "Exponent" is a parser responsible for producing a signed integer
- * representation of exponent. Can be defined in terms of numeric_parser
- * itself.
+/* "Exponent" is a pair of 2 parsers: parser for separator and parser
+ * for exponent value (which, in turn, can be defined in terms of
+ * numeric_parser).
  */
 struct with_exponent {};
 
@@ -74,7 +66,6 @@ typedef boost::mpl::x11::list<
 	with_integral,
 	with_filter,
 	with_sign,
-	with_prefix,
 	with_fractional,
 	with_exponent,
 	with_special,

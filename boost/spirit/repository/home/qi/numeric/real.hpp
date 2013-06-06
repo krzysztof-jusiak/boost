@@ -52,16 +52,18 @@ using real_policy = mpl::x11::map<
 		with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
 	>,
-	mpl::x11::pair<
-		with_fractional, mpl::x11::pair<
+	mpl::x11::pair<with_fractional, mpl::x11::pair<
 			detail::default_fractional_separator<
 				char_encoding::standard::char_type
 			>,
 			detail::unchecked_small_radix_fraction<T, 10>
 	>>,
-	mpl::x11::pair<
-		with_exponent, numeric_parser<int, exponent_policy<int>>
-	>/*
+	mpl::x11::pair<with_exponent, mpl::x11::pair<
+			detail::default_exponent_separator<
+				char_encoding::standard::char_type
+			>,
+			numeric_parser<int, exponent_policy<int>>
+	>>/*
 	mpl::x11::pair<
 		with_exponent, mpl::x11::pair<
 			detail::default_exponent_separator<
@@ -84,9 +86,12 @@ using ureal_policy = mpl::x11::map<
 			>,
 			detail::unchecked_small_radix_fraction<T, 10>
 	>>,
-	mpl::x11::pair<
-		with_exponent, numeric_parser<int, exponent_policy<int>>
-	>/*
+	mpl::x11::pair<with_exponent, mpl::x11::pair<
+			detail::default_exponent_separator<
+				char_encoding::standard::char_type
+			>,
+			numeric_parser<int, exponent_policy<int>>
+	>>/*
 	mpl::x11::pair<
 		with_exponent, mpl::x11::pair<
 			detail::default_exponent_separator<
