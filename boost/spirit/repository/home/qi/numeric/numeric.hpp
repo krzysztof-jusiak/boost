@@ -19,7 +19,7 @@
 namespace boost { namespace spirit { namespace repository {
 namespace tag {
 
-template <typename T, typename Policy>
+template <typename T, typename Policy, typename Flags>
 struct numeric_parser {
 	BOOST_SPIRIT_IS_TAG()
 };
@@ -28,12 +28,12 @@ struct numeric_parser {
 
 namespace qi {
 
-template <typename T, typename Policy>
-struct numeric_parser : terminal<tag::numeric_parser<T, Policy>> {};
+template <typename T, typename Policy, typename Flags = mpl::x11::set<>>
+struct numeric_parser : terminal<tag::numeric_parser<T, Policy, Flags>> {};
 
-template <typename T, typename Policy>
+template <typename T, typename Policy, typename Flags>
 struct any_numeric_parser : spirit::qi::primitive_parser<
-	any_numeric_parser<T, Policy>
+	any_numeric_parser<T, Policy, Flags>
 > {
 	template <typename Context, typename Iterator>
 	struct attribute {
@@ -48,14 +48,14 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 	{
 		typedef mpl::x11::apply_wrap<
 			unpack_map<
-				detail::numeric_impl,
+				detail::numeric_impl<Flags>,
 				detail::trait_tag_order
 			>, Policy
 		> extract;
 
 		attr_ = traits::zero<T>();
 		spirit::qi::skip_over(first, last, skipper);
-		return extract::parse(first, last, attr_);
+		return extract::parse(first, last, attr_) > 0;
 	}
 
 	template <
@@ -82,9 +82,9 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 	}
 };
 
-template <typename T, typename Policy, bool no_attribute = true>
+template <typename T, typename Policy, typename Flags, bool no_attribute = true>
 struct literal_numeric_parser : spirit::qi::primitive_parser<
-	literal_numeric_parser<T, Policy, no_attribute>
+	literal_numeric_parser<T, Policy, Flags, no_attribute>
 > {
 	template <typename Value>
 	literal_numeric_parser(Value const& n) : n_(n) {}
@@ -102,7 +102,7 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 	{
 		typedef mpl::x11::apply_wrap<
 			unpack_map<
-				detail::numeric_impl,
+				detail::numeric_impl<Flags>,
 				detail::trait_tag_order
 			>, Policy
 		> extract;
@@ -110,7 +110,7 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 		Iterator save = first;
 		T attr_(traits::zero<T>());
 
-		if (extract::parse(first, last, attr_)
+		if ((extract::parse(first, last, attr_) > 0)
 		    && (attr_ == n_)) {
 			spirit::traits::assign_to(attr_, attr_param);
 			return true;
@@ -129,9 +129,9 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 	T n_;
 };
 
-template <typename T, typename Policy>
+template <typename T, typename Policy, typename Flags = mpl::x11::set<>>
 struct make_numeric {
-	typedef any_numeric_parser<T, Policy> result_type;
+	typedef any_numeric_parser<T, Policy, Flags> result_type;
 
 	result_type operator()(unused_type, unused_type) const
 	{
@@ -139,9 +139,9 @@ struct make_numeric {
 	}
 };
 
-template <typename T, typename Policy>
+template <typename T, typename Policy, typename Flags = mpl::x11::set<>>
 struct make_direct_numeric {
-	typedef literal_numeric_parser<T, Policy, false> result_type;
+	typedef literal_numeric_parser<T, Policy, Flags, false> result_type;
 
 	template <typename Terminal>
 	result_type operator()(Terminal const &term, unused_type) const
@@ -150,9 +150,9 @@ struct make_direct_numeric {
 	}
 };
 
-template <typename T, typename Policy>
+template <typename T, typename Policy, typename Flags = mpl::x11::set<>>
 struct make_literal_numeric {
-	typedef literal_numeric_parser<T, Policy> result_type;
+	typedef literal_numeric_parser<T, Policy, Flags> result_type;
 
 	template <typename Terminal>
 	result_type operator()(Terminal const& term, unused_type) const
@@ -165,39 +165,43 @@ struct make_literal_numeric {
 }
 
 /* Enables any numeric_parser */
-template <typename T, typename Policy>
-struct use_terminal<qi::domain, repository::tag::numeric_parser<T, Policy>>
+template <typename T, typename Policy, typename Flags>
+struct use_terminal<
+	qi::domain, repository::tag::numeric_parser<T, Policy, Flags>
+>
 : mpl::true_ {};
 
 /* Enables any numeric_parser(n) */
-template <typename T, typename Policy, typename A0>
+template <typename T, typename Policy, typename Flags, typename A0>
 struct use_terminal<
 	qi::domain, terminal_ex<
-		repository::tag::numeric_parser<T, Policy>,
+		repository::tag::numeric_parser<T, Policy, Flags>,
 		fusion::vector1<A0>
 	>
 > : mpl::true_ {};
 
 /* Enables lazy numeric_parser(n) */
-template <typename T, typename Policy>
+template <typename T, typename Policy, typename Flags>
 struct use_lazy_terminal<
-	qi::domain, repository::tag::numeric_parser<T, Policy>, 1
+	qi::domain, repository::tag::numeric_parser<T, Policy, Flags>, 1
 > : mpl::true_ {};
 
 namespace qi {
 
-template <typename T, typename Policy, typename Modifiers>
+template <typename T, typename Policy, typename Flags, typename Modifiers>
 struct make_primitive<
-	spirit::repository::tag::numeric_parser<T, Policy>, Modifiers
-> : spirit::repository::qi::make_numeric<T, Policy> {};
+	spirit::repository::tag::numeric_parser<T, Policy, Flags>, Modifiers
+> : spirit::repository::qi::make_numeric<T, Policy, Flags> {};
 
-template <typename T, typename Policy, typename A0, typename Modifiers>
-struct make_primitive<
+template <
+	typename T, typename Policy, typename Flags, typename A0,
+	typename Modifiers
+> struct make_primitive<
 	terminal_ex<
-		spirit::repository::tag::numeric_parser<T, Policy>,
+		spirit::repository::tag::numeric_parser<T, Policy, Flags>,
 		fusion::vector1<A0>
 	>, Modifiers
-> : spirit::repository::qi::make_direct_numeric<T, Policy> {};
+> : spirit::repository::qi::make_direct_numeric<T, Policy, Flags> {};
 
 }
 }}

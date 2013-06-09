@@ -111,27 +111,21 @@ struct unchecked_small_radix_fraction {
 		T, Radix, !Negative
 	> opposite_type;
 
-	T scale;
+	T factor;
 	unchecked_small_radix_integral<T, Radix, Negative> i;
 
 	unchecked_small_radix_fraction()
-	: scale(1) {}
+	: factor(0) {}
 
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
 		if(i(in, out)) {
-			scale *= Radix;
+			++factor;
 			return true;
 		} else
 			return false;
 		
-	}
-
-	static bool adjust(unchecked_small_radix_fraction &self, T &out)
-	{
-		out /= self.scale;
-		return true;
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);

@@ -35,29 +35,28 @@ struct with_filter {};
  */
 struct with_sign {};
 
-/* "Fractional" is a pair of separator parser and attribute mutating
- * function, similar to integral above.
+/* "Fractional" is a pair of parser and attribute mutator function: parser
+ * to match the fraction part separator, and mutator to update the attribute
+ * with extracted digits.
  */
 struct with_fractional {};
 
-/* "Exponent" is a pair of 2 parsers: parser for separator and parser
- * for exponent value (which, in turn, can be defined in terms of
- * numeric_parser).
+/* "Exponent" is a pair of parser and attribute mutator function: parser
+ * to match the exponent part separator, and mutator to update the exponent
+ * with extracted digits. Exponent has its own attribute (normally int) for
+ * precision and performance reasons.
  */
 struct with_exponent {};
+
+/* Same as "sign", but applies only to exponent's attribute.
+ */
+struct with_exponent_sign {};
 
 /* "Special" is a variety of special-purpose skipper function which is applied
  * after sign to the whole input to establish, whether it matches any sort
  * of special value, such as NaN or Inf.
  */
 struct with_special {};
-
-/* "Flags" is a set of type tags used to affect the actual parsing logic.
- * This is a sort of duplication of spirit modifier syntax, but without
- * the need to define more specific directives.
- * This may change in the future.
- */
-struct with_flags {};
 
 namespace detail {
 
@@ -68,13 +67,15 @@ typedef boost::mpl::x11::list<
 	with_sign,
 	with_fractional,
 	with_exponent,
-	with_special,
-	with_flags
+	with_special
 > trait_tag_order;
 
 }
 
 namespace flag {
+/* Flags, possibly bundled together into an mpl set, can be passed to
+ * numeric_parser to alter its behavior.
+ */
 
 struct compulsory_sign {};
 
