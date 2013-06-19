@@ -28,9 +28,11 @@ inline bool scale(T &n, E exp)
 {
 	if (exp >= 0) {
 		T m(radix_pow<T, Radix>(exp));
+		std::cout << "pos scale " << n << " by " << m << " (" << exp << ")\n";
 		n *= m;
 	} else {
 		T m(radix_pow<T, Radix>(-exp));
+		std::cout << "neg scale " << n << " by " << m << " (" << exp << ")\n";
 		n /= m;
 	}
 	return true;

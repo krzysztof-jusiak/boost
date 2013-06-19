@@ -67,6 +67,7 @@ typedef boost::mpl::x11::list<
 	with_sign,
 	with_fractional,
 	with_exponent,
+	with_exponent_sign,
 	with_special
 > trait_tag_order;
 

@@ -29,7 +29,7 @@ template <typename T>
 using real_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integral,
-		detail::unchecked_small_radix_integral<T, 10>
+		detail::unchecked_decimal_float<T>
 	>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -38,7 +38,7 @@ using real_policy = mpl::x11::map<
 		detail::default_fractional_separator<
 			char_encoding::standard::char_type
 		>,
-		detail::unchecked_small_radix_integral<T, 10>
+		detail::unchecked_decimal_float<T>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 		detail::default_exponent_separator<
@@ -55,13 +55,13 @@ template <typename T>
 using ureal_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integral,
-		detail::unchecked_small_radix_integral<T, 10>
+		detail::unchecked_decimal_float<T>
 	>,
 	mpl::x11::pair<with_fractional, mpl::x11::pair<
 			detail::default_fractional_separator<
 				char_encoding::standard::char_type
 			>,
-			detail::unchecked_small_radix_integral<T, 10>
+			detail::unchecked_decimal_float<T>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 			detail::default_exponent_separator<
