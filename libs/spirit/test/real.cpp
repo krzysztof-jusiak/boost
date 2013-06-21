@@ -21,17 +21,6 @@
 #include "test.hpp"
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
-namespace test {
-
-template <typename T>
-bool compare(T n, double expected)
-{
-	T const eps = std::pow(10.0, -std::numeric_limits<T>::digits10);
-	T delta = n - expected;
-	return (delta >= -eps) && (delta <= eps);
-}
-
-}
 
 BOOST_AUTO_TEST_CASE(real_0)
 {
@@ -40,38 +29,38 @@ BOOST_AUTO_TEST_CASE(real_0)
 
 	BOOST_CHECK(test::parse("1234", udouble));
 	BOOST_CHECK(test::parse_attr("1234", udouble, d));
-	BOOST_CHECK(test::compare(d, 1234));
+	BOOST_CHECK_EQUAL(d, 1234);
 
 	BOOST_CHECK(test::parse("1234.5678", udouble));
 	BOOST_CHECK(test::parse_attr("1234.5678", udouble, d));
-	BOOST_CHECK(test::compare(d, 1234.5678));
+	BOOST_CHECK_EQUAL(d, 1234.5678);
 
 	BOOST_CHECK(test::parse("1.2e3", udouble));
 	BOOST_CHECK(test::parse_attr("1.2e3", udouble, d));
-	BOOST_CHECK(test::compare(d, 1.2e3));
+	BOOST_CHECK_EQUAL(d, 1.2e3);
 
 	BOOST_CHECK(test::parse("1.2e-3", udouble));
 	BOOST_CHECK(test::parse_attr("1.2e-3", udouble, d));
-	BOOST_CHECK(test::compare(d, 1.2e-3));
+	BOOST_CHECK_EQUAL(d, 1.2e-3);
 
 	BOOST_CHECK(test::parse("1.e2", udouble));
 	BOOST_CHECK(test::parse_attr("1.e2", udouble, d));
-	BOOST_CHECK(test::compare(d, 1.e2));
+	BOOST_CHECK_EQUAL(d, 1.e2);
 
 	BOOST_CHECK(test::parse("1.", udouble));
 	BOOST_CHECK(test::parse_attr("1.", udouble, d));
-	BOOST_CHECK(test::compare(d, 1.));
+	BOOST_CHECK_EQUAL(d, 1.);
 	BOOST_CHECK(test::parse(".2e3", udouble));
 	BOOST_CHECK(test::parse_attr(".2e3", udouble, d));
-	BOOST_CHECK(test::compare(d, .2e3));
+	BOOST_CHECK_EQUAL(d, .2e3);
 
 	BOOST_CHECK(test::parse("2e3", udouble));
 	BOOST_CHECK(test::parse_attr("2e3", udouble, d));
-	BOOST_CHECK(test::compare(d, 2e3));
+	BOOST_CHECK_EQUAL(d, 2e3);
 
 	BOOST_CHECK(test::parse("2", udouble));
 	BOOST_CHECK(test::parse_attr("2", udouble, d));
-	BOOST_CHECK(test::compare(d, 2));
+	BOOST_CHECK_EQUAL(d, 2);
 #if 0
 	using boost::math::fpclassify;
 	BOOST_CHECK(test::parse("inf", udouble));
@@ -122,43 +111,43 @@ BOOST_AUTO_TEST_CASE(real_1)
 
 	BOOST_CHECK(test::parse("-1234", double_));
 	BOOST_CHECK(test::parse_attr("-1234", double_, d));
-	BOOST_CHECK(test::compare(d, -1234));
+	BOOST_CHECK_EQUAL(d, -1234);
 
 	BOOST_CHECK(test::parse("+1234.5678", double_));
 	BOOST_CHECK(test::parse_attr("+1234.5678", double_, d));
-	BOOST_CHECK(test::compare(d, 1234.5678));
+	BOOST_CHECK_EQUAL(d, 1234.5678);
 
 	BOOST_CHECK(test::parse("-1234.5678", double_));
 	BOOST_CHECK(test::parse_attr("-1234.5678", double_, d));
-	BOOST_CHECK(test::compare(d, -1234.5678));
+	BOOST_CHECK_EQUAL(d, -1234.5678);
 
 	BOOST_CHECK(test::parse("-1.2e3", double_));
 	BOOST_CHECK(test::parse_attr("-1.2e3", double_, d));
-	BOOST_CHECK(test::compare(d, -1.2e3));
+	BOOST_CHECK_EQUAL(d, -1.2e3);
 
 	BOOST_CHECK(test::parse("+1.2e3", double_));
 	BOOST_CHECK(test::parse_attr("+1.2e3", double_, d));
-	BOOST_CHECK(test::compare(d, 1.2e3));
+	BOOST_CHECK_EQUAL(d, 1.2e3);
 
 	BOOST_CHECK(test::parse("-0.1", double_));
 	BOOST_CHECK(test::parse_attr("-0.1", double_, d));
-	BOOST_CHECK(test::compare(d, -0.1));
+	BOOST_CHECK_EQUAL(d, -0.1);
 
 	BOOST_CHECK(test::parse("-1.2e-3", double_));
 	BOOST_CHECK(test::parse_attr("-1.2e-3", double_, d));
-	BOOST_CHECK(test::compare(d, -1.2e-3));
+	BOOST_CHECK_EQUAL(d, -1.2e-3);
 
 	BOOST_CHECK(test::parse("-1.e2", double_));
 	BOOST_CHECK(test::parse_attr("-1.e2", double_, d));
-	BOOST_CHECK(test::compare(d, -1.e2));
+	BOOST_CHECK_EQUAL(d, -1.e2);
 
 	BOOST_CHECK(test::parse("-.2e3", double_));
 	BOOST_CHECK(test::parse_attr("-.2e3", double_, d));
-	BOOST_CHECK(test::compare(d, -.2e3));
+	BOOST_CHECK_EQUAL(d, -.2e3);
 
 	BOOST_CHECK(test::parse("-2e3", double_));
 	BOOST_CHECK(test::parse_attr("-2e3", double_, d));
-	BOOST_CHECK(test::compare(d, -2e3));
+	BOOST_CHECK_EQUAL(d, -2e3);
 
 	BOOST_CHECK(!test::parse("-e3", double_));
 	BOOST_CHECK(!test::parse_attr("-e3", double_, d));
@@ -168,7 +157,6 @@ BOOST_AUTO_TEST_CASE(real_1)
 
 	BOOST_CHECK(test::parse_attr("-5.7222349715140557", double_, d));
 	BOOST_CHECK_EQUAL(d, -5.7222349715140557);
-	BOOST_CHECK(test::compare(d, -5.7222349715140557));
 
 	BOOST_CHECK(test::parse_attr("2.0332938517515416", double_, d));
 	BOOST_CHECK_EQUAL(d, 2.0332938517515416);
@@ -242,18 +230,18 @@ BOOST_AUTO_TEST_CASE(real_2)
 
 	BOOST_CHECK(test::parse("1.2", strict_udouble));
 	BOOST_CHECK(test::parse_attr("1.2", strict_udouble, d));
-	BOOST_CHECK(test::compare(d, 1.2));
+	BOOST_CHECK_EQUAL(d, 1.2));
 
 	BOOST_CHECK(!test::parse("-1234", strict_double));
 	BOOST_CHECK(!test::parse_attr("-1234", strict_double, d));
 
 	BOOST_CHECK(test::parse("123.", strict_double));
 	BOOST_CHECK(test::parse_attr("123.", strict_double, d));
-	BOOST_CHECK(test::compare(d, 123));
+	BOOST_CHECK_EQUAL(d, 123));
 
 	BOOST_CHECK(test::parse("3.E6", strict_double));
 	BOOST_CHECK(test::parse_attr("3.E6", strict_double, d));
-	BOOST_CHECK(test::compare(d, 3e6));
+	BOOST_CHECK_EQUAL(d, 3e6));
 
 	 numeric_parser<
 		double,
@@ -293,15 +281,15 @@ BOOST_AUTO_TEST_CASE(real_3)
 
 	BOOST_CHECK(test::parse("123,456,789.01", ts_real));
 	BOOST_CHECK(test::parse_attr("123,456,789.01", ts_real, d));
-	BOOST_CHECK(test::compare(d, 123456789.01));
+	BOOST_CHECK_EQUAL(d, 123456789.01));
 
 	BOOST_CHECK(test::parse("12,345,678.90", ts_real));
 	BOOST_CHECK(test::parse_attr("12,345,678.90", ts_real, d));
-	BOOST_CHECK(test::compare(d, 12345678.90));
+	BOOST_CHECK_EQUAL(d, 12345678.90));
 
 	BOOST_CHECK(test::parse("1,234,567.89", ts_real));
 	BOOST_CHECK(test::parse_attr("1,234,567.89", ts_real, d));
-	BOOST_CHECK(test::compare(d, 1234567.89));
+	BOOST_CHECK_EQUAL(d, 1234567.89));
 
 	BOOST_CHECK(!test::parse("1234,567,890", ts_real));
 	BOOST_CHECK(!test::parse("1,234,5678,9", ts_real));
@@ -319,40 +307,42 @@ BOOST_AUTO_TEST_CASE(real_4)
 
 	BOOST_CHECK(test::parse("-1234", custom_real));
 	BOOST_CHECK(test::parse_attr("-1234", custom_real, d));
-	BOOST_CHECK(test::compare(d, -1234));
+	BOOST_CHECK_EQUAL(d, -1234);
 
 	BOOST_CHECK(test::parse("1234.4567", custom_real));
 	BOOST_CHECK(test::parse_attr("1234.4567", custom_real, d));
-	BOOST_CHECK(test::compare(d, 1234.4567));
+	BOOST_CHECK_EQUAL(                                                   \
+		d.value(), math::concepts::real_concept_base_type(1234.4567) \
+	);
 }
 #if 0
 	BOOST_CHECK(test::parse("-1.2e3", custom_real));
 	BOOST_CHECK(test::parse_attr("-1.2e3", custom_real, d));
-	BOOST_CHECK(test::compare(d, -1.2e3));
+	BOOST_CHECK_EQUAL(d, -1.2e3));
 
 	BOOST_CHECK(test::parse("+1.2e3", custom_real));
 	BOOST_CHECK(test::parse_attr("+1.2e3", custom_real, d));
-	BOOST_CHECK(test::compare(d, 1.2e3));
+	BOOST_CHECK_EQUAL(d, 1.2e3));
 
 	BOOST_CHECK(test::parse("-0.1", custom_real));
 	BOOST_CHECK(test::parse_attr("-0.1", custom_real, d));
-	BOOST_CHECK(test::compare(d, -0.1));
+	BOOST_CHECK_EQUAL(d, -0.1));
 
 	BOOST_CHECK(test::parse("-1.2e-3", custom_real));
 	BOOST_CHECK(test::parse_attr("-1.2e-3", custom_real, d));
-	BOOST_CHECK(test::compare(d, -1.2e-3));
+	BOOST_CHECK_EQUAL(d, -1.2e-3));
 
 	BOOST_CHECK(test::parse("-1.e2", custom_real));
 	BOOST_CHECK(test::parse_attr("-1.e2", custom_real, d));
-	BOOST_CHECK(test::compare(d, -1.e2));
+	BOOST_CHECK_EQUAL(d, -1.e2));
 
 	BOOST_CHECK(test::parse("-.2e3", custom_real));
 	BOOST_CHECK(test::parse_attr("-.2e3", custom_real, d));
-	BOOST_CHECK(test::compare(d, -.2e3));
+	BOOST_CHECK_EQUAL(d, -.2e3));
 
 	BOOST_CHECK(test::parse("-2e3", custom_real));
 	BOOST_CHECK(test::parse_attr("-2e3", custom_real, d));
-	BOOST_CHECK(test::compare(d, -2e3));
+	BOOST_CHECK_EQUAL(d, -2e3));
 
 	BOOST_CHECK(!test::parse("-e3", custom_real));
 	BOOST_CHECK(!test::parse_attr("-e3", custom_real, d));
@@ -368,25 +358,25 @@ BOOST_AUTO_TEST_CASE(real_5)
 	BOOST_CHECK(test::parse("+1234", double_(1234)));
 	BOOST_CHECK(!test::parse("+1234", double_(-1234)));
 	BOOST_CHECK(test::parse_attr("+1234", double_(1234), d));
-	BOOST_CHECK(test::compare(d, 1234));
+	BOOST_CHECK_EQUAL(d, 1234));
 	BOOST_CHECK(!test::parse_attr("+1234", double_(-1234), d));
 
 	BOOST_CHECK(test::parse("-1234", double_(-1234)));
 	BOOST_CHECK(!test::parse("-1234", double_(1234)));
 	BOOST_CHECK(test::parse_attr("-1234", double_(-1234), d));
-	BOOST_CHECK(test::compare(d, -1234));
+	BOOST_CHECK_EQUAL(d, -1234));
 	BOOST_CHECK(!test::parse_attr("-1234", double_(1234), d));
 
 	BOOST_CHECK(test::parse("+1.2e3", double_(1.2e3)));
 	BOOST_CHECK(!test::parse("+1.2e3", double_(-1.2e3)));
 	BOOST_CHECK(test::parse_attr("+1.2e3", double_(1.2e3), d));
-	BOOST_CHECK(test::compare(d, 1.2e3));
+	BOOST_CHECK_EQUAL(d, 1.2e3));
 	BOOST_CHECK(!test::parse_attr("+1.2e3", double_(-1.2e3), d));
 
 	BOOST_CHECK(test::parse("-1.2e3", double_(-1.2e3)));
 	BOOST_CHECK(!test::parse("-1.2e3", double_(1.2e3)));
 	BOOST_CHECK(test::parse_attr("-1.2e3", double_(-1.2e3), d));
-	BOOST_CHECK(test::compare(d, -1.2e3));
+	BOOST_CHECK_EQUAL(d, -1.2e3));
 	BOOST_CHECK(!test::parse_attr("-1.2e3", double_(1.2e3), d));
 }
 
@@ -397,13 +387,13 @@ BOOST_AUTO_TEST_CASE(real_6)
 	BOOST_CHECK(test::parse("1234", udouble(1234)));
 	BOOST_CHECK(!test::parse("1234", udouble(4321)));
 	BOOST_CHECK(test::parse_attr("1234", udouble(1234), d));
-	BOOST_CHECK(test::compare(d, 1234));
+	BOOST_CHECK_EQUAL(d, 1234));
 	BOOST_CHECK(!test::parse_attr("1234", udouble(4321), d));
 
 	BOOST_CHECK(test::parse("1.2e3", udouble(1.2e3)));
 	BOOST_CHECK(!test::parse("1.2e3", udouble(3.2e1)));
 	BOOST_CHECK(test::parse_attr("1.2e3", udouble(1.2e3), d));
-	BOOST_CHECK(test::compare(d, 1.2e3));
+	BOOST_CHECK_EQUAL(d, 1.2e3));
 	BOOST_CHECK(!test::parse_attr("1.2e3", udouble(3.2e1), d));
 }
 
@@ -415,13 +405,13 @@ BOOST_AUTO_TEST_CASE(real_7)
 	BOOST_CHECK(test::parse("-1234", custom_real(-1234)));
 	BOOST_CHECK(!test::parse("-1234", custom_real(4321)));
 	BOOST_CHECK(test::parse_attr("-1234", custom_real(-1234), d));
-	BOOST_CHECK(test::compare(d, -1234));
+	BOOST_CHECK_EQUAL(d, -1234));
 	BOOST_CHECK(!test::parse_attr("-1234", custom_real(-4321), d));
 
 	BOOST_CHECK(test::parse("1.2e3", custom_real(1.2e3)));
 	BOOST_CHECK(!test::parse("1.2e3", custom_real(-1.2e3)));
 	BOOST_CHECK(test::parse_attr("1.2e3", custom_real(1.2e3), d));
-	BOOST_CHECK(test::compare(d, 1.2e3));
+	BOOST_CHECK_EQUAL(d, 1.2e3));
 	BOOST_CHECK(!test::parse_attr("1.2e3", custom_real(-3.2e1), d));
 }
 

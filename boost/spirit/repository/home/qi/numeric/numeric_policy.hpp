@@ -52,9 +52,16 @@ struct with_exponent {};
  */
 struct with_exponent_sign {};
 
-/* "Special" is a variety of special-purpose skipper function which is applied
- * after sign to the whole input to establish, whether it matches any sort
- * of special value, such as NaN or Inf.
+/* "Wrapper" specifies a type which should be used in place of actual attribute
+ * type and then converted to the attribute value. "Special" is expected
+ * to always return the original attribute type, disregarding the optional
+ * wrapper.
+ */
+struct with_wrapper {};
+
+/* "Special" is a "static" parser which is attempted before the rest of numeric
+ * parser methods to test whether input contains a predefined constant value
+ * (such as NaN or Inf).
  */
 struct with_special {};
 
@@ -68,6 +75,7 @@ typedef boost::mpl::x11::list<
 	with_fractional,
 	with_exponent,
 	with_exponent_sign,
+	with_wrapper,
 	with_special
 > trait_tag_order;
 

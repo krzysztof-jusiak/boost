@@ -104,65 +104,41 @@ struct unchecked_small_radix_integral {
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
 };
 
-template <typename T, bool Negative = false>
-struct unchecked_decimal_float {
-	typedef unchecked_decimal_float<
-		T, !Negative
-	> opposite_type;
-
-	template <typename CharType, bool Negative_ = false>
-	struct impl {
-		bool operator()(CharType in, T &out, T const &base)
-		{
-			out = out * T(10) + T(in & 0xf) * base;
-			return true;
-		}
-	};
-
-	template <typename CharType>
-	struct impl<CharType, true> {
-		bool operator()(CharType in, T &out, T const &base)
-		{
-			out = out * T(10) - T(in & 0xf) * base;
-			return true;
-		}
-	};
-
-	static int const base_scale = -std::numeric_limits<T>::digits10 - 1;
-	T base;
-
-	unchecked_decimal_float()
-	: base(T(1) / radix_pow<T, 10>(-base_scale))
-	{}
-
-	template <typename CharType>
-	bool operator()(CharType in, T &out)
-	{
-		return impl<CharType, Negative>()(in, out, base);
-	}
-};
-
 template <typename T, unsigned int Radix, bool Negative = false>
 struct unchecked_small_radix_fraction {
 	typedef unchecked_small_radix_fraction<
 		T, Radix, !Negative
 	> opposite_type;
 
-	T factor;
-	unchecked_small_radix_integral<T, Radix, Negative> i;
+	template <typename CharType, bool Negative_ = false>
+	struct impl {
+		bool operator()(CharType in, T &out, T &scale)
+		{
+			out = out + T(in & 0xf) * scale;
+			scale /= Radix;
+			return true;
+		}
+	};
+
+	template <typename CharType>
+	struct impl<CharType, true> {
+		bool operator()(CharType in, T &out, T &scale)
+		{
+			out = out - T(in & 0xf) * scale;
+			scale /= Radix;
+			return true;
+		}
+	};
+
+	T scale;
 
 	unchecked_small_radix_fraction()
-	: factor(0) {}
+	: scale(T(1) / Radix) {}
 
 	template <typename CharType>
 	bool operator()(CharType in, T &out)
 	{
-		if(i(in, out)) {
-			++factor;
-			return true;
-		} else
-			return false;
-		
+		return impl<CharType, Negative>()(in, out, scale);
 	}
 
 	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
@@ -191,8 +167,6 @@ struct unchecked_small_radix_exponent {
 
 	template <typename CharType>
 	struct impl<CharType, true> {
-		unsigned int last = 0;
-
 		bool operator()(CharType in, T &out, unsigned int &last)
 		{
 			unsigned int digit(in & 0xf);

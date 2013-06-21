@@ -33,7 +33,7 @@ struct numeric_impl {
 		Extractor, IntegralF
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -45,12 +45,12 @@ struct numeric_impl {
 		>, Extractor, IntegralF, Filter
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr,
 			Filter &filt
 		);
@@ -63,7 +63,7 @@ struct numeric_impl {
 		>, Extractor, IntegralF, SignP
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -77,12 +77,12 @@ struct numeric_impl {
 		>, Extractor, IntegralF, Filter, SignP
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr,
 			Filter &filt
 		);
@@ -96,7 +96,7 @@ struct numeric_impl {
 		>, Extractor, IntegralF, FractionalC
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -111,7 +111,7 @@ struct numeric_impl {
 		>, Extractor, IntegralF, SignP, FractionalC
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -126,7 +126,7 @@ struct numeric_impl {
 		>, Extractor, IntegralF, FractionalC, ExponentC
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -141,7 +141,7 @@ struct numeric_impl {
 		>, Extractor, IntegralF, SignP, FractionalC, ExponentC
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -156,7 +156,7 @@ struct numeric_impl {
 		>, Extractor, IntegralF, FractionalC, ExponentC, ExponentSignP
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -173,7 +173,7 @@ struct numeric_impl {
 		ExponentSignP
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 	};
@@ -188,12 +188,12 @@ struct numeric_impl {
 		>, Extractor, IntegralF, Filter, SignP, FractionalC
 	> {
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr
 		);
 
 		template <typename Iterator, typename Attribute>
-		static int parse(
+		static bool parse(
 			Iterator &first, Iterator const &last, Attribute &attr,
 			Filter &filt
 		);
@@ -203,7 +203,7 @@ struct numeric_impl {
 template <typename Flags>
 template <typename Extractor, typename IntegralF>
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral
 	>, Extractor, IntegralF
@@ -220,31 +220,28 @@ int numeric_impl<Flags>::apply<
 	IntegralF i;
 	Iterator iter(first), next(first);
 	extractor_value_type c;
-	int cnt(0);
 
 	while (iter != last) {
 		if (!spirit::qi::parse(next, last, e, c))
 			break;
 
 		if (!i(c, attr))
-			return 0;
-		else {
-			++cnt;
+			return false;
+		else
 			iter = next;
-		}
 	}
 
 	if (first != iter) {
 		first = iter;
-		return cnt;
+		return true;
 	} else 
-		return 0;
+		return false;
 }
 
 template <typename Flags>
 template <typename Extractor, typename IntegralF, typename Filter>
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_filter
 	>, Extractor, IntegralF, Filter
@@ -257,7 +254,7 @@ int numeric_impl<Flags>::apply<
 template <typename Flags>
 template <typename Extractor, typename IntegralF, typename Filter>
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_filter
 	>, Extractor, IntegralF, Filter
@@ -284,7 +281,7 @@ int numeric_impl<Flags>::apply<
 		if (!spirit::qi::parse(next, last, e, c)) {
 			if (cnt > rel_cnt) {
 				if (!filt(next, last, cnt - rel_cnt))
-					return 0;
+					return false;
 				else {
 					rel_cnt = cnt;
 					if (next == iter) {
@@ -311,15 +308,15 @@ int numeric_impl<Flags>::apply<
 
 	if (v_flag) {
 		first = iter;
-		return cnt;
+		return true;
 	} else
-		return 0;
+		return false;
 }
 
 template <typename Flags>
 template <typename Extractor, typename IntegralF, typename SignP>
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_sign
 	>, Extractor, IntegralF, SignP
@@ -330,7 +327,7 @@ int numeric_impl<Flags>::apply<
 	bool neg(false);
 	if (!spirit::qi::parse(first, last, s, neg)) {
 		if (has_key<flag_set, flag::compulsory_sign>::value)
-			return 0;
+			return false;
 	}
 
 	if (!neg) {
@@ -359,7 +356,7 @@ template <
 	typename Extractor, typename IntegralF, typename Filter, typename SignP
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_filter, with_sign
 	>, Extractor, IntegralF, Filter, SignP
@@ -374,7 +371,7 @@ template <
 	typename Extractor, typename IntegralF, typename Filter, typename SignP
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_filter, with_sign
 	>, Extractor, IntegralF, Filter, SignP
@@ -385,7 +382,7 @@ int numeric_impl<Flags>::apply<
 	bool neg(false);
 	if (!spirit::qi::parse(first, last, s, neg)) {
 		if (has_key<flag_set, flag::compulsory_sign>::value)
-			return 0;
+			return false;
 	}
 
 	if (!neg) {
@@ -415,11 +412,13 @@ template <
 	typename Extractor, typename IntegralF, typename FractionalC
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_fractional
 	>, Extractor, IntegralF, FractionalC
 >::parse(Iterator &first, Iterator const &last, Attribute &attr) {
+	using mpl::x11::has_key;
+
 	typedef typename numeric_impl<Flags>::template apply<
 		boost::mpl::x11::package<
 			with_extractor, with_integral
@@ -434,20 +433,20 @@ int numeric_impl<Flags>::apply<
 		>, Extractor, typename mpl::x11::second<FractionalC>::type
 	> next_frac;
 
-	int cnt(next_int::parse(first, last, attr));
+	bool has_int(next_int::parse(first, last, attr));
 
-	if (cnt) {
-		if (spirit::qi::parse(first, last, sep)) {
-			int f_cnt(next_frac::parse(first, last, attr));
-			if (f_cnt)
-				return cnt + f_cnt;
-		}
+	if (!has_int && has_key<flag_set, flag::no_leading_dot>::value)
+			return false;
 
-		return cnt;
-	} else if (spirit::qi::parse(first, last, sep))
-		return next_frac::parse(first, last, attr);
-
-	return 0;
+	if (spirit::qi::parse(first, last, sep)) {
+		if (next_frac::parse(first, last, attr))
+			return true;
+		else
+			return has_int && !has_key<
+				flag_set, flag::no_trailing_dot
+			>::value;
+	} else
+		return has_int;
 }
 
 template <typename Flags>
@@ -456,7 +455,7 @@ template <
 	typename FractionalC
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_sign, with_fractional
 	>, Extractor, IntegralF, SignP, FractionalC
@@ -466,7 +465,7 @@ int numeric_impl<Flags>::apply<
 	bool neg(false);
 	if (!spirit::qi::parse(first, last, s, neg)) {
 		if (has_key<flag_set, flag::compulsory_sign>::value)
-			return 0;
+			return false;
 	}
 
 	if (!neg) {
@@ -502,23 +501,16 @@ template <
 	typename ExponentC
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_fractional, with_exponent
 	>, Extractor, IntegralF, FractionalC, ExponentC
 >::parse(Iterator &first, Iterator const &last, Attribute &attr) {
 	typedef typename numeric_impl<Flags>::template apply<
-		boost::mpl::x11::package<
-			with_extractor, with_integral
-		>, Extractor, IntegralF
-	> next_int;
-	typename mpl::x11::first<FractionalC>::type frac_sep;
-
-	typedef typename numeric_impl<Flags>::template apply<
-		boost::mpl::x11::package<
-			with_extractor, with_integral
-		>, Extractor, typename mpl::x11::second<FractionalC>::type
-	> next_frac;
+	boost::mpl::x11::package<
+			with_extractor, with_integral, with_fractional
+		>, Extractor, IntegralF, FractionalC
+	> next_num;
 
 	typename mpl::x11::first<ExponentC>::type exp_sep;
 
@@ -528,38 +520,13 @@ int numeric_impl<Flags>::apply<
 		>, Extractor, typename mpl::x11::second<ExponentC>::type
 	> next_exp;
 
-	int cnt(next_int::parse(first, last, attr)), f_cnt(0);
-	bool has_int(false), has_frac(false);
-	using mpl::x11::has_key;
+	if (!next_num::parse(first, last, attr))
+		return false;
 
-	if (cnt)
-		has_int = true;
-	else if (has_key<flag_set, flag::no_leading_dot>::value)
-		return 0;
-
-	if (spirit::qi::parse(first, last, frac_sep)) {
-		f_cnt = next_frac::parse(first, last, attr);
-		if (f_cnt)
-			has_frac = true;
-		else if (has_key<flag_set, flag::no_trailing_dot>::value)
-			return 0;
-	}
-
-	if (!has_int && !has_frac)
-		return 0;
-
-	if (spirit::qi::parse(first, last, exp_sep)) {
-		int exp(0), e_cnt(0);
-		if (0 < (e_cnt = next_exp::parse(first, last, exp))) {
-			if (traits::scale(attr, exp - f_cnt))
-				return cnt + f_cnt + e_cnt;
-			else
-				return 0;
-		}
-	} else
-		return traits::scale(attr, -f_cnt) ? cnt + f_cnt : 0;
-
-	return 0;
+	if (spirit::qi::parse(first, last, exp_sep))
+		return next_exp::parse(first, last, attr);
+	else
+		return true;
 }
 
 template <typename Flags>
@@ -568,48 +535,35 @@ template <
 	typename FractionalC, typename ExponentC
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_sign,
 		with_fractional, with_exponent
 	>, Extractor, IntegralF, SignP, FractionalC, ExponentC
 >::parse(Iterator &first, Iterator const &last, Attribute &attr)
 {
-	using mpl::x11::has_key;
-	SignP s;
-	bool neg(false);
-	if (!spirit::qi::parse(first, last, s, neg)) {
-		if (has_key<flag_set, flag::compulsory_sign>::value)
-			return 0;
-	}
+	typedef typename numeric_impl<Flags>::template apply<
+	boost::mpl::x11::package<
+			with_extractor, with_integral, with_sign,
+			with_fractional
+		>, Extractor, IntegralF, SignP, FractionalC
+	> next_num;
 
-	if (!neg) {
-		typedef typename numeric_impl<Flags>::template apply<
-			boost::mpl::x11::package<
-				with_extractor, with_integral, with_fractional,
-				with_exponent
-			>, Extractor, IntegralF, FractionalC, ExponentC
-		> next;
+	typename mpl::x11::first<ExponentC>::type exp_sep;
 
-		return next::parse(first, last, attr);
-	} else {
-		typedef typename mpl::x11::second<
-			FractionalC
-		>::type FractionalF;
+	typedef typename numeric_impl<Flags>::template apply<
+		boost::mpl::x11::package<
+			with_extractor, with_integral
+		>, Extractor, typename mpl::x11::second<ExponentC>::type
+	> next_exp;
 
-		typedef typename numeric_impl<Flags>::template apply<
-			boost::mpl::x11::package<
-				with_extractor, with_integral, with_fractional,
-				with_exponent
-			>, Extractor, typename IntegralF::opposite_type,
-			mpl::x11::pair<
-				typename mpl::x11::first<FractionalC>::type,
-				typename FractionalF::opposite_type
-			>, ExponentC
-		> next;
+	if (!next_num::parse(first, last, attr))
+		return false;
 
-		return next::parse(first, last, attr);
-	}
+	if (spirit::qi::parse(first, last, exp_sep))
+		return next_exp::parse(first, last, attr);
+	else
+		return true;
 }
 
 template <typename Flags>
@@ -618,27 +572,17 @@ template <
 	typename ExponentC, typename ExponentSignP
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_fractional, with_exponent,
 		with_exponent_sign
 	>, Extractor, IntegralF, FractionalC, ExponentC, ExponentSignP
 >::parse(Iterator &first, Iterator const &last, Attribute &attr) {
 	typedef typename numeric_impl<Flags>::template apply<
-		boost::mpl::x11::package<
-			with_extractor, with_integral
-		>, Extractor, IntegralF
-	> next_int;
-	int const int_base_scale = IntegralF::base_scale;
-
-	typename mpl::x11::first<FractionalC>::type frac_sep;
-
-	typedef typename numeric_impl<Flags>::template apply<
-		boost::mpl::x11::package<
-			with_extractor, with_integral
-		>, Extractor, typename mpl::x11::second<FractionalC>::type
-	> next_frac;
-	int const frac_base_scale = mpl::x11::second<FractionalC>::type::base_scale;
+	boost::mpl::x11::package<
+			with_extractor, with_integral, with_fractional
+		>, Extractor, IntegralF, FractionalC
+	> next_num;
 
 	typename mpl::x11::first<ExponentC>::type exp_sep;
 
@@ -649,43 +593,13 @@ int numeric_impl<Flags>::apply<
 		ExponentSignP
 	> next_exp;
 
-	int cnt(next_int::parse(first, last, attr)), f_cnt(0), base_scale(frac_base_scale);
-	bool has_int(false), has_frac(false);
-	using mpl::x11::has_key;
+	if (!next_num::parse(first, last, attr))
+		return false;
 
-	if (cnt)
-		has_int = true;
-	else if (has_key<flag_set, flag::no_leading_dot>::value)
-		return 0;
-
-	if (int_base_scale != frac_base_scale) {
-		if (!traits::scale(attr, frac_base_scale - int_base_scale + 1))
-			return false;
-	}
-
-	if (spirit::qi::parse(first, last, frac_sep)) {
-		f_cnt = next_frac::parse(first, last, attr);
-		if (f_cnt)
-			has_frac = true;
-		else if (has_key<flag_set, flag::no_trailing_dot>::value)
-			return 0;
-	}
-
-	if (!has_int && !has_frac)
-		return 0;
-
-	std::cout << "attr " << attr << '\n';
-	if (spirit::qi::parse(first, last, exp_sep)) {
-		int exp(0), e_cnt(0);
-		if (0 < (e_cnt = next_exp::parse(first, last, exp))) {
-			printf("exp %d, f_cnt %d, base %d\n", exp, f_cnt, base_scale);
-			return traits::scale(attr, exp - f_cnt - base_scale)
-			       ? cnt + f_cnt + e_cnt : 0;
-		}
-	} else
-		return traits::scale(attr, -f_cnt - base_scale) ? cnt + f_cnt : 0;
-
-	return 0;
+	if (spirit::qi::parse(first, last, exp_sep))
+		return next_exp::parse(first, last, attr);
+	else
+		return true;
 }
 
 template <typename Flags>
@@ -694,48 +608,35 @@ template <
 	typename FractionalC, typename ExponentC, typename ExponentSignP
 >
 template <typename Iterator, typename Attribute>
-int numeric_impl<Flags>::apply<
+bool numeric_impl<Flags>::apply<
 	boost::mpl::x11::package<
 		with_extractor, with_integral, with_sign, with_fractional,
 		with_exponent, with_exponent_sign
 	>, Extractor, IntegralF, SignP, FractionalC, ExponentC, ExponentSignP
 >::parse(Iterator &first, Iterator const &last, Attribute &attr) {
-	using mpl::x11::has_key;
-	SignP s;
-	bool neg(false);
-	if (!spirit::qi::parse(first, last, s, neg)) {
-		if (has_key<flag_set, flag::compulsory_sign>::value)
-			return 0;
-	}
+	typedef typename numeric_impl<Flags>::template apply<
+	boost::mpl::x11::package<
+			with_extractor, with_integral, with_sign,
+			with_fractional
+		>, Extractor, IntegralF, SignP, FractionalC
+	> next_num;
 
-	if (!neg) {
-		typedef typename numeric_impl<Flags>::template apply<
-			boost::mpl::x11::package<
-				with_extractor, with_integral, with_fractional,
-				with_exponent, with_exponent_sign
-			>, Extractor, IntegralF, FractionalC, ExponentC,
-			ExponentSignP
-		> next;
+	typename mpl::x11::first<ExponentC>::type exp_sep;
 
-		return next::parse(first, last, attr);
-	} else {
-		typedef typename mpl::x11::second<
-			FractionalC
-		>::type FractionalF;
+	typedef typename numeric_impl<Flags>::template apply<
+		boost::mpl::x11::package<
+			with_extractor, with_integral, with_sign
+		>, Extractor, typename mpl::x11::second<ExponentC>::type,
+		ExponentSignP
+	> next_exp;
 
-		typedef typename numeric_impl<Flags>::template apply<
-			boost::mpl::x11::package<
-				with_extractor, with_integral, with_fractional,
-				with_exponent, with_exponent_sign
-			>, Extractor, typename IntegralF::opposite_type,
-			mpl::x11::pair<
-				typename mpl::x11::first<FractionalC>::type,
-				typename FractionalF::opposite_type
-			>, ExponentC, ExponentSignP
-		> next;
+	if (!next_num::parse(first, last, attr))
+		return false;
 
-		return next::parse(first, last, attr);
-	}
+	if (spirit::qi::parse(first, last, exp_sep))
+		return next_exp::parse(first, last, attr);
+	else
+		return true;
 }
 
 }
