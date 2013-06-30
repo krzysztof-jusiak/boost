@@ -150,16 +150,16 @@ struct unchecked_small_radix_exponent {
 		T, Radix, !Negative
 	> opposite_type;
 
-	unsigned int last = 0;
+	double last;
 
 	template <typename CharType, bool Negative_ = false>
 	struct impl {
-		bool operator()(CharType in, T &out, unsigned int &last)
+		bool operator()(CharType in, T &out, double &last)
 		{
 			unsigned int digit(in & 0xf);
-			unsigned int next = last * Radix + digit;
+			double next = last * Radix + digit;
 
-			out *= radix_pow<T, Radix>(next - last);
+			out *= exp10(next - last);
 			last = next;
 			return true;
 		}
@@ -167,16 +167,20 @@ struct unchecked_small_radix_exponent {
 
 	template <typename CharType>
 	struct impl<CharType, true> {
-		bool operator()(CharType in, T &out, unsigned int &last)
+		bool operator()(CharType in, T &out, double &last)
 		{
 			unsigned int digit(in & 0xf);
-			unsigned int next = last * Radix + digit;
+			double next = last * Radix + digit;
 
-			out /= radix_pow<T, Radix>(next - last);
+			out /= exp10(next - last);
 			last = next;
 			return true;
 		}
 	};
+
+	unchecked_small_radix_exponent()
+	: last(0)
+	{}
 
 	template <typename CharType>
 	bool operator()(CharType in, T &out)

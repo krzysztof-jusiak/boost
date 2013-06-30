@@ -24,6 +24,120 @@ struct long_double { BOOST_SPIRIT_IS_TAG() };
 }
 
 namespace qi {
+namespace detail {
+
+template <
+	typename T, unsigned int RadixM, unsigned int RadixE = RadixM,
+	unsigned int ExponentBase = RadixM, unsigned int ExponentBaseStep = 1
+> struct real_wrapper {
+	typedef real_wrapper<T, RadixM, RadixE> wrapper_type;
+
+	T mantissa;
+	int exponent;
+
+	template <typename CharType, bool Negative_ = false>
+	struct impl {
+		static bool integral_op(CharType in, wrapper_type &out)
+		{
+			out.mantissa *= RadixM;
+			out.mantissa += in & 0xf;
+			return true;
+		}
+
+		static bool exponent_op(CharType in, wrapper_type &out)
+		{
+			out.exponent *= RadixE;
+			out.exponent += in & 0xf;
+			return true;
+		}
+	};
+	
+	template <typename CharType>
+	struct impl<CharType, true> {
+		static bool integral_op(CharType in, wrapper_type &out)
+		{
+			out.mantissa *= RadixM;
+			out.mantissa -= in & 0xf;
+			return true;
+		}
+
+		static bool exponent_op(CharType in, wrapper_type &out)
+		{
+			out.exponent *= RadixE;
+			out.exponent -= in & 0xf;
+			return true;
+		}
+	};
+
+	template <bool Negative = false>
+	struct integral_op {
+		typedef integral_op<!Negative> opposite_type;
+
+		template <typename CharType>
+		bool operator()(CharType in, wrapper_type &out)
+		{
+			return impl<CharType, Negative>::integral_op(in, out);
+		}
+	};
+
+	template <bool Negative = false>
+	struct fractional_op {
+		typedef fractional_op<!Negative> opposite_type;
+
+		template <typename CharType>
+		bool operator()(CharType in, wrapper_type &out)
+		{
+			bool rv(impl<CharType, Negative>::integral_op(in, out));
+			if (rv)
+				out.exponent -= ExponentBaseStep;
+
+			return rv;
+		}
+	};
+
+	template <bool Negative = false>
+	struct exponent_op {
+		typedef exponent_op<!Negative> opposite_type;
+
+		template <typename CharType>
+		bool operator()(CharType in, wrapper_type &out)
+		{
+			return impl<CharType, Negative>::exponent_op(in, out);
+		}
+	};
+
+	real_wrapper()
+	: mantissa(traits::zero<T>()), exponent(0)
+	{}
+};
+}
+
+template <typename T>
+using precise_real_policy = mpl::x11::map<
+	mpl::x11::pair<with_extractor, standard::digit_type>,
+	mpl::x11::pair<with_integral,
+		typename detail::real_wrapper<T, 10>::integral_op
+	>,
+	mpl::x11::pair<with_sign,
+		detail::default_sign<char_encoding::standard::char_type>
+	>,
+	mpl::x11::pair<with_fractional, mpl::x11::pair<
+		detail::default_fractional_separator<
+			char_encoding::standard::char_type
+		>,
+		typename detail::real_wrapper<T, 10>::fractional_op
+	>>,
+	mpl::x11::pair<with_exponent, mpl::x11::pair<
+		detail::default_exponent_separator<
+			char_encoding::standard::char_type
+		>,
+		typename detail::real_wrapper<T, 10>::exponent_op
+	>>,
+	mpl::x11::pair<with_exponent_sign,
+		detail::default_sign<char_encoding::standard::char_type>
+	>,
+	mpl::x11::pair<with_wrapper, detail::real_wrapper<T, 10>>
+>;
 
 template <typename T>
 using real_policy = mpl::x11::map<

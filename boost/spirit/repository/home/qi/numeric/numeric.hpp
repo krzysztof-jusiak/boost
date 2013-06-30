@@ -15,6 +15,7 @@
 #include <boost/spirit/home/qi/meta_compiler.hpp>
 #include <boost/spirit/home/qi/skip_over.hpp>
 #include <boost/spirit/home/qi/parser.hpp>
+#include <boost/mpl/x11/erase.hpp>
 
 namespace boost { namespace spirit { namespace repository {
 namespace tag {
@@ -40,22 +41,60 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 		typedef T type;
 	};
 
+	typedef typename mpl::x11::erase_key<
+		typename mpl::x11::erase_key<Policy, with_wrapper>::type,
+		with_special
+	>::type applicable_policy;
+
+	typedef mpl::x11::apply_wrap<
+		unpack_map<
+			detail::numeric_impl<Flags>, detail::trait_tag_order
+		>, applicable_policy
+	> extractor_type;
+
+	template <typename Iterator, typename Context, bool Wrapped = false>
+	struct impl {
+		static bool parse(
+			Iterator &first, Iterator const &last, Context &ctx,
+			T &attr_param
+		)
+		{
+			attr_param = traits::zero<T>();
+			return extractor_type::parse(first, last, attr_param);
+		}
+	};
+
+	template <typename Iterator, typename Context>
+	struct impl<Iterator, Context, true> {
+		static bool parse(
+			Iterator &first, Iterator const &last, Context &ctx,
+			T &attr_param
+		)
+		{
+			typename mpl::x11::at<
+				Policy, with_wrapper
+			>::type attr_;
+
+			if (extractor_type::parse(first, last, attr_)) {
+				spirit::traits::assign_to(attr_, attr_param);
+				return true;
+			} else
+				return false;
+		}
+	};
+	
 	template <typename Iterator, typename Context, typename Skipper>
 	bool parse(
 		Iterator &first, Iterator const &last, Context &ctx,
-		Skipper const &skipper , T &attr_
+		Skipper const &skipper , T &attr_param
 	) const
 	{
-		typedef mpl::x11::apply_wrap<
-			unpack_map<
-				detail::numeric_impl<Flags>,
-				detail::trait_tag_order
-			>, Policy
-		> extract;
-
-		attr_ = traits::zero<T>();
 		spirit::qi::skip_over(first, last, skipper);
-		return extract::parse(first, last, attr_) > 0;
+
+		return impl<
+			Iterator, Context,
+			mpl::x11::has_key<Policy, with_wrapper>::value
+		>::parse(first, last, ctx, attr_param);
 	}
 
 	template <
@@ -71,8 +110,8 @@ struct any_numeric_parser : spirit::qi::primitive_parser<
 		if (parse(first, last, ctx, skipper, attr_)) {
 			spirit::traits::assign_to(attr_, attr_param);
 			return true;
-		}
-		return false;
+		} else
+			return false;
 	}
 
 	template <typename Context>
@@ -100,24 +139,20 @@ struct literal_numeric_parser : spirit::qi::primitive_parser<
 		Skipper const &skipper, Attribute &attr_param
 	) const
 	{
-		typedef mpl::x11::apply_wrap<
-			unpack_map<
-				detail::numeric_impl<Flags>,
-				detail::trait_tag_order
-			>, Policy
-		> extract;
-		spirit::qi::skip_over(first, last, skipper);
+		any_numeric_parser<T, Policy, Flags> p;
+
 		Iterator save = first;
 		T attr_(traits::zero<T>());
-
-		if ((extract::parse(first, last, attr_) > 0)
-		    && (attr_ == n_)) {
+		if (
+			p.parse(first, last, ctx, skipper, attr_)
+			&& (attr_ == n_)
+		) {
 			spirit::traits::assign_to(attr_, attr_param);
 			return true;
+		} else {
+			first = save;
+			return false;
 		}
-
-		first = save;
-		return false;
 	}
 
 	template <typename Context>
