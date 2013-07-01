@@ -51,7 +51,7 @@ template <
 			return true;
 		}
 	};
-	
+
 	template <typename CharType>
 	struct impl<CharType, true> {
 		static bool integral_op(CharType in, wrapper_type &out)
@@ -109,6 +109,11 @@ template <
 	real_wrapper()
 	: mantissa(traits::zero<T>()), exponent(0)
 	{}
+
+	operator T() const
+	{
+		return mantissa;
+	}
 };
 }
 
@@ -116,7 +121,7 @@ template <typename T>
 using precise_real_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integral,
-		typename detail::real_wrapper<T, 10>::integral_op
+		typename detail::real_wrapper<T, 10>::template integral_op<>
 	>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -125,13 +130,13 @@ using precise_real_policy = mpl::x11::map<
 		detail::default_fractional_separator<
 			char_encoding::standard::char_type
 		>,
-		typename detail::real_wrapper<T, 10>::fractional_op
+		typename detail::real_wrapper<T, 10>::template fractional_op<>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 		detail::default_exponent_separator<
 			char_encoding::standard::char_type
 		>,
-		typename detail::real_wrapper<T, 10>::exponent_op
+		typename detail::real_wrapper<T, 10>::template exponent_op<>
 	>>,
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -229,7 +234,7 @@ struct make_primitive<
 template <typename Modifiers>
 struct make_primitive<repository::tag::double_, Modifiers>
 : repository::qi::make_numeric<
-	double, repository::qi::real_policy<double>
+	double, repository::qi::precise_real_policy<double>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -239,14 +244,14 @@ struct make_primitive<
 		A0, repository::value_wrapper<double>
 	>>::type
 > : repository::qi::make_literal_numeric<
-	double, repository::qi::real_policy<double>
+	double, repository::qi::precise_real_policy<double>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::double_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	double, repository::qi::real_policy<double>
+	double, repository::qi::precise_real_policy<double>
 > {};
 
 /*** long_double ***/

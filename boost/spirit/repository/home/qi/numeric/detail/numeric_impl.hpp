@@ -179,6 +179,24 @@ struct numeric_impl {
 	};
 
 	template <
+		typename Extractor, typename IntegralF, typename SignP,
+		typename FractionalC, typename ExponentC,
+		typename ExponentSignP, typename WrapperT
+	> struct apply<
+		boost::mpl::x11::package<
+			with_extractor, with_integral, with_sign,
+			with_fractional, with_exponent, with_exponent_sign,
+			with_wrapper
+		>, Extractor, IntegralF, SignP, FractionalC, ExponentC,
+		ExponentSignP, WrapperT
+	> {
+		template <typename Iterator, typename Attribute>
+		static bool parse(
+			Iterator &first, Iterator const &last, Attribute &attr
+		);
+	};
+
+	template <
 		typename Extractor, typename IntegralF, typename Filter,
 		typename SignP, typename FractionalC
 	> struct apply<
@@ -639,7 +657,38 @@ bool numeric_impl<Flags>::apply<
 		return true;
 }
 
+template <typename Flags>
+template <
+	typename Extractor, typename IntegralF, typename SignP,
+	typename FractionalC, typename ExponentC, typename ExponentSignP,
+	typename WrapperT
+>
+template <typename Iterator, typename Attribute>
+bool numeric_impl<Flags>::apply<
+	boost::mpl::x11::package<
+		with_extractor, with_integral, with_sign, with_fractional,
+		with_exponent, with_exponent_sign, with_wrapper
+	>, Extractor, IntegralF, SignP, FractionalC, ExponentC, ExponentSignP,
+	WrapperT
+>::parse(Iterator &first, Iterator const &last, Attribute &attr)
+{
+	typedef typename numeric_impl<Flags>::template apply<
+		boost::mpl::x11::package<
+			with_extractor, with_integral, with_sign,
+			with_fractional, with_exponent, with_exponent_sign
+		>, Extractor, IntegralF, SignP, FractionalC, ExponentC,
+		ExponentSignP
+	> next_num;
+
+	WrapperT w_attr;
+	if (next_num::parse(first, last, w_attr)) {
+		spirit::traits::assign_to(w_attr, attr);
+		return true;
+	}
+	else
+		return false;
 }
-}}}}
+
+}}}}}
 
 #endif
