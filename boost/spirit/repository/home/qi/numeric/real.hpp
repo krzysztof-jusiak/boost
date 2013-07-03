@@ -11,7 +11,7 @@
 
 #include <boost/mpl/x11/map.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
-#include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
+#include <boost/spirit/repository/home/qi/numeric/detail/real_wrapper.hpp>
 
 namespace boost { namespace spirit {
 namespace repository {
@@ -24,109 +24,17 @@ struct long_double { BOOST_SPIRIT_IS_TAG() };
 }
 
 namespace qi {
-namespace detail {
-
-template <
-	typename T, unsigned int RadixM, unsigned int RadixE = RadixM,
-	unsigned int ExponentBase = RadixM, unsigned int ExponentBaseStep = 1
-> struct real_wrapper {
-	typedef real_wrapper<T, RadixM, RadixE> wrapper_type;
-
-	T mantissa;
-	int exponent;
-
-	template <typename CharType, bool Negative_ = false>
-	struct impl {
-		static bool integral_op(CharType in, wrapper_type &out)
-		{
-			out.mantissa *= RadixM;
-			out.mantissa += in & 0xf;
-			return true;
-		}
-
-		static bool exponent_op(CharType in, wrapper_type &out)
-		{
-			out.exponent *= RadixE;
-			out.exponent += in & 0xf;
-			return true;
-		}
-	};
-
-	template <typename CharType>
-	struct impl<CharType, true> {
-		static bool integral_op(CharType in, wrapper_type &out)
-		{
-			out.mantissa *= RadixM;
-			out.mantissa -= in & 0xf;
-			return true;
-		}
-
-		static bool exponent_op(CharType in, wrapper_type &out)
-		{
-			out.exponent *= RadixE;
-			out.exponent -= in & 0xf;
-			return true;
-		}
-	};
-
-	template <bool Negative = false>
-	struct integral_op {
-		typedef integral_op<!Negative> opposite_type;
-
-		template <typename CharType>
-		bool operator()(CharType in, wrapper_type &out)
-		{
-			return impl<CharType, Negative>::integral_op(in, out);
-		}
-	};
-
-	template <bool Negative = false>
-	struct fractional_op {
-		typedef fractional_op<!Negative> opposite_type;
-
-		template <typename CharType>
-		bool operator()(CharType in, wrapper_type &out)
-		{
-			bool rv(impl<CharType, Negative>::integral_op(in, out));
-			if (rv)
-				out.exponent -= ExponentBaseStep;
-
-			return rv;
-		}
-	};
-
-	template <bool Negative = false>
-	struct exponent_op {
-		typedef exponent_op<!Negative> opposite_type;
-
-		template <typename CharType>
-		bool operator()(CharType in, wrapper_type &out)
-		{
-			return impl<CharType, Negative>::exponent_op(in, out);
-		}
-	};
-
-	real_wrapper()
-	: mantissa(traits::zero<T>()), exponent(0)
-	{}
-
-	operator T() const
-	{
-		return mantissa;
-	}
-};
-}
 
 template <typename T>
 using precise_real_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral,
+	mpl::x11::pair<with_integer,
 		typename detail::real_wrapper<T, 10>::template integral_op<>
 	>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
 	>,
-	mpl::x11::pair<with_fractional, mpl::x11::pair<
+	mpl::x11::pair<with_fraction, mpl::x11::pair<
 		detail::default_fractional_separator<
 			char_encoding::standard::char_type
 		>,
@@ -147,23 +55,23 @@ using precise_real_policy = mpl::x11::map<
 template <typename T>
 using real_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral,
-		detail::unchecked_small_radix_integral<T, 10>
+	mpl::x11::pair<with_integer,
+		detail::unchecked_ascii_integer<T, 10>
 	>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
 	>,
-	mpl::x11::pair<with_fractional, mpl::x11::pair<
+	mpl::x11::pair<with_fraction, mpl::x11::pair<
 		detail::default_fractional_separator<
 			char_encoding::standard::char_type
 		>,
-		detail::unchecked_small_radix_fraction<T, 10>
+		detail::unchecked_ascii_fraction<T, 10>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 		detail::default_exponent_separator<
 			char_encoding::standard::char_type
 		>,
-		detail::unchecked_small_radix_exponent<T, 10>
+		detail::unchecked_ascii_exponent<T, 10>
 	>>,
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -173,20 +81,20 @@ using real_policy = mpl::x11::map<
 template <typename T>
 using ureal_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integral,
-		detail::unchecked_small_radix_integral<T, 10>
+	mpl::x11::pair<with_integer,
+		detail::unchecked_ascii_integer<T, 10>
 	>,
-	mpl::x11::pair<with_fractional, mpl::x11::pair<
+	mpl::x11::pair<with_fraction, mpl::x11::pair<
 			detail::default_fractional_separator<
 				char_encoding::standard::char_type
 			>,
-			detail::unchecked_small_radix_fraction<T, 10>
+			detail::unchecked_ascii_fraction<T, 10>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 			detail::default_exponent_separator<
 				char_encoding::standard::char_type
 			>,
-			detail::unchecked_small_radix_exponent<T, 10>
+			detail::unchecked_ascii_exponent<T, 10>
 	>>,
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -234,7 +142,7 @@ struct make_primitive<
 template <typename Modifiers>
 struct make_primitive<repository::tag::double_, Modifiers>
 : repository::qi::make_numeric<
-	double, repository::qi::precise_real_policy<double>
+	double, repository::qi::real_policy<double>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -244,14 +152,14 @@ struct make_primitive<
 		A0, repository::value_wrapper<double>
 	>>::type
 > : repository::qi::make_literal_numeric<
-	double, repository::qi::precise_real_policy<double>
+	double, repository::qi::real_policy<double>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::double_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	double, repository::qi::precise_real_policy<double>
+	double, repository::qi::real_policy<double>
 > {};
 
 /*** long_double ***/

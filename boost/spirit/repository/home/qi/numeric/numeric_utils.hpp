@@ -39,41 +39,18 @@ value_wrapper<T> _r(T v)
 
 namespace qi { namespace detail {
 
-template <typename T>
-struct hex_integral {
-	template <typename CharType>
-	static T hex_digit(CharType in)
-	{
-		return T(
-			(in & 0xf) + (in > CharType('9') ? 9 : 0)
-		);
-	}
+template <unsigned int Radix, typename Char>
+inline static Char ascii_digit_value(Char ch)
+{
+	if (Radix <= 10 || (ch >= '0' && ch <= '9'))
+		return ch - '0';
 
-	template <typename CharType>
-	bool operator()(CharType in, T &out)
-	{
-		static T const max((std::numeric_limits<T>::max)());
-		static T const val(max >> 4);
-
-		if (out > val)
-			return false;
-
-		out <<= 4;
-
-		T digit(hex_digit(in));
-
-		if (out > max - digit)
-			return false;
-
-		out += digit;
-		return true;
-	}
-
-};
+	return spirit::char_encoding::ascii::tolower(ch) - 'a' + 10;
+}
 
 template <typename T, unsigned int Radix, bool Negative = false>
-struct unchecked_small_radix_integral {
-	typedef unchecked_small_radix_integral<
+struct unchecked_ascii_integer {
+	typedef unchecked_ascii_integer<
 		T, Radix, !Negative
 	> opposite_type;
 
@@ -81,7 +58,7 @@ struct unchecked_small_radix_integral {
 	struct impl {
 		bool operator()(CharType in, T &out)
 		{
-			out = (out * Radix) + T(in & 0xf);
+			out = (out * Radix) + T(ascii_digit_value<Radix>(in));
 			return true;
 		}
 	};
@@ -90,7 +67,7 @@ struct unchecked_small_radix_integral {
 	struct impl<CharType, true> {
 		bool operator()(CharType in, T &out)
 		{
-			out = (out * Radix) - T(in & 0xf);
+			out = (out * Radix) - T(ascii_digit_value<Radix>(in));
 			return true;
 		}
 	};
@@ -101,12 +78,12 @@ struct unchecked_small_radix_integral {
 		return impl<CharType, Negative>()(in, out);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
 };
 
 template <typename T, unsigned int Radix, bool Negative = false>
-struct unchecked_small_radix_fraction {
-	typedef unchecked_small_radix_fraction<
+struct unchecked_ascii_fraction {
+	typedef unchecked_ascii_fraction<
 		T, Radix, !Negative
 	> opposite_type;
 
@@ -114,7 +91,7 @@ struct unchecked_small_radix_fraction {
 	struct impl {
 		bool operator()(CharType in, T &out, T &scale)
 		{
-			out = out + T(in & 0xf) * scale;
+			out = out + T(ascii_digit_value<10>(in)) * scale;
 			scale /= Radix;
 			return true;
 		}
@@ -124,7 +101,7 @@ struct unchecked_small_radix_fraction {
 	struct impl<CharType, true> {
 		bool operator()(CharType in, T &out, T &scale)
 		{
-			out = out - T(in & 0xf) * scale;
+			out = out - T(ascii_digit_value<10>(in)) * scale;
 			scale /= Radix;
 			return true;
 		}
@@ -132,7 +109,7 @@ struct unchecked_small_radix_fraction {
 
 	T scale;
 
-	unchecked_small_radix_fraction()
+	unchecked_ascii_fraction()
 	: scale(T(1) / Radix) {}
 
 	template <typename CharType>
@@ -141,12 +118,12 @@ struct unchecked_small_radix_fraction {
 		return impl<CharType, Negative>()(in, out, scale);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
 };
 
 template <typename T, unsigned int Radix, bool Negative = false>
-struct unchecked_small_radix_exponent {
-	typedef unchecked_small_radix_exponent<
+struct unchecked_ascii_exponent {
+	typedef unchecked_ascii_exponent<
 		T, Radix, !Negative
 	> opposite_type;
 
@@ -156,7 +133,7 @@ struct unchecked_small_radix_exponent {
 	struct impl {
 		bool operator()(CharType in, T &out, double &last)
 		{
-			unsigned int digit(in & 0xf);
+			unsigned int digit(ascii_digit_value<Radix>(in));
 			double next = last * Radix + digit;
 
 			out *= exp10(next - last);
@@ -169,7 +146,7 @@ struct unchecked_small_radix_exponent {
 	struct impl<CharType, true> {
 		bool operator()(CharType in, T &out, double &last)
 		{
-			unsigned int digit(in & 0xf);
+			unsigned int digit(ascii_digit_value<Radix>(in));
 			double next = last * Radix + digit;
 
 			out /= exp10(next - last);
@@ -178,7 +155,7 @@ struct unchecked_small_radix_exponent {
 		}
 	};
 
-	unchecked_small_radix_exponent()
+	unchecked_ascii_exponent()
 	: last(0)
 	{}
 
@@ -188,12 +165,12 @@ struct unchecked_small_radix_exponent {
 		return impl<CharType, Negative>()(in, out, last);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
 };
 
 template <typename T, unsigned int Radix, int MaxDigits, bool Negative = false>
-struct fixed_small_radix_integral {
-	typedef fixed_small_radix_integral<
+struct fixed_ascii_integer {
+	typedef fixed_ascii_integer<
 		T, Radix, MaxDigits, !Negative
 	> opposite_type;
 
@@ -203,7 +180,7 @@ struct fixed_small_radix_integral {
 	struct impl {
 		bool operator()(CharType in, T &out)
 		{
-			T digit(in & 0xf);
+			T digit(ascii_digit_value<Radix>(in));
 			out *= Radix;
 			out += digit;
 			return true;
@@ -214,7 +191,7 @@ struct fixed_small_radix_integral {
 	struct impl<CharType, true> {
 		bool operator()(CharType in, T &out)
 		{
-			T digit(in & 0xf);
+			T digit(ascii_digit_value<Radix>(in));
 			out *= Radix;
 			out -= digit;
 			return true;
@@ -230,12 +207,12 @@ struct fixed_small_radix_integral {
 			return impl<CharType, Negative>()(in, out);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
 };
 
 template <typename T, T Radix, bool Negative = false>
-struct small_radix_integral {
-	typedef small_radix_integral<T, Radix, !Negative> opposite_type;
+struct ascii_integer {
+	typedef ascii_integer<T, Radix, !Negative> opposite_type;
 
 	template <typename CharType, bool Negative_ = false>
 	struct impl {
@@ -249,7 +226,7 @@ struct small_radix_integral {
 
 			out *= Radix;
 
-			T digit(in & 0xf);
+			T digit(ascii_digit_value<Radix>(in));
 
 			if (out > max - digit)
 				return false;
@@ -271,7 +248,7 @@ struct small_radix_integral {
 
 			out *= Radix;
 
-			T digit(in & 0xf);
+			T digit(ascii_digit_value<Radix>(in));
 
 			if (out < min + digit)
 				return false;
@@ -287,7 +264,7 @@ struct small_radix_integral {
 		return impl<CharType, Negative>()(in, out);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 11);
+	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
 };
 
 template <unsigned int...>

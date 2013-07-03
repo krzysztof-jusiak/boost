@@ -19,10 +19,10 @@ namespace qi {
 /* "Extractor" produces value tokens from input stream. */
 struct with_extractor {};
 
-/* "Integral" is an attribute mutating function affecting integral part of
+/* "Integer" is an attribute mutating function affecting integral part of
  * the attribute using "Extractor" supplied token.
  */
-struct with_integral {}; 
+struct with_integer {}; 
 
 /* "Filter" is a variety of special-purpose skipper function which can validate
  * and remove non-numeric "decorations" from the input stream.
@@ -35,11 +35,11 @@ struct with_filter {};
  */
 struct with_sign {};
 
-/* "Fractional" is a pair of parser and attribute mutator function: parser
+/* "Fraction" is a pair of parser and attribute mutator function: parser
  * to match the fraction part separator, and mutator to update the attribute
  * with extracted digits.
  */
-struct with_fractional {};
+struct with_fraction {};
 
 /* "Exponent" is a pair of parser and attribute mutator function: parser
  * to match the exponent part separator, and mutator to update the exponent
@@ -69,10 +69,10 @@ namespace detail {
 
 typedef boost::mpl::x11::list<
 	with_extractor,
-	with_integral,
+	with_integer,
 	with_filter,
 	with_sign,
-	with_fractional,
+	with_fraction,
 	with_exponent,
 	with_exponent_sign,
 	with_wrapper,

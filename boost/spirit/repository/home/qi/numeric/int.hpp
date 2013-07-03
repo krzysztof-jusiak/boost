@@ -33,7 +33,7 @@ template <typename T>
 using int_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<
-		with_integral, detail::small_radix_integral<T, 10, false>
+		with_integer, detail::ascii_integer<T, 10, false>
 	>,
 	mpl::x11::pair<
 		with_sign,

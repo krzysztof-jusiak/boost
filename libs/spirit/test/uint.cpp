@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(uint_4)
 	numeric_parser<unsigned int, mpl::x11::map<
 		mpl::x11::pair<with_extractor, standard::digit_type>,
 		mpl::x11::pair<
-			with_integral,
-			detail::fixed_small_radix_integral<
+			with_integer,
+			detail::fixed_ascii_integer<
 				unsigned int, 10, 3
 			>
 		>,
@@ -158,8 +158,8 @@ BOOST_AUTO_TEST_CASE(uint_4)
 	numeric_parser<unsigned int, mpl::x11::map<
 		mpl::x11::pair<with_extractor, standard::digit_type>,
 		mpl::x11::pair<
-			with_integral,
-			detail::fixed_small_radix_integral<
+			with_integer,
+			detail::fixed_ascii_integer<
 				unsigned int, 10, 4
 			>
 		>,
@@ -175,8 +175,8 @@ BOOST_AUTO_TEST_CASE(uint_4)
 	numeric_parser<unsigned int, mpl::x11::map<
 		mpl::x11::pair<with_extractor, standard::digit_type>,
 		mpl::x11::pair<
-			with_integral,
-			detail::fixed_small_radix_integral<
+			with_integer,
+			detail::fixed_ascii_integer<
 				unsigned int, 10, 4
 			>
 		>,

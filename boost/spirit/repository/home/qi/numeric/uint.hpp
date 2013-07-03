@@ -34,7 +34,7 @@ template <typename T>
 using uint_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<
-		with_integral, detail::small_radix_integral<T, 10>
+		with_integer, detail::ascii_integer<T, 10>
 	>
 >;
 
@@ -47,7 +47,7 @@ using bin_policy = mpl::x11::map<
 			char_encoding::standard
 		>
 	>,
-	mpl::x11::pair<with_integral, detail::small_radix_integral<T, 2>>
+	mpl::x11::pair<with_integer, detail::ascii_integer<T, 2>>
 >;
 
 template <typename T>
@@ -59,13 +59,13 @@ using oct_policy = mpl::x11::map<
 			char_encoding::standard
 		>
 	>,
-	mpl::x11::pair<with_integral, detail::small_radix_integral<T, 8>>
+	mpl::x11::pair<with_integer, detail::ascii_integer<T, 8>>
 >;
 
 template <typename T>
 using hex_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::xdigit_type>,
-	mpl::x11::pair<with_integral, detail::hex_integral<T>>
+	mpl::x11::pair<with_integer, detail::ascii_integer<T, 16>>
 >;
 
 typedef terminal<tag::ushort_> ushort_type;
