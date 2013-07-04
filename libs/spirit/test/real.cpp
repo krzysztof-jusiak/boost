@@ -27,6 +27,9 @@ BOOST_AUTO_TEST_CASE(real_0)
 	numeric_parser<double, precise_real_policy<double>> pdouble;
 	double d;
 
+	d = strtod("1.2e3", 0);
+	BOOST_CHECK_EQUAL(d, 1.2e3);
+
 	BOOST_CHECK(test::parse_attr("-1234", pdouble, d));
 	BOOST_CHECK_EQUAL(d, -1234);
 

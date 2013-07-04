@@ -29,7 +29,9 @@ template <typename T>
 using precise_real_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integer,
-		typename detail::real_wrapper<T, 10>::template integral_op<>
+		detail::unchecked_ascii_integer<
+			detail::decimal_real_wrapper<T>, 10
+		>
 	>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -38,18 +40,22 @@ using precise_real_policy = mpl::x11::map<
 		detail::default_fractional_separator<
 			char_encoding::standard::char_type
 		>,
-		typename detail::real_wrapper<T, 10>::template fractional_op<>
+		detail::unchecked_ascii_fraction<
+			detail::decimal_real_wrapper<T>, 10
+		>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 		detail::default_exponent_separator<
 			char_encoding::standard::char_type
 		>,
-		typename detail::real_wrapper<T, 10>::template exponent_op<>
+		detail::unchecked_ascii_exponent<
+			detail::decimal_real_wrapper<T>, 10
+		>
 	>>,
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
 	>,
-	mpl::x11::pair<with_wrapper, detail::real_wrapper<T, 10>>
+	mpl::x11::pair<with_wrapper, detail::decimal_real_wrapper<T>>
 >;
 
 template <typename T>
