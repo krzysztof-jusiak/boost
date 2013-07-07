@@ -1,13 +1,23 @@
 /*=============================================================================
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
+    Based on the implementation by:
+        Rob Pike and Ken Thompson.
+        Copyright (c) 2002 by Lucent Technologies.
+
+            Permission to use, copy, modify, and distribute this software for
+            any purpose without fee is hereby granted, provided that this
+            entire notice is included in all copies of any software which is or
+            includes a copy or modification of this software and in all copies
+            of the supporting documentation for such software.
+
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 #if !defined(SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815)
 #define SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815
 
-#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecission/cpp_int.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
@@ -17,26 +27,26 @@ template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 
-	multiprecision::number<multiprecision::cpp_int_backend<>> mantissa;
+	multiprecission::number<cpp_int_backend<>> mantissa;
 	int exponent;
 
 	decimal_real_wrapper()
-	: mantissa(0), exponent(0)
+	: mantissa(0), exponent(0), flags(0)
 	{}
 
 	template <typename CharType, bool Negative_ = false>
 	struct impl {
 		static bool mantissa_op(CharType in, wrapper_type &out)
 		{
-			out.mantissa *= 10;
-			out.mantissa += ascii_digit_value<10>(in);
+			out.mantissa
+			+= out.mantissa * 10 + ascii_digit_value<10>(in);
 			return true;
 		}
 
 		static bool exponent_op(CharType in, wrapper_type &out)
 		{
-			out.exponent *= 10;
-			out.exponent += ascii_digit_value<10>(in);
+			out.exponent
+			+= out.exponent * 10 + ascii_digit_value<10>(in);
 			return true;
 		}
 	};
@@ -45,15 +55,15 @@ struct decimal_real_wrapper {
 	struct impl<CharType, true> {
 		static bool mantissa_op(CharType in, wrapper_type &out)
 		{
-			out.mantissa *= 10;
-			out.mantissa -= ascii_digit_value<10>(in);
+			out.mantissa
+			+= out.mantissa * 10 - ascii_digit_value<10>(in);
 			return true;
 		}
 
 		static bool exponent_op(CharType in, wrapper_type &out)
 		{
-			out.exponent *= 10;
-			out.exponent -= ascii_digit_value<10>(in);
+			out.exponent
+			+= out.exponent * 10 - ascii_digit_value<10>(in);
 			return true;
 		}
 	};
@@ -67,7 +77,7 @@ struct decimal_real_wrapper {
 		{
 			return wrapper_type::impl<
 				CharType, Negative
-			>::mantissa_op(in, out);
+			>::integer_op(in, out);
 		}
 	};
 
@@ -82,7 +92,7 @@ struct decimal_real_wrapper {
 				CharType, Negative
 			>::mantissa_op(in, out));
 			if (rv)
-				out.exponent++;
+				out.exponent--;
 
 			return rv;
 		}
@@ -107,10 +117,7 @@ struct decimal_real_wrapper {
 template <>
 decimal_real_wrapper<double>::operator double() const
 {
-	static double const tinytens[] = {
-		1e-16, 1e-32, 1e-64, 1e-128,
-		9007199254740992.0 * 9007199254740992.0e-256
-	};
+
 
 	return mantissa.template convert_to<double>();
 }
