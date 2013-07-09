@@ -1,6 +1,4 @@
 /*=============================================================================
-    Copyright (c) 2001-2011 Joel de Guzman
-    Copyright (c) 2011      Bryce Lelbach
     Copyright (c) 2013      Alex Dubov <oakad@yahoo.com>
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -11,7 +9,7 @@
 
 #include <boost/mpl/x11/map.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
-#include <boost/spirit/repository/home/qi/numeric/detail/real_wrapper.hpp>
+#include <boost/spirit/repository/home/qi/numeric/detail/decimal_real_wrapper.hpp>
 
 namespace boost { namespace spirit {
 namespace repository {
@@ -29,7 +27,8 @@ template <typename T>
 using precise_real_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integer,
-		typename detail::decimal_real_wrapper<T>::template integer_op<false>
+		typename detail::decimal_real_wrapper<T>
+			       ::template integer_op<false>
 	>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -38,13 +37,15 @@ using precise_real_policy = mpl::x11::map<
 		detail::default_fractional_separator<
 			char_encoding::standard::char_type
 		>,
-		typename detail::decimal_real_wrapper<T>::template fraction_op<false>
+		typename detail::decimal_real_wrapper<T>
+			       ::template fraction_op<false>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
 		detail::default_exponent_separator<
 			char_encoding::standard::char_type
 		>,
-		typename detail::decimal_real_wrapper<T>::template exponent_op<false>
+		typename detail::decimal_real_wrapper<T>
+			       ::template exponent_op<false>
 	>>,
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
