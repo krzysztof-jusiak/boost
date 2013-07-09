@@ -154,7 +154,7 @@ decimal_real_wrapper<T>::operator T() const
 	while (d_exp > 0)
 		scale_down(m, d_exp, b_exp);
 
-	while (d_exp < 0 && m[0] < 5)
+	while (d_exp < 0 || m[0] < 5)
 		scale_up(m, d_exp, b_exp);
 
 	T rv(0);
@@ -170,7 +170,7 @@ void decimal_real_wrapper<T>::scale_down(num_type &m, int &d_exp, int &b_exp)
 {
 	int d(d_exp);
 
-	if (d > static_cast<int>(tab_pow_2_1.size()))
+	if (d >= static_cast<int>(tab_pow_2_1.size()))
 		d = tab_pow_2_1.size() - 1;
 
 	int b(tab_pow_2_1[d].first);
@@ -185,7 +185,6 @@ void decimal_real_wrapper<T>::scale_down(num_type &m, int &d_exp, int &b_exp)
 	b_exp += b;
 
 	int n(0), c(0);
-
 	auto p(m.begin()), q(m.begin());
 
 	while (!(n >> b)) {
@@ -201,7 +200,6 @@ void decimal_real_wrapper<T>::scale_down(num_type &m, int &d_exp, int &b_exp)
 			goto out;
 		}
 		n = n * 10 + c;
-		m.pop_back();
 	};
 
 	while (true) {
@@ -214,6 +212,12 @@ void decimal_real_wrapper<T>::scale_down(num_type &m, int &d_exp, int &b_exp)
 		n = n * 10 + c;
 	}
 out:
+	while (n && q != m.end()) {
+		n = n * 10;
+		c = n >> b;
+		n -= c << b;
+		*q++ = c;
+	};
 	while (n) {
 		n = n * 10;
 		c = n >> b;
@@ -225,6 +229,43 @@ out:
 template <typename T>
 void decimal_real_wrapper<T>::scale_up(num_type &m, int &d_exp, int &b_exp)
 {
+	int d(-d_exp);
+	if (d >= static_cast<int>(tab_pow_5.size()))
+		d = tab_pow_5.size() - 1;
+
+	int b(tab_pow_5[d].first);
+	if (std::lexicographical_compare(
+		m.cbegin(), m.cend(),
+		tab_pow_5[d].second.cbegin(), tab_pow_5[d].second.cend(),
+		std::less<num_type::value_type>()
+	))
+		--d;
+
+	b_exp -= b;
+	d_exp += d;
+
+	int n(0), c(0);
+	auto q(m.end());
+	m.insert(m.end(), d, uint8_t(0));
+	auto p(m.end());
+
+	do {
+		--q;
+		c = *q;
+		c = (c << b) + n;
+		n = c / 10;
+		c -= n * 10;
+		--p;
+		*p = c;
+	} while (q != m.begin());
+
+	while (n) {
+		c = n;
+		n = c / 10;
+		c -= n * 10;
+		--p;
+		*p = c;
+	}
 }
 
 template <typename T>
@@ -241,6 +282,40 @@ std::array<
 	std::make_pair(23, num_type({8, 3, 8, 8, 6, 0, 7})),
 	std::make_pair(26, num_type({6, 7, 1, 0, 8, 8, 6, 3})),
 	std::make_pair(27, num_type({1, 3, 4, 2, 1, 7, 7, 2, 7}))
+}};
+
+template <typename T>
+std::array<
+	std::pair<int, std::vector<uint8_t>>, 10
+> const decimal_real_wrapper<T>::tab_pow_5 = {{
+	std::make_pair(1, num_type()),
+	std::make_pair(3, num_type({
+		1, 2, 5
+	})),
+	std::make_pair(6, num_type({
+		1, 5, 6, 2, 5
+	})),
+	std::make_pair(9, num_type({
+		1, 9, 5, 3, 1, 2, 5
+	})),
+	std::make_pair(13, num_type({
+		1, 2, 2, 0, 7, 0, 3, 1, 2, 5
+	})),
+	std::make_pair(16, num_type({
+		1, 5, 2, 5, 8, 7, 8, 9, 0, 6, 2, 5
+	})),
+	std::make_pair(19, num_type({
+		1, 9, 0, 7, 3, 4, 8, 6, 3, 2, 8, 1, 2, 5
+	})),
+	std::make_pair(23, num_type({
+		1, 1, 9, 2, 0, 9, 2, 8, 9, 5, 5, 0, 7, 8, 1, 2, 5
+	})),
+	std::make_pair(26, num_type({
+		1, 4, 9, 0, 1, 1, 6, 1, 1, 9, 3, 8, 4, 7, 6, 5, 6, 2, 5
+	})),
+	std::make_pair(27, num_type({
+		7, 4, 5, 0, 5, 8, 0, 5, 9, 6, 9, 2, 3, 8, 2, 8, 1, 2, 5
+	}))
 }};
 
 }
