@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 //#include "fmt.h"
 #include "nan.h"
 
@@ -97,6 +98,7 @@ fmtstrtod(const char *as, char **aas)
 	ulong low[Prec], hig[Prec], mid[Prec];
 	double d;
 	char *s, a[Ndig];
+	int x = 0;
 
 	flag = 0;	/* Fsign, Fesign, Fdpoint */
 	na = 0;		/* number of digits of a[] */
@@ -260,6 +262,7 @@ fmtstrtod(const char *as, char **aas)
 
 	/* binary search for closest mantissa */
 	for(;;) {
+		x++;
 		/* mid = (hig + low) / 2 */
 		c = 0;
 		for(i=0; i<Prec; i++) {
@@ -296,7 +299,7 @@ fmtstrtod(const char *as, char **aas)
 			mid[Prec-1] -= c;
 		break;	/* exactly mid */
 	}
-
+	printf("iter: %d\n", x);
 	/* normal rounding applies */
 	c = mid[Prec-1] & (Sigbit-1);
 	mid[Prec-1] -= c;

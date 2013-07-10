@@ -20,6 +20,7 @@
 
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
+#include <cmath>
 #include <array>
 #include <initializer_list>
 
@@ -30,17 +31,10 @@ template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 	typedef std::vector<uint8_t> num_type;
-	typedef std::vector<uint32_t> acc_type;
-
-	static int const bits_per_word = 28; /* from initial implementation */
-	static int const bit_precision = std::numeric_limits<T>::digits;
-	static int const word_precision
-	= (bit_precision + bits_per_word + 1) / bits_per_word;
-	static acc_type::value_type const unity = 1 << bits_per_word;
 
 	num_type mantissa;
 	bool sign;
-	int scale;
+	int int_scale;
 	int exponent;
 
 	template <bool Negative = false>
@@ -52,7 +46,7 @@ struct decimal_real_wrapper {
 		{
 			out.sign = Negative;
 			out.mantissa.push_back(ascii_digit_value<10>(in));
-			++out.scale;
+			++out.int_scale;
 			return true;
 		}
 	};
@@ -102,7 +96,7 @@ struct decimal_real_wrapper {
 	};
 
 	decimal_real_wrapper()
-	: scale(0), exponent(0)
+	: int_scale(0), exponent(0)
 	{}
 
 	operator T() const;
@@ -116,8 +110,9 @@ private:
 		std::pair<int, num_type>, 10
 	> const tab_pow_5;
 
-	static void scale_down(num_type &m, int &d_exp, int &b_exp);
-	static void scale_up(num_type &m, int &d_exp, int &b_exp);
+	static void scale(num_type &m, int &d_exp, int &b_exp);
+	static void normalize(num_type &m, int &d_exp, int &b_exp);
+	static long target_cmp(num_type &m, T val);
 };
 
 template <typename T>
@@ -138,35 +133,75 @@ decimal_real_wrapper<T>::operator T() const
 
 	num_type m(pos_b, pos_e);
 	int adj_scale(pos_e - mantissa.cend());
-	int d_exp(scale);
+	int d_exp(int_scale);
 
-	if (adj_scale > static_cast<int>(mantissa.size() - scale))
-		d_exp += adj_scale - (mantissa.size() - scale);
+	if (adj_scale > static_cast<int>(mantissa.size() - int_scale))
+		d_exp += adj_scale - (mantissa.size() - int_scale);
 
 	adj_scale = mantissa.cbegin() - pos_b;
-	if (adj_scale > scale)
-		d_exp -=adj_scale - scale;
+	if (adj_scale > int_scale)
+		d_exp -=adj_scale - int_scale;
 
 	d_exp -= exponent;
 
 	int b_exp(0);
 
 	while (d_exp > 0)
-		scale_down(m, d_exp, b_exp);
+		scale(m, d_exp, b_exp);
 
 	while (d_exp < 0 || m[0] < 5)
-		scale_up(m, d_exp, b_exp);
+		normalize(m, d_exp, b_exp);
 
-	T rv(0);
-	for (auto v : m) {
-		rv *= 10;
-		rv += v;
-	}
-	return rv;
+	adj_scale = std::min(
+		static_cast<int>(m.size()), std::numeric_limits<T>::digits10
+	);
+	T val(std::accumulate(
+		m.cbegin(), m.cend(), T(0),
+		[](T v, num_type::value_type d) -> T {
+			return v * 10 + d;
+		}
+	));
+	T high, low, last(std::pow(10, -8));
+
+	val *= std::pow(10, -adj_scale);;
+
+	val = std::frexp(val, &adj_scale);
+
+	int c(target_cmp(m, val));
+	int x(0);
+
+	if (c > 0) {
+		low = val;
+		high = val + last;
+	} else if (c < 0) {
+		high = val;
+		low = val - last;
+	} else
+		goto out;
+
+	do {
+		last = val;
+		val = (high + low) / 2;
+		val = std::frexp(val, &adj_scale);
+
+		c = target_cmp(m, val);
+
+		if (c > 0)
+			low = val;
+
+		if (c < 0)
+			high = val;
+
+		
+		++x;
+	} while(c && val != last);
+	std::cout << "iter: " << x << '\n';
+out:
+	return ldexp(val, b_exp);
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::scale_down(num_type &m, int &d_exp, int &b_exp)
+void decimal_real_wrapper<T>::scale(num_type &m, int &d_exp, int &b_exp)
 {
 	int d(d_exp);
 
@@ -227,7 +262,7 @@ out:
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::scale_up(num_type &m, int &d_exp, int &b_exp)
+void decimal_real_wrapper<T>::normalize(num_type &m, int &d_exp, int &b_exp)
 {
 	int d(-d_exp);
 	if (d >= static_cast<int>(tab_pow_5.size()))
@@ -265,6 +300,34 @@ void decimal_real_wrapper<T>::scale_up(num_type &m, int &d_exp, int &b_exp)
 		c -= n * 10;
 		--p;
 		*p = c;
+	}
+}
+
+template <typename T>
+long decimal_real_wrapper<T>::target_cmp(num_type &m, T val)
+{
+	T next_val;
+	long rv;
+	auto pos(m.cbegin());
+
+	for (auto v : m) {
+		next_val = std::modf(val * 10, &val);
+		rv = static_cast<long>(v) - std::lrint(val);
+		if (rv)
+			return rv;
+
+		val = next_val;
+	}
+
+	while (true) {
+		next_val = std::modf(val * 10, &val);
+		rv = 0 - std::lrint(val);
+		if (rv)
+			return rv;
+		else if (next_val == 0)
+			return 0;
+
+		val = next_val;
 	}
 }
 
