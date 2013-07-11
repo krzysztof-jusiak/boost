@@ -8,6 +8,7 @@
 #define SPIRIT_REPOSITORY_QI_REAL_MAR_13_2013_2300
 
 #include <boost/mpl/x11/map.hpp>
+#include <boost/mpl/x11/insert.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric.hpp>
 #include <boost/spirit/repository/home/qi/numeric/detail/decimal_real_wrapper.hpp>
 
@@ -24,14 +25,11 @@ struct long_double { BOOST_SPIRIT_IS_TAG() };
 namespace qi {
 
 template <typename T>
-using precise_real_policy = mpl::x11::map<
+using precise_ureal_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integer,
 		typename detail::decimal_real_wrapper<T>
 			       ::template integer_op<false>
-	>,
-	mpl::x11::pair<with_sign,
-		detail::default_sign<char_encoding::standard::char_type>
 	>,
 	mpl::x11::pair<with_fraction, mpl::x11::pair<
 		detail::default_fractional_separator<
@@ -54,33 +52,15 @@ using precise_real_policy = mpl::x11::map<
 >;
 
 template <typename T>
-using real_policy = mpl::x11::map<
-	mpl::x11::pair<with_extractor, standard::digit_type>,
-	mpl::x11::pair<with_integer,
-		detail::unchecked_ascii_integer<T, 10>
-	>,
+using precise_real_policy = typename mpl::x11::insert<
+	precise_ureal_policy<T>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
-	>,
-	mpl::x11::pair<with_fraction, mpl::x11::pair<
-		detail::default_fractional_separator<
-			char_encoding::standard::char_type
-		>,
-		detail::unchecked_ascii_fraction<T, 10>
-	>>,
-	mpl::x11::pair<with_exponent, mpl::x11::pair<
-		detail::default_exponent_separator<
-			char_encoding::standard::char_type
-		>,
-		detail::unchecked_ascii_exponent<T, 10>
-	>>,
-	mpl::x11::pair<with_exponent_sign,
-		detail::default_sign<char_encoding::standard::char_type>
 	>
->;
+>::type;
 
 template <typename T>
-using ureal_policy = mpl::x11::map<
+using simple_ureal_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integer,
 		detail::unchecked_ascii_integer<T, 10>
@@ -102,6 +82,14 @@ using ureal_policy = mpl::x11::map<
 	>
 >;
 
+template <typename T>
+using simple_real_policy = typename mpl::x11::insert<
+	simple_ureal_policy<T>,
+	mpl::x11::pair<with_sign,
+		detail::default_sign<char_encoding::standard::char_type>
+	>
+>::type;
+
 typedef terminal<tag::float_> float_type;
 typedef terminal<tag::double_> double_type;
 typedef terminal<tag::long_double> long_double_type;
@@ -119,7 +107,7 @@ namespace qi {
 template <typename Modifiers>
 struct make_primitive<repository::tag::float_, Modifiers>
 : repository::qi::make_numeric<
-	float, repository::qi::real_policy<float>
+	float, repository::qi::precise_real_policy<float>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -129,21 +117,21 @@ struct make_primitive<
 		A0, repository::value_wrapper<float>
 	>>::type
 > : repository::qi::make_literal_numeric<
-	float, repository::qi::real_policy<float>
+	float, repository::qi::precise_real_policy<float>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::float_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	float, repository::qi::real_policy<float>
+	float, repository::qi::precise_real_policy<float>
 > {};
 
 /*** double_ ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::double_, Modifiers>
 : repository::qi::make_numeric<
-	double, repository::qi::real_policy<double>
+	double, repository::qi::precise_real_policy<double>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -153,21 +141,21 @@ struct make_primitive<
 		A0, repository::value_wrapper<double>
 	>>::type
 > : repository::qi::make_literal_numeric<
-	double, repository::qi::real_policy<double>
+	double, repository::qi::precise_real_policy<double>
 > {};
 
 template <typename Modifiers, typename A0>
 struct make_primitive<
 	terminal_ex<repository::tag::double_, fusion::vector1<A0>>, Modifiers
 > : repository::qi::make_direct_numeric<
-	double, repository::qi::real_policy<double>
+	double, repository::qi::precise_real_policy<double>
 > {};
 
 /*** long_double ***/
 template <typename Modifiers>
 struct make_primitive<repository::tag::long_double, Modifiers>
 : repository::qi::make_numeric<
-	long double, repository::qi::real_policy<long double>
+	long double, repository::qi::precise_real_policy<long double>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -177,7 +165,7 @@ struct make_primitive<
 		A0, repository::value_wrapper<long double>
 	>>::type
 > : repository::qi::make_literal_numeric<
-	long double, repository::qi::real_policy<long double>
+	long double, repository::qi::precise_real_policy<long double>
 > {};
 
 template <typename Modifiers, typename A0>
@@ -185,7 +173,7 @@ struct make_primitive<
 	terminal_ex<repository::tag::long_double, fusion::vector1<A0>>,
 	Modifiers
 > : repository::qi::make_direct_numeric<
-	long double, repository::qi::real_policy<long double>
+	long double, repository::qi::precise_real_policy<long double>
 > {};
 
 }

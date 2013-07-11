@@ -31,6 +31,7 @@ template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 	typedef std::vector<uint8_t> num_type;
+	constexpr static T const initial_error_bound = 1e-8;
 
 	num_type mantissa;
 	bool sign;
@@ -142,7 +143,7 @@ decimal_real_wrapper<T>::operator T() const
 	if (adj_scale > int_scale)
 		d_exp -=adj_scale - int_scale;
 
-	d_exp -= exponent;
+	d_exp += exponent;
 
 	int b_exp(0);
 
@@ -156,12 +157,12 @@ decimal_real_wrapper<T>::operator T() const
 		static_cast<int>(m.size()), std::numeric_limits<T>::digits10
 	);
 	T val(std::accumulate(
-		m.cbegin(), m.cend(), T(0),
+		m.cbegin(), m.cbegin() + adj_scale, T(0),
 		[](T v, num_type::value_type d) -> T {
 			return v * 10 + d;
 		}
 	));
-	T high, low, last(std::pow(10, -8));
+	T high, low, last(initial_error_bound);
 
 	val *= std::pow(10, -adj_scale);;
 
@@ -197,7 +198,10 @@ decimal_real_wrapper<T>::operator T() const
 	} while(c && val != last);
 	std::cout << "iter: " << x << '\n';
 out:
-	return ldexp(val, b_exp);
+	return std::copysign(
+		std::ldexp(val, b_exp),
+		sign ? T(-1) : T(1)
+	);
 }
 
 template <typename T>
@@ -224,7 +228,9 @@ void decimal_real_wrapper<T>::scale(num_type &m, int &d_exp, int &b_exp)
 
 	while (!(n >> b)) {
 		c = *p++;
+		n = n * 10 + c;
 		if (p == m.end()) {
+			
 			while (n) {
 				c = n * 10;
 				if (c >> b)
@@ -234,7 +240,6 @@ void decimal_real_wrapper<T>::scale(num_type &m, int &d_exp, int &b_exp)
 			}
 			goto out;
 		}
-		n = n * 10 + c;
 	};
 
 	while (true) {
@@ -280,9 +285,9 @@ void decimal_real_wrapper<T>::normalize(num_type &m, int &d_exp, int &b_exp)
 	d_exp += d;
 
 	int n(0), c(0);
-	auto q(m.end());
 	m.insert(m.end(), d, uint8_t(0));
 	auto p(m.end());
+	auto q(m.end() - d);
 
 	do {
 		--q;
@@ -308,7 +313,6 @@ long decimal_real_wrapper<T>::target_cmp(num_type &m, T val)
 {
 	T next_val;
 	long rv;
-	auto pos(m.cbegin());
 
 	for (auto v : m) {
 		next_val = std::modf(val * 10, &val);
