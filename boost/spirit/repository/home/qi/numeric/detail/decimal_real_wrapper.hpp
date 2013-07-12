@@ -31,7 +31,25 @@ template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 	typedef std::vector<uint8_t> num_type;
-	constexpr static T const initial_error_bound = 1e-8;
+
+	static int const mantissa_bits = std::numeric_limits<T>::digits;
+
+	/* 4 bits "guard space" is necessary to avoid overflow from
+	 * multiplication by 10.
+	 */
+	static int const word_bits
+	= std::numeric_limits<unsigned long>::digits - 4;
+
+	typedef std::array<
+		unsigned long, (
+			mantissa_bits + word_bits + 1
+		) / word_bits
+	> bigint_type;
+
+	/* Normalized mantissa value obtained by naive conversion is expected
+	 * to deviate from true value by no more than 10e-8.
+	 */
+	constexpr static int const initial_error_bound = 8;
 
 	num_type mantissa;
 	bool sign;
@@ -113,7 +131,9 @@ private:
 
 	static void scale(num_type &m, int &d_exp, int &b_exp);
 	static void normalize(num_type &m, int &d_exp, int &b_exp);
-	static long target_cmp(num_type &m, T val);
+	static long target_cmp_f(num_type const &m, T val);
+	static long target_cmp(num_type const &m, bigint_type const &val);
+	static void get_machine_mantissa(T val, bigint_type &m);
 };
 
 template <typename T>
@@ -154,21 +174,23 @@ decimal_real_wrapper<T>::operator T() const
 		normalize(m, d_exp, b_exp);
 
 	adj_scale = std::min(
-		static_cast<int>(m.size()), std::numeric_limits<T>::digits10
+		static_cast<int>(m.size()), initial_error_bound
 	);
+
 	T val(std::accumulate(
 		m.cbegin(), m.cbegin() + adj_scale, T(0),
 		[](T v, num_type::value_type d) -> T {
 			return v * 10 + d;
 		}
 	));
-	T high, low, last(initial_error_bound);
 
-	val *= std::pow(10, -adj_scale);;
-
+	bigint_type mid;
+	
+	val *= std::pow(T(10), -adj_scale);;
 	val = std::frexp(val, &adj_scale);
 
-	int c(target_cmp(m, val));
+	T high, low, last(std::pow(T(10), -initial_error_bound));
+	int c(target_cmp_f(m, val));
 	int x(0);
 
 	if (c > 0) {
@@ -309,7 +331,7 @@ void decimal_real_wrapper<T>::normalize(num_type &m, int &d_exp, int &b_exp)
 }
 
 template <typename T>
-long decimal_real_wrapper<T>::target_cmp(num_type &m, T val)
+long decimal_real_wrapper<T>::target_cmp_f(num_type const &m, T val)
 {
 	T next_val;
 	long rv;
@@ -333,6 +355,33 @@ long decimal_real_wrapper<T>::target_cmp(num_type &m, T val)
 
 		val = next_val;
 	}
+}
+
+template <>
+void decimal_real_wrapper<double>::get_machine_mantissa(
+	double val, bigint_type &m
+)
+{
+	union {
+		unsigned long bits[sizeof(double) / sizeof(unsigned long)];
+		double val;
+	} expanded_val(val);
+
+	int p(0);
+	for (auto &v : m)
+		v = expanded_val.bits(p++);
+
+	/* Need to parametrize BE/LE */
+
+	bigint_type::value_type c1(0), c2(0);
+	for (auto &v : m) {
+		c1 = v;
+		v <<= 12;
+		v |= c2;
+		c2 = c1 >> (sizeof(bigint_type::value_type) * 8);
+	}
+
+	std::reverse(m.begin(), m.end());
 }
 
 template <typename T>
