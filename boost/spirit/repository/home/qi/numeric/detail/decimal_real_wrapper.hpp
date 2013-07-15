@@ -32,12 +32,12 @@ struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 	typedef std::vector<uint8_t> num_type;
 
-	static int const mantissa_bits = std::numeric_limits<T>::digits;
+	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
 	/* 4 bits "guard space" is necessary to avoid overflow from
 	 * multiplication by 10.
 	 */
-	static int const word_bits
+	constexpr static int word_bits
 	= std::numeric_limits<unsigned long>::digits - 4;
 
 	typedef std::array<
@@ -47,9 +47,9 @@ struct decimal_real_wrapper {
 	> bigint_type;
 
 	/* Normalized mantissa value obtained by naive conversion is expected
-	 * to deviate from true value by no more than 10e-8.
+	 * to deviate from true value by no more than 2^-28.
 	 */
-	constexpr static int const initial_error_bound = 8;
+	constexpr static int initial_true_bits = 28;
 
 	num_type mantissa;
 	bool sign;
@@ -133,8 +133,15 @@ private:
 	static void normalize(num_type &m, int &d_exp, int &b_exp);
 	static long target_cmp_f(num_type const &m, T val);
 	static long target_cmp(num_type const &m, bigint_type const &val);
-	static void get_machine_mantissa(T val, bigint_type &m);
+	static void real_to_bigint(T val, bigint_type &low, bigint_type &high);
+	static void bigint_average(
+		bigint_type const &low, bigint_type const &high,
+		bigint_type &mid
+	);
 };
+
+template <typename T>
+constexpr int decimal_real_wrapper<T>::word_bits;
 
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
@@ -174,7 +181,7 @@ decimal_real_wrapper<T>::operator T() const
 		normalize(m, d_exp, b_exp);
 
 	adj_scale = std::min(
-		static_cast<int>(m.size()), initial_error_bound
+		static_cast<int>(m.size()), std::numeric_limits<T>::digits10
 	);
 
 	T val(std::accumulate(
@@ -184,36 +191,40 @@ decimal_real_wrapper<T>::operator T() const
 		}
 	));
 
-	bigint_type mid;
+	val *= std::pow(T(10), -adj_scale);
+
+	bigint_type low, mid, high;
+	real_to_bigint(val, low, high);
+
 	
-	val *= std::pow(T(10), -adj_scale);;
 	val = std::frexp(val, &adj_scale);
 
-	T high, low, last(std::pow(T(10), -initial_error_bound));
+	T high_f, low_f, last(std::pow(T(10), -8));
 	int c(target_cmp_f(m, val));
 	int x(0);
 
 	if (c > 0) {
-		low = val;
-		high = val + last;
+		low_f = val;
+		high_f = val + last;
 	} else if (c < 0) {
-		high = val;
-		low = val - last;
+		high_f = val;
+		low_f = val - last;
 	} else
 		goto out;
 
 	do {
 		last = val;
-		val = (high + low) / 2;
+		val = (high_f + low_f) / 2;
 		val = std::frexp(val, &adj_scale);
+		bigint_average(low, high, mid);
 
-		c = target_cmp(m, val);
+		c = target_cmp_f(m, val);
 
 		if (c > 0)
-			low = val;
+			low_f = val;
 
 		if (c < 0)
-			high = val;
+			high_f = val;
 
 		
 		++x;
@@ -357,31 +368,60 @@ long decimal_real_wrapper<T>::target_cmp_f(num_type const &m, T val)
 	}
 }
 
-template <>
-void decimal_real_wrapper<double>::get_machine_mantissa(
-	double val, bigint_type &m
+template <typename T>
+void decimal_real_wrapper<T>::real_to_bigint(
+	T val, bigint_type &low, bigint_type &high
 )
 {
-	union {
-		unsigned long bits[sizeof(double) / sizeof(unsigned long)];
-		double val;
-	} expanded_val(val);
+	int exp, adj_exp(0), shift;
+	T int_val;
+	typename bigint_type::size_type bigint_pos(0);
 
-	int p(0);
-	for (auto &v : m)
-		v = expanded_val.bits(p++);
+	do {
+		val = std::frexp(val, &exp);
+		exp = std::min(word_bits, initial_true_bits - adj_exp);
+		val = std::ldexp(val, exp);
+		val = std::modf(val, &int_val);
+		low[bigint_pos] = lrint(int_val);
+		low[bigint_pos] <<= word_bits - exp;
+		high[bigint_pos] = low[bigint_pos]
+				   | (1L << (word_bits - exp)) - 1L;
+		
+		adj_exp += exp;
+		++bigint_pos;
+	} while (adj_exp < initial_true_bits && bigint_pos < low.size());
 
-	/* Need to parametrize BE/LE */
+	while (bigint_pos < low.size()) {
+		low[bigint_pos++] = 0;
+		high[bigint_pos++] = (1L << word_bits) - 1L;
+	}
+}
 
-	bigint_type::value_type c1(0), c2(0);
-	for (auto &v : m) {
-		c1 = v;
-		v <<= 12;
-		v |= c2;
-		c2 = c1 >> (sizeof(bigint_type::value_type) * 8);
+template <typename T>
+void decimal_real_wrapper<T>::bigint_average(
+	bigint_type const &low, bigint_type const &high,
+	bigint_type &mid
+)
+{
+	typename bigint_type::size_type bigint_pos(0);
+	long c(0);
+
+	for (; bigint_pos < mid.size(); ++bigint_pos) {
+		mid[bigint_pos] = high[bigint_pos] + low[bigint_pos];
+		if (c)
+			mid[bigint_pos] += 1L << word_bits;
+
+		c = mid[bigint_pos] & 1L;
+		mid[bigint_pos] >>= 1;
 	}
 
-	std::reverse(m.begin(), m.end());
+	c = 0;
+	for (--bigint_pos; bigint_pos; --bigint_pos) {
+		mid[bigint_pos] += c;
+		c = mid[bigint_pos] >> word_bits;
+		mid[bigint_pos] &= (1L << word_bits) - 1L;
+	}
+	mid[0] += c;
 }
 
 template <typename T>

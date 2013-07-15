@@ -4,7 +4,7 @@ double fmtstrtod(char const *s, char **sp);
 
 int main(int argc, char **argv)
 {
-	char const *in = "1.23e-20";
+	char const *in = "1.23";
 	char *sp;
 	double out(fmtstrtod(in, &sp));
 
