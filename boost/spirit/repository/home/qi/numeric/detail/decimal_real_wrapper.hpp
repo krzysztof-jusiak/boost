@@ -46,9 +46,10 @@ struct decimal_real_wrapper {
 	typedef std::array<unsigned long, bigint_words> bigint_type;
 
 	/* Normalized mantissa value obtained by naive conversion is expected
-	 * to deviate from true value by no more than 2^-20.
+	 * to contain at least that many correct bits. This should be
+	 * calculatable somehow.
 	 */
-	constexpr static int initial_true_bits = 16;
+	static int const initial_true_bits;
 
 	/* Least significant value bit in the bigint expansion. */
 	constexpr static unsigned long sig_bit_mask
@@ -147,6 +148,15 @@ private:
 template <typename T>
 constexpr int decimal_real_wrapper<T>::word_bits;
 
+template <>
+int const decimal_real_wrapper<float>::initial_true_bits = 16;
+
+template <>
+int const decimal_real_wrapper<double>::initial_true_bits = 32;
+
+template <>
+int const decimal_real_wrapper<long double>::initial_true_bits = 48;
+
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
@@ -217,7 +227,7 @@ decimal_real_wrapper<T>::operator T() const
 				tail == (sig_bit_mask >> 1)
 				&& !(mid.back() & sig_bit_mask)
 			)
-				m.back() -= tail;
+				mid.back() -= tail;
 
 			break;
 		}
@@ -363,8 +373,7 @@ void decimal_real_wrapper<T>::real_to_bigint(
 		val = std::modf(val, &int_val);
 		low[pos] = lrint(int_val);
 		low[pos] <<= word_bits - exp;
-		high[pos] = low[pos] | (1UL << (word_bits - exp)) - 1UL;
-		
+		high[pos] = low[pos] | ((1UL << (word_bits - exp)) - 1UL);
 		adj_exp += exp;
 		++pos;
 	} while ((adj_exp < initial_true_bits) && (pos < low.size()));
