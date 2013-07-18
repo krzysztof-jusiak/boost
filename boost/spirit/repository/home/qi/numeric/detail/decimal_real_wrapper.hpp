@@ -31,6 +31,7 @@ template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 	typedef std::vector<uint8_t> num_type;
+	typedef std::vector<unsigned long> num_type1;
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
@@ -56,7 +57,9 @@ struct decimal_real_wrapper {
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
 	num_type mantissa;
+	num_type1 mantissa1;
 	bool sign;
+	int back_scale;
 	int int_scale;
 	int exponent;
 
@@ -70,6 +73,19 @@ struct decimal_real_wrapper {
 			out.sign = Negative;
 			out.mantissa.push_back(ascii_digit_value<10>(in));
 			++out.int_scale;
+			out.mantissa1.back()
+			*= out.mantissa1.back() * 10
+			+ ascii_digit_value<10>(in);
+			++out.back_scale;
+			if (
+				out.back_scale
+				== std::numeric_limits<
+					num_type1::value_type
+				>::digits10
+			) {
+				out.mantissa1.push_back(0);
+				out.back_scale = 0;
+			}
 			return true;
 		}
 	};
@@ -83,6 +99,19 @@ struct decimal_real_wrapper {
 		{
 			out.sign = Negative;
 			out.mantissa.push_back(ascii_digit_value<10>(in));
+			out.mantissa1.back()
+			*= out.mantissa1.back() * 10
+			+ ascii_digit_value<10>(in);
+			++out.back_scale;
+			if (
+				out.back_scale
+				== std::numeric_limits<
+					num_type1::value_type
+				>::digits10
+			) {
+				out.mantissa1.push_back(0);
+				out.back_scale = 0;
+			}
 			return true;
 		}
 	};
@@ -119,7 +148,7 @@ struct decimal_real_wrapper {
 	};
 
 	decimal_real_wrapper()
-	: int_scale(0), exponent(0)
+	: mantissa1(1, 0), back_scale(0), int_scale(0), exponent(0)
 	{}
 
 	operator T() const;
@@ -181,9 +210,6 @@ decimal_real_wrapper<T>::operator T() const
 
 	int adj_scale(mantissa.cend() - pos_e);
 	int d_exp(int_scale);
-
-	if (adj_scale > static_cast<int>(mantissa.size() - int_scale))
-		d_exp += adj_scale - (mantissa.size() - int_scale);
 
 	adj_scale = pos_b - mantissa.cbegin();
 	d_exp -= adj_scale;
