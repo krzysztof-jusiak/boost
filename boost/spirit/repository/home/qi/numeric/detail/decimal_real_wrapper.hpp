@@ -162,10 +162,11 @@ decimal_real_wrapper<T>::operator T() const
 {
 	auto pos_b(mantissa.cbegin()), pos_e(mantissa.cend());
 
-	while (!*pos_b)
-		++pos_b;
+	for (; pos_b != pos_e; ++pos_b)
+		if (*pos_b)
+			break;
 
-	while (pos_e != mantissa.cbegin()) {
+	while (pos_e != pos_b) {
 		--pos_e;
 		if (*pos_e) {
 			++pos_e;
@@ -174,15 +175,18 @@ decimal_real_wrapper<T>::operator T() const
 	}
 
 	num_type m(pos_b, pos_e);
-	int adj_scale(pos_e - mantissa.cend());
+	if (m.empty()) {
+		return std::copysign(T(0), sign ? T(-1) : T(1));
+	};
+
+	int adj_scale(mantissa.cend() - pos_e);
 	int d_exp(int_scale);
 
 	if (adj_scale > static_cast<int>(mantissa.size() - int_scale))
 		d_exp += adj_scale - (mantissa.size() - int_scale);
 
-	adj_scale = mantissa.cbegin() - pos_b;
-	if (adj_scale > int_scale)
-		d_exp -=adj_scale - int_scale;
+	adj_scale = pos_b - mantissa.cbegin();
+	d_exp -= adj_scale;
 
 	d_exp += exponent;
 
@@ -234,7 +238,6 @@ decimal_real_wrapper<T>::operator T() const
 
 		++x;
 	};
-	std::cout << "iter: " << x << '\n';
 	auto tail(mid.back() & (sig_bit_mask - 1UL));
 	mid.back() -= tail;
 	if (tail >= (sig_bit_mask >> 1)) {
@@ -279,7 +282,8 @@ void decimal_real_wrapper<T>::scale(num_type &m, int &d_exp, int &b_exp)
 		c = *p++;
 		n = n * 10 + c;
 		if (p == m.end()) {
-			
+			if (n >> b)
+				break;
 			while (n) {
 				c = n * 10;
 				if (c >> b)
@@ -371,7 +375,7 @@ void decimal_real_wrapper<T>::real_to_bigint(
 		exp = std::min(word_bits, initial_true_bits - adj_exp);
 		val = std::ldexp(val, exp);
 		val = std::modf(val, &int_val);
-		low[pos] = lrint(int_val);
+		low[pos] = std::lrint(int_val);
 		low[pos] <<= word_bits - exp;
 		high[pos] = low[pos] | ((1UL << (word_bits - exp)) - 1UL);
 		adj_exp += exp;

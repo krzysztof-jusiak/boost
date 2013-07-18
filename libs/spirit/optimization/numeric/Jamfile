@@ -8,5 +8,6 @@ project spirit-numeric-benchmark
 :
 ;
 
-exe uint_parser : uint_parser.cpp ;
 exe int_parser : int_parser.cpp ;
+exe real_parser : real_parser.cpp ;
+exe uint_parser : uint_parser.cpp ;
