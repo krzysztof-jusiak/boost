@@ -74,7 +74,7 @@ struct decimal_real_wrapper {
 			out.mantissa.push_back(ascii_digit_value<10>(in));
 			++out.int_scale;
 			out.mantissa1.back()
-			*= out.mantissa1.back() * 10
+			= out.mantissa1.back() * 10
 			+ ascii_digit_value<10>(in);
 			++out.back_scale;
 			if (
@@ -100,7 +100,7 @@ struct decimal_real_wrapper {
 			out.sign = Negative;
 			out.mantissa.push_back(ascii_digit_value<10>(in));
 			out.mantissa1.back()
-			*= out.mantissa1.back() * 10
+			= out.mantissa1.back() * 10
 			+ ascii_digit_value<10>(in);
 			++out.back_scale;
 			if (
