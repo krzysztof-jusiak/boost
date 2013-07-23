@@ -7,12 +7,15 @@
 #if !defined(SPIRIT_REPOSITORY_SUPPORT_RADIX_POW_JUN_01_2013_2300)
 #define SPIRIT_REPOSITORY_SUPPORT_RADIX_POW_JUN_01_2013_2300
 
+#include <limits>
+
 namespace boost { namespace spirit { namespace repository {
 
 template <typename T, unsigned long Radix>
-T radix_pow(unsigned long exponent) const
+__attribute__((pure))
+T radix_pow(unsigned long exponent)
 {
-	static unsigned long constexpr max_pos
+	constexpr unsigned long max_pos
 	= 1UL << ((std::numeric_limits<unsigned long>::digits) - 1);
 
 	T rv(1);

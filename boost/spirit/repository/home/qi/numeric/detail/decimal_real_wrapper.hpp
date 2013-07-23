@@ -18,10 +18,12 @@
 #if !defined(SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815)
 #define SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815
 
+#include <boost/spirit/repository/home/support/radix_pow.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
 #include <cmath>
 #include <array>
+#include <tuple>
 #include <initializer_list>
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
@@ -31,7 +33,7 @@ template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
 	typedef std::vector<uint8_t> num_type;
-	typedef std::vector<unsigned long> num_type1;
+	typedef std::vector<std::uint32_t> num_type1;
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
@@ -56,39 +58,14 @@ struct decimal_real_wrapper {
 	constexpr static unsigned long sig_bit_mask
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
+	constexpr static std::uint32_t max_dec_leaf_value = 100000000;
+
 	num_type mantissa;
 	num_type1 mantissa1;
 	bool sign;
-	int back_scale;
+	unsigned long back_scale;
 	int int_scale;
 	int exponent;
-
-	template <bool Negative = false>
-	struct integer_op {
-		typedef integer_op<!Negative> opposite_type;
-
-		template <typename CharType>
-		bool operator()(CharType in, wrapper_type &out)
-		{
-			out.sign = Negative;
-			out.mantissa.push_back(ascii_digit_value<10>(in));
-			++out.int_scale;
-			out.mantissa1.back()
-			= out.mantissa1.back() * 10
-			+ ascii_digit_value<10>(in);
-			++out.back_scale;
-			if (
-				out.back_scale
-				== std::numeric_limits<
-					num_type1::value_type
-				>::digits10
-			) {
-				out.mantissa1.push_back(0);
-				out.back_scale = 0;
-			}
-			return true;
-		}
-	};
 
 	template <bool Negative = false>
 	struct fraction_op {
@@ -98,21 +75,37 @@ struct decimal_real_wrapper {
 		bool operator()(CharType in, wrapper_type &out)
 		{
 			out.sign = Negative;
+
 			out.mantissa.push_back(ascii_digit_value<10>(in));
+
+			out.back_scale /= 10;
 			out.mantissa1.back()
-			= out.mantissa1.back() * 10
-			+ ascii_digit_value<10>(in);
-			++out.back_scale;
-			if (
-				out.back_scale
-				== std::numeric_limits<
-					num_type1::value_type
-				>::digits10
-			) {
+			+= out.back_scale * ascii_digit_value<10>(in);
+
+			if (out.back_scale == 1UL) {
 				out.mantissa1.push_back(0);
-				out.back_scale = 0;
+				out.back_scale = max_dec_leaf_value;
 			}
+
 			return true;
+		}
+	};
+
+	template <bool Negative = false>
+	struct integer_op {
+		typedef integer_op<!Negative> opposite_type;
+
+		template <typename CharType>
+		bool operator()(CharType in, wrapper_type &out)
+		{
+			auto d(ascii_digit_value<10>(in));
+			if (!out.int_scale && !d)
+				return true;
+
+			auto rv(fraction_op<Negative>()(in, out));
+			if (rv)
+				++out.int_scale;
+			return rv;
 		}
 	};
 
@@ -148,7 +141,9 @@ struct decimal_real_wrapper {
 	};
 
 	decimal_real_wrapper()
-	: mantissa1(1, 0), back_scale(0), int_scale(0), exponent(0)
+	: mantissa1(1, 0),
+	  back_scale(max_dec_leaf_value),
+	  int_scale(0), exponent(0)
 	{}
 
 	operator T() const;
@@ -159,11 +154,23 @@ private:
 	> const tab_pow_2_1;
 
 	static std::array<
+		std::tuple<
+			int,
+			std::uint32_t,
+			std::uint32_t
+		>, 17
+	> const tab_pow_2_1x;
+
+	static std::array<
 		std::pair<int, num_type>, 10
 	> const tab_pow_5;
 
 	static void scale(num_type &m, int &d_exp, int &b_exp);
+	static void scale(num_type1 &m, int &d_exp, int &b_exp);
+
 	static void normalize(num_type &m, int &d_exp, int &b_exp);
+	static void normalize(num_type1 &m, int &d_exp, int &b_exp);
+
 	static void real_to_bigint(T val, bigint_type &low, bigint_type &high);
 	static void bigint_average(
 		bigint_type const &low, bigint_type const &high,
@@ -208,6 +215,7 @@ decimal_real_wrapper<T>::operator T() const
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	};
 
+	num_type1 m1(mantissa1);
 	int adj_scale(mantissa.cend() - pos_e);
 	int d_exp(int_scale);
 
@@ -217,9 +225,12 @@ decimal_real_wrapper<T>::operator T() const
 	d_exp += exponent;
 
 	int b_exp(0);
+	int d_exp1(d_exp), b_exp1(b_exp);
 
-	while (d_exp > 0)
+	while (d_exp > 0) {
 		scale(m, d_exp, b_exp);
+		scale(m1, d_exp1, b_exp1);
+	}
 
 	while (d_exp < 0 || m[0] < 5)
 		normalize(m, d_exp, b_exp);
@@ -339,6 +350,70 @@ out:
 	};
 	while (n) {
 		n = n * 10;
+		c = n >> b;
+		n -= c << b;
+		m.push_back(c);
+	};
+}
+
+template <typename T>
+void decimal_real_wrapper<T>::scale(num_type1 &m, int &d_exp, int &b_exp)
+{
+	int d(d_exp);
+
+	if (d >= static_cast<int>(tab_pow_2_1x.size()))
+		d = tab_pow_2_1x.size() - 1;
+
+	int b(std::get<0>(tab_pow_2_1x[d]));
+
+	if (std::get<1>(tab_pow_2_1x[d]) < m[0]) {
+		--d;
+	} else if (std::get<1>(tab_pow_2_1x[d]) == m[0]) {
+		if (m.size() > 1 && std::get<2>(tab_pow_2_1x[d]) < m[1])
+			--d;
+	}
+
+	d_exp -= d;
+	b_exp += b;
+
+	long long n(0), c(0);
+	auto p(m.begin()), q(m.begin());
+
+	while (!(n >> b)) {
+		c = *p++;
+		n = n * max_dec_leaf_value + c;
+		if (p == m.end()) {
+			if (n >> b)
+				break;
+			while (n) {
+				c = n * max_dec_leaf_value;
+				if (c >> b)
+					break;
+
+				n = c;
+			}
+			goto out;
+		}
+	};
+
+	while (true) {
+		c = n >> b;
+		n -= c << b;
+		*q++ = c;
+		if (p == m.end())
+			break;
+		c = *p++;
+		n = n * max_dec_leaf_value + c;
+	}
+out:
+	while (n && q != m.end()) {
+		n = n * max_dec_leaf_value;
+		c = n >> b;
+		n -= c << b;
+		*q++ = c;
+	};
+	while (n) {
+		n = n * max_dec_leaf_value;
 		c = n >> b;
 		n -= c << b;
 		m.push_back(c);
@@ -516,16 +591,43 @@ template <typename T>
 std::array<
 	std::pair<int, std::vector<uint8_t>>, 10
 > const decimal_real_wrapper<T>::tab_pow_2_1 = {{
-	std::make_pair(1, num_type()),
-	std::make_pair(3, num_type({7})),
-	std::make_pair(6, num_type({6, 3})),
-	std::make_pair(9, num_type({5, 1, 1})),
+	std::make_pair(1,  num_type()),
+	std::make_pair(3,  num_type({7})),
+	std::make_pair(6,  num_type({6, 3})),
+	std::make_pair(9,  num_type({5, 1, 1})),
 	std::make_pair(13, num_type({8, 1, 9, 1})),
 	std::make_pair(16, num_type({6, 5, 5, 3, 5})),
 	std::make_pair(19, num_type({5, 2, 4, 2, 8, 7})),
 	std::make_pair(23, num_type({8, 3, 8, 8, 6, 0, 7})),
 	std::make_pair(26, num_type({6, 7, 1, 0, 8, 8, 6, 3})),
 	std::make_pair(27, num_type({1, 3, 4, 2, 1, 7, 7, 2, 7}))
+}};
+
+template <typename T>
+std::array<
+	std::tuple<
+		int,
+		typename decimal_real_wrapper<T>::num_type1::value_type,
+		typename decimal_real_wrapper<T>::num_type1::value_type
+	>, 17
+> const decimal_real_wrapper<T>::tab_pow_2_1x = {{
+	std::make_tuple(1,  0, 0),
+	std::make_tuple(3,  70000000, 0),
+	std::make_tuple(6,  63000000, 0),
+	std::make_tuple(9,  51100000, 0),
+	std::make_tuple(13, 81910000, 0),
+	std::make_tuple(16, 65535000, 0),
+	std::make_tuple(19, 52428700, 0),
+	std::make_tuple(23, 83886070, 0),
+	std::make_tuple(26, 67108863, 0),
+	std::make_tuple(29, 53687091, 10000000),
+	std::make_tuple(33, 85899345, 92000000),
+	std::make_tuple(36, 68719476, 73600000),
+	std::make_tuple(39, 54975581, 38880000),
+	std::make_tuple(43, 87960930, 22208000),
+	std::make_tuple(46, 70368744, 17766400),
+	std::make_tuple(49, 56294995, 34213120),
+	std::make_tuple(53, 90071992, 54740992)
 }};
 
 template <typename T>
