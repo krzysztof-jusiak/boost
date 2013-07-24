@@ -32,8 +32,7 @@ namespace detail {
 template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
-	typedef std::vector<uint8_t> num_type;
-	typedef std::vector<std::uint32_t> num_type1;
+	typedef std::vector<std::uint32_t> num_type;
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
@@ -58,10 +57,9 @@ struct decimal_real_wrapper {
 	constexpr static unsigned long sig_bit_mask
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
-	constexpr static std::uint32_t max_dec_leaf_value = 100000000;
+	constexpr static std::uint32_t dec_num_radix = 1000000;
 
 	num_type mantissa;
-	num_type1 mantissa1;
 	bool sign;
 	unsigned long back_scale;
 	int int_scale;
@@ -76,15 +74,13 @@ struct decimal_real_wrapper {
 		{
 			out.sign = Negative;
 
-			out.mantissa.push_back(ascii_digit_value<10>(in));
-
 			out.back_scale /= 10;
-			out.mantissa1.back()
+			out.mantissa.back()
 			+= out.back_scale * ascii_digit_value<10>(in);
 
 			if (out.back_scale == 1UL) {
-				out.mantissa1.push_back(0);
-				out.back_scale = max_dec_leaf_value;
+				out.mantissa.push_back(0);
+				out.back_scale = dec_num_radix;
 			}
 
 			return true;
@@ -141,8 +137,8 @@ struct decimal_real_wrapper {
 	};
 
 	decimal_real_wrapper()
-	: mantissa1(1, 0),
-	  back_scale(max_dec_leaf_value),
+	: mantissa(1, 0),
+	  back_scale(dec_num_radix),
 	  int_scale(0), exponent(0)
 	{}
 
@@ -150,7 +146,11 @@ struct decimal_real_wrapper {
 
 private:
 	static std::array<
-		std::pair<int, num_type>, 10
+		std::tuple<
+			int,
+			std::uint32_t,
+			std::uint32_t
+		>, 13
 	> const tab_pow_2_1;
 
 	static std::array<
@@ -158,18 +158,23 @@ private:
 			int,
 			std::uint32_t,
 			std::uint32_t
-		>, 17
-	> const tab_pow_2_1x;
+		>, 13
+	> const tab_pow_2;
 
 	static std::array<
-		std::pair<int, num_type>, 10
+		std::tuple<
+			int,
+			std::uint32_t,
+			std::uint32_t,
+			std::uint32_t,
+			std::uint32_t,
+			std::uint32_t
+		>, 13
 	> const tab_pow_5;
 
 	static void scale(num_type &m, int &d_exp, int &b_exp);
-	static void scale(num_type1 &m, int &d_exp, int &b_exp);
 
 	static void normalize(num_type &m, int &d_exp, int &b_exp);
-	static void normalize(num_type1 &m, int &d_exp, int &b_exp);
 
 	static void real_to_bigint(T val, bigint_type &low, bigint_type &high);
 	static void bigint_average(
@@ -196,27 +201,13 @@ int const decimal_real_wrapper<long double>::initial_true_bits = 48;
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
-	auto pos_b(mantissa.cbegin()), pos_e(mantissa.cend());
-
-	for (; pos_b != pos_e; ++pos_b)
-		if (*pos_b)
-			break;
-
-	while (pos_e != pos_b) {
-		--pos_e;
-		if (*pos_e) {
-			++pos_e;
-			break;
-		}
-	}
-
-	num_type m(pos_b, pos_e);
-	if (m.empty()) {
+	if (mantissa.empty()) {
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	};
 
-	num_type1 m1(mantissa1);
-	int adj_scale(mantissa.cend() - pos_e);
+	num_type m(mantissa);
+
+	//int adj_scale(mantissa.cend() - pos_e);
 	int d_exp(int_scale);
 
 	adj_scale = pos_b - mantissa.cbegin();
@@ -225,14 +216,11 @@ decimal_real_wrapper<T>::operator T() const
 	d_exp += exponent;
 
 	int b_exp(0);
-	int d_exp1(d_exp), b_exp1(b_exp);
 
-	while (d_exp > 0) {
+	while (d_exp > 0)
 		scale(m, d_exp, b_exp);
-		scale(m1, d_exp1, b_exp1);
-	}
 
-	while (d_exp < 0 || m[0] < 5)
+	while (d_exp < 0 || m[0] < (dec_num_radix / 2))
 		normalize(m, d_exp, b_exp);
 
 	adj_scale = std::min(
@@ -242,7 +230,7 @@ decimal_real_wrapper<T>::operator T() const
 	T val(std::accumulate(
 		m.cbegin(), m.cbegin() + adj_scale, T(0),
 		[](T v, num_type::value_type d) -> T {
-			return v * 10 + d;
+			return v * dec_num_radix + d;
 		}
 	));
 
@@ -302,122 +290,97 @@ void decimal_real_wrapper<T>::scale(num_type &m, int &d_exp, int &b_exp)
 	if (d >= static_cast<int>(tab_pow_2_1.size()))
 		d = tab_pow_2_1.size() - 1;
 
-	int b(tab_pow_2_1[d].first);
-	if (std::lexicographical_compare(
-		tab_pow_2_1[d].second.cbegin(), tab_pow_2_1[d].second.cend(),
-		m.cbegin(), m.cend()
-	))
-		--d;
+	int b(std::get<0>(tab_pow_2_1[d]));
 
-	d_exp -= d;
-	b_exp += b;
-
-	int n(0), c(0);
-	auto p(m.begin()), q(m.begin());
-
-	while (!(n >> b)) {
-		c = *p++;
-		n = n * 10 + c;
-		if (p == m.end()) {
-			if (n >> b)
-				break;
-			while (n) {
-				c = n * 10;
-				if (c >> b)
-					break;
-
-				n = c;
-			}
-			goto out;
-		}
-	};
-
-	while (true) {
-		c = n >> b;
-		n -= c << b;
-		*q++ = c;
-		if (p == m.end())
-			break;
-		c = *p++;
-		n = n * 10 + c;
-	}
-out:
-	while (n && q != m.end()) {
-		n = n * 10;
-		c = n >> b;
-		n -= c << b;
-		*q++ = c;
-	};
-	while (n) {
-		n = n * 10;
-		c = n >> b;
-		n -= c << b;
-		m.push_back(c);
-	};
-}
-
-template <typename T>
-void decimal_real_wrapper<T>::scale(num_type1 &m, int &d_exp, int &b_exp)
-{
-	int d(d_exp);
-
-	if (d >= static_cast<int>(tab_pow_2_1x.size()))
-		d = tab_pow_2_1x.size() - 1;
-
-	int b(std::get<0>(tab_pow_2_1x[d]));
-
-	if (std::get<1>(tab_pow_2_1x[d]) < m[0]) {
+	if (std::get<1>(tab_pow_2_1[d]) < m[0]) {
 		--d;
 	} else if (std::get<1>(tab_pow_2_1x[d]) == m[0]) {
-		if (m.size() > 1 && std::get<2>(tab_pow_2_1x[d]) < m[1])
+		if (m.size() > 1 && std::get<2>(tab_pow_2_1[d]) < m[1])
 			--d;
 	}
 
 	d_exp -= d;
 	b_exp += b;
 
-	long long n(0), c(0);
-	auto p(m.begin()), q(m.begin());
+	constexpr static long long dec_num_radix_sqr
+	= static_cast<long long>(dec_num_radix) * dec_num_radix;
 
-	while (!(n >> b)) {
-		c = *p++;
-		n = n * max_dec_leaf_value + c;
-		if (p == m.end()) {
-			if (n >> b)
-				break;
-			while (n) {
-				c = n * max_dec_leaf_value;
-				if (c >> b)
-					break;
+	num_type1 q(1, 0);
+	num_type1 u(m.size() + 3UL, 0);
+	std::copy(m.cbegin(), m.cend(), u.begin() + 1);
 
-				n = c;
-			}
-			goto out;
+	num_type1::value_type v[2] = {
+		std::get<1>(tab_pow_2[d]),
+		std::get<2>(tab_pow_2[d])
+	};
+
+	long long lv(static_cast<long long>(v[0]) * dec_num_radix + v[1]);
+	long long acc[3], qx;
+	bool borrow(false);
+
+repeat:
+	u[0] = 0;
+	for (auto uj(u.begin()); uj != (u.end() - 2); ++uj) {
+		acc[0] = *uj;
+		acc[0] *= dec_num_radix;
+		acc[0] += *(uj + 1);
+
+		if (*uj == v[0])
+			qx = dec_num_radix - 1;
+		else {
+			qx = acc[0] / v[0];
+			while ((qx * v[1]) > (
+				(acc[0] - qx * v[0])
+				* dec_num_radix + *(uj + 2)
+			))
+				--qx;
+		}
+
+		acc[0] *= dec_num_radix;
+		acc[0] += *(uj + 2);
+		acc[1] = qx * lv;
+		if (acc[0] >= acc[1]) {
+			borrow = false;
+			acc[1] = acc[0] - acc[1];
+		} else {
+			borrow = true;
+			acc[1] = dec_num_radix_sqr - acc[1] + acc[0];
+		}
+
+		*uj = acc[1] / dec_num_radix_sqr;
+		acc[1] %= dec_num_radix_sqr;
+		*(uj + 1) = acc[1] / dec_num_radix;
+		*(uj + 2) = acc[1] % dec_num_radix;
+
+		if (!q.back()) {
+			if (qx)
+				q.back() = qx;
+		} else
+			q.push_back(qx);
+
+		if (borrow) {
+			--q.back();
+			acc[0] = *(uj + 1);
+			acc[0] *= dec_num_radix;
+			acc[0] += *(uj + 2);
+			acc[0] += lv;
+			*uj = ((acc[0] / dec_num_radix_sqr) + *uj)
+			      % dec_num_radix;
+			acc[1] = acc[0] % dec_num_radix_sqr;
+			*(uj + 1) = acc[1] / dec_num_radix;
+			*(uj + 2) = acc[1] % dec_num_radix;
 		}
 	};
 
-	while (true) {
-		c = n >> b;
-		n -= c << b;
-		*q++ = c;
-		if (p == m.end())
-			break;
-		c = *p++;
-		n = n * max_dec_leaf_value + c;
+	u.erase(u.begin() + 1, u.end() - 2);
+	if (std::any_of(u.cbegin(), u.cend(), [](num_type1::value_type uj) {
+		return uj != 0;
+	})) {
+		u.push_back(0);
+		goto repeat;
 	}
-out:
-	while (n && q != m.end()) {
-		n = n * max_dec_leaf_value;
-		c = n >> b;
-		n -= c << b;
-		*q++ = c;
-	};
-	while (n) {
-		n = n * max_dec_leaf_value;
-		c = n >> b;
-		n -= c << b;
-		m.push_back(c);
-	};
+
+	m.swap(q);
 }
 
 template <typename T>
@@ -589,84 +552,77 @@ int decimal_real_wrapper<T>::target_cmp(
 
 template <typename T>
 std::array<
-	std::pair<int, std::vector<uint8_t>>, 10
+	std::tuple<
+		int,
+		typename decimal_real_wrapper<T>::num_type::value_type,
+		typename decimal_real_wrapper<T>::num_type::value_type
+	>, 13
 > const decimal_real_wrapper<T>::tab_pow_2_1 = {{
-	std::make_pair(1,  num_type()),
-	std::make_pair(3,  num_type({7})),
-	std::make_pair(6,  num_type({6, 3})),
-	std::make_pair(9,  num_type({5, 1, 1})),
-	std::make_pair(13, num_type({8, 1, 9, 1})),
-	std::make_pair(16, num_type({6, 5, 5, 3, 5})),
-	std::make_pair(19, num_type({5, 2, 4, 2, 8, 7})),
-	std::make_pair(23, num_type({8, 3, 8, 8, 6, 0, 7})),
-	std::make_pair(26, num_type({6, 7, 1, 0, 8, 8, 6, 3})),
-	std::make_pair(27, num_type({1, 3, 4, 2, 1, 7, 7, 2, 7}))
+	std::make_tuple(1,  0, 0),
+	std::make_tuple(3,  700000, 0),
+	std::make_tuple(6,  630000, 0),
+	std::make_tuple(9,  511000, 0),
+	std::make_tuple(13, 819100, 0),
+	std::make_tuple(16, 655350, 0),
+	std::make_tuple(19, 524287, 0),
+	std::make_tuple(23, 838860, 700000),
+	std::make_tuple(26, 671088, 630000),
+	std::make_tuple(29, 536870, 911000),
+	std::make_tuple(33, 858993, 459100),
+	std::make_tuple(36, 687194, 767350),
+	std::make_tuple(39, 549755, 813887)
 }};
 
 template <typename T>
 std::array<
 	std::tuple<
 		int,
-		typename decimal_real_wrapper<T>::num_type1::value_type,
-		typename decimal_real_wrapper<T>::num_type1::value_type
-	>, 17
-> const decimal_real_wrapper<T>::tab_pow_2_1x = {{
+		typename decimal_real_wrapper<T>::num_type::value_type,
+		typename decimal_real_wrapper<T>::num_type::value_type
+	>, 13
+> const decimal_real_wrapper<T>::tab_pow_2 = {{
 	std::make_tuple(1,  0, 0),
-	std::make_tuple(3,  70000000, 0),
-	std::make_tuple(6,  63000000, 0),
-	std::make_tuple(9,  51100000, 0),
-	std::make_tuple(13, 81910000, 0),
-	std::make_tuple(16, 65535000, 0),
-	std::make_tuple(19, 52428700, 0),
-	std::make_tuple(23, 83886070, 0),
-	std::make_tuple(26, 67108863, 0),
-	std::make_tuple(29, 53687091, 10000000),
-	std::make_tuple(33, 85899345, 92000000),
-	std::make_tuple(36, 68719476, 73600000),
-	std::make_tuple(39, 54975581, 38880000),
-	std::make_tuple(43, 87960930, 22208000),
-	std::make_tuple(46, 70368744, 17766400),
-	std::make_tuple(49, 56294995, 34213120),
-	std::make_tuple(53, 90071992, 54740992)
+	std::make_tuple(3,  800000, 0),
+	std::make_tuple(6,  640000, 0),
+	std::make_tuple(9,  512000, 0),
+	std::make_tuple(13, 819200, 0),
+	std::make_tuple(16, 655360, 0),
+	std::make_tuple(19, 524288, 0),
+	std::make_tuple(23, 838860, 800000),
+	std::make_tuple(26, 671088, 640000),
+	std::make_tuple(29, 536870, 912000),
+	std::make_tuple(33, 858993, 459200),
+	std::make_tuple(36, 687194, 767360),
+	std::make_tuple(39, 549755, 813888)
 }};
 
 template <typename T>
 std::array<
-	std::pair<int, std::vector<uint8_t>>, 10
+	std::tuple<
+		int,
+		typename decimal_real_wrapper<T>::num_type::value_type,
+		typename decimal_real_wrapper<T>::num_type::value_type,
+		typename decimal_real_wrapper<T>::num_type::value_type,
+		typename decimal_real_wrapper<T>::num_type::value_type,
+		typename decimal_real_wrapper<T>::num_type::value_type
+	>, 13
 > const decimal_real_wrapper<T>::tab_pow_5 = {{
-	std::make_pair(1, num_type()),
-	std::make_pair(3, num_type({
-		1, 2, 5
-	})),
-	std::make_pair(6, num_type({
-		1, 5, 6, 2, 5
-	})),
-	std::make_pair(9, num_type({
-		1, 9, 5, 3, 1, 2, 5
-	})),
-	std::make_pair(13, num_type({
-		1, 2, 2, 0, 7, 0, 3, 1, 2, 5
-	})),
-	std::make_pair(16, num_type({
-		1, 5, 2, 5, 8, 7, 8, 9, 0, 6, 2, 5
-	})),
-	std::make_pair(19, num_type({
-		1, 9, 0, 7, 3, 4, 8, 6, 3, 2, 8, 1, 2, 5
-	})),
-	std::make_pair(23, num_type({
-		1, 1, 9, 2, 0, 9, 2, 8, 9, 5, 5, 0, 7, 8, 1, 2, 5
-	})),
-	std::make_pair(26, num_type({
-		1, 4, 9, 0, 1, 1, 6, 1, 1, 9, 3, 8, 4, 7, 6, 5, 6, 2, 5
-	})),
-	std::make_pair(27, num_type({
-		7, 4, 5, 0, 5, 8, 0, 5, 9, 6, 9, 2, 3, 8, 2, 8, 1, 2, 5
-	}))
+	std::make_tuple(1,  0,      0,      0,      0,      0),
+	std::make_tuple(3,  125000, 0,      0,      0,      0),
+	std::make_tuple(6,  156250, 0,      0,      0,      0),
+	std::make_tuple(9,  195312, 500000, 0,      0,      0),
+	std::make_tuple(13, 122070, 312500, 0,      0,      0),
+	std::make_tuple(16, 152587, 890625, 0,      0,      0),
+	std::make_tuple(19, 190734, 863281, 250000, 0,      0),
+	std::make_tuple(23, 119209, 289550, 781250, 0,      0),
+	std::make_tuple(26, 149011, 611938, 476562, 500000, 0),
+	std::make_tuple(29, 186264, 514923, 095703, 125000, 0),
+	std::make_tuple(33, 116415, 321826, 934814, 453125, 0),
+	std::make_tuple(36, 145519, 152283, 668518,  66406, 250000),
+	std::make_tuple(39, 181898, 940354, 585647, 583007, 812500)
 }};
 
 }
 }}}}
 
 #endif
-
-

@@ -4,13 +4,13 @@ double fmtstrtod(char const *s, char **sp);
 
 int main(int argc, char **argv)
 {
-	char const *in = ".8174817660e43";
+	char const *in = "1.23456";
 	char *sp;
 	double out(fmtstrtod(in, &sp));
 
 	std::cout.precision(32);
-	std::cout << out << ", " << out - .8174817660e43 << '\n';
-	std::cout << "eq " << (out == .8174817660e43) << '\n';
+	std::cout << out << ", " << out - 1.23456 << '\n';
+	std::cout << "eq " << (out == 1.23456) << '\n';
 
 	in = "1.23456789012345678901234567890123456789";
 	out = fmtstrtod(in, &sp);

@@ -55,8 +55,7 @@ void test_arg(T arg, char const *arg_ref)
 
 int main(int argc, char **argv)
 {
-	TESTARG(double, 1.23);
-
+	TESTARG(double, 1.23456789);
 //#define NOT_WORKING 1
 #ifdef NOT_WORKING
 	TESTARG(double, .8174817660e43);
