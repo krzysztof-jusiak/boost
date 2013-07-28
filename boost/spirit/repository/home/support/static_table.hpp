@@ -16,6 +16,7 @@ template <typename TableData>
 struct static_table {
 	typedef typename TableData::value_type value_type;
 	typedef std::size_t size_type;
+	typedef std::ptrdiff_t difference_type;
 
 	struct const_iterator : boost::iterator_facade<
 		const_iterator, const value_type,
@@ -39,6 +40,16 @@ struct static_table {
 		bool equal(const_iterator const &other) const
 		{
 			return ptr == other.ptr;
+		}
+
+		void advance(difference_type n)
+		{
+			ptr += n;
+		}
+
+		difference_type distance_to(const_iterator const &other) const
+		{
+			return other.ptr - ptr;
 		}
 
 		value_type const &dereference() const
