@@ -66,7 +66,7 @@ template <
 		unsigned long k(0);
 		for (auto i(u.size()); i > 0; --i)
 			detail::bignum_mul_step<Radix>(
-				w[i + j - 2], k, u[i - 1], v[j - 1]
+				w[i + j - 1], k, u[i - 1], v[j - 1]
 			);
 
 		w[j - 1] = k;

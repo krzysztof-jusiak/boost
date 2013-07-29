@@ -18,7 +18,10 @@
 #if !defined(SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815)
 #define SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815
 
-#include <boost/spirit/repository/home/support/radix_pow.hpp>
+#include <boost/spirit/repository/home/support/bignum_utils.hpp>
+#include <boost/spirit/repository/home/support/static_table.hpp>
+#include <boost/spirit/repository/home/support/detail/pow_2m1.hpp>
+#include <boost/spirit/repository/home/support/detail/rec_pow_2.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
 #include <cmath>
@@ -32,20 +35,18 @@ namespace detail {
 template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
-	typedef std::vector<std::uint32_t> num_type;
+	typedef std::vector<unsigned long> src_num_type;
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
-	/* 4 bits "guard space" is necessary to avoid overflow from
-	 * multiplication by 10.
-	 */
+	/* Leave some room for carry. */
 	constexpr static int word_bits
-	= std::numeric_limits<unsigned long>::digits - 4;
+	= std::numeric_limits<unsigned long>::digits - 2;
 
 	constexpr static int bigint_words
 	= (mantissa_bits + word_bits + 1) / word_bits;
 
-	typedef std::array<unsigned long, bigint_words> bigint_type;
+	typedef std::array<unsigned long, bigint_words> dst_num_type;
 
 	/* Normalized mantissa value obtained by naive conversion is expected
 	 * to contain at least that many correct bits. This should be
@@ -57,9 +58,13 @@ struct decimal_real_wrapper {
 	constexpr static unsigned long sig_bit_mask
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
-	constexpr static std::uint32_t dec_num_radix = 1000000;
+#ifdef __LP64__
+	constexpr long dec_num_radix = 1000000000000000000L;
+#else
+	constexpr long dec_num_radix = 1000000000L;
+#endif
 
-	num_type mantissa;
+	src_num_type mantissa;
 	bool sign;
 	unsigned long back_scale;
 	int int_scale;
@@ -145,45 +150,21 @@ struct decimal_real_wrapper {
 	operator T() const;
 
 private:
-	static std::array<
-		std::tuple<
-			int,
-			std::uint32_t,
-			std::uint32_t
-		>, 13
-	> const tab_pow_2_1;
+	static void scale_down(src_num_type &m, int &d_exp, int &b_exp);
+	static void scale_up(src_num_type &m, int &d_exp, int &b_exp);
 
-	static std::array<
-		std::tuple<
-			int,
-			std::uint32_t,
-			std::uint32_t
-		>, 13
-	> const tab_pow_2;
-
-	static std::array<
-		std::tuple<
-			int,
-			std::uint32_t,
-			std::uint32_t,
-			std::uint32_t,
-			std::uint32_t,
-			std::uint32_t
-		>, 13
-	> const tab_pow_5;
-
-	static void scale(num_type &m, int &d_exp, int &b_exp);
-
-	static void normalize(num_type &m, int &d_exp, int &b_exp);
-
-	static void real_to_bigint(T val, bigint_type &low, bigint_type &high);
-	static void bigint_average(
-		bigint_type const &low, bigint_type const &high,
-		bigint_type &mid
+	static void real_to_dst_num_type(
+		dst_num_type &high, dst_num_type &low, T val
 	);
-	static bool bigint_assign_cmp(bigint_type const &src, bigint_type &dst);
-	static void bigint_normalize(bigint_type &val);
-	static int target_cmp(num_type const &m, bigint_type const &val);
+	static void dst_num_type_average(
+		dst_num_type &mid, dst_num_type const &high,
+		dst_num_type const &low
+	);
+	static bool dst_num_type_assign_cmp(
+		dst_num_type &dst, dst_num_type const &src
+	);
+	static void dst_num_type_normalize(dst_num_type &val);
+	static int target_cmp(dst_num_type const &val, src_num_type const &m);
 };
 
 template <typename T>
@@ -205,12 +186,12 @@ decimal_real_wrapper<T>::operator T() const
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	};
 
-	num_type m(mantissa);
+	src_num_type m(mantissa);
 
 	//int adj_scale(mantissa.cend() - pos_e);
 	int d_exp(int_scale);
 
-	adj_scale = pos_b - mantissa.cbegin();
+	//adj_scale = pos_b - mantissa.cbegin();
 	d_exp -= adj_scale;
 
 	d_exp += exponent;
@@ -218,10 +199,10 @@ decimal_real_wrapper<T>::operator T() const
 	int b_exp(0);
 
 	while (d_exp > 0)
-		scale(m, d_exp, b_exp);
+		scale_down(m, d_exp, b_exp);
 
 	while (d_exp < 0 || m[0] < (dec_num_radix / 2))
-		normalize(m, d_exp, b_exp);
+		scale_up(m, d_exp, b_exp);
 
 	adj_scale = std::min(
 		static_cast<int>(m.size()), std::numeric_limits<T>::digits10
@@ -549,78 +530,6 @@ int decimal_real_wrapper<T>::target_cmp(
 			return 0;
 	}
 }
-
-template <typename T>
-std::array<
-	std::tuple<
-		int,
-		typename decimal_real_wrapper<T>::num_type::value_type,
-		typename decimal_real_wrapper<T>::num_type::value_type
-	>, 13
-> const decimal_real_wrapper<T>::tab_pow_2_1 = {{
-	std::make_tuple(1,  0, 0),
-	std::make_tuple(3,  700000, 0),
-	std::make_tuple(6,  630000, 0),
-	std::make_tuple(9,  511000, 0),
-	std::make_tuple(13, 819100, 0),
-	std::make_tuple(16, 655350, 0),
-	std::make_tuple(19, 524287, 0),
-	std::make_tuple(23, 838860, 700000),
-	std::make_tuple(26, 671088, 630000),
-	std::make_tuple(29, 536870, 911000),
-	std::make_tuple(33, 858993, 459100),
-	std::make_tuple(36, 687194, 767350),
-	std::make_tuple(39, 549755, 813887)
-}};
-
-template <typename T>
-std::array<
-	std::tuple<
-		int,
-		typename decimal_real_wrapper<T>::num_type::value_type,
-		typename decimal_real_wrapper<T>::num_type::value_type
-	>, 13
-> const decimal_real_wrapper<T>::tab_pow_2 = {{
-	std::make_tuple(1,  0, 0),
-	std::make_tuple(3,  800000, 0),
-	std::make_tuple(6,  640000, 0),
-	std::make_tuple(9,  512000, 0),
-	std::make_tuple(13, 819200, 0),
-	std::make_tuple(16, 655360, 0),
-	std::make_tuple(19, 524288, 0),
-	std::make_tuple(23, 838860, 800000),
-	std::make_tuple(26, 671088, 640000),
-	std::make_tuple(29, 536870, 912000),
-	std::make_tuple(33, 858993, 459200),
-	std::make_tuple(36, 687194, 767360),
-	std::make_tuple(39, 549755, 813888)
-}};
-
-template <typename T>
-std::array<
-	std::tuple<
-		int,
-		typename decimal_real_wrapper<T>::num_type::value_type,
-		typename decimal_real_wrapper<T>::num_type::value_type,
-		typename decimal_real_wrapper<T>::num_type::value_type,
-		typename decimal_real_wrapper<T>::num_type::value_type,
-		typename decimal_real_wrapper<T>::num_type::value_type
-	>, 13
-> const decimal_real_wrapper<T>::tab_pow_5 = {{
-	std::make_tuple(1,  0,      0,      0,      0,      0),
-	std::make_tuple(3,  125000, 0,      0,      0,      0),
-	std::make_tuple(6,  156250, 0,      0,      0,      0),
-	std::make_tuple(9,  195312, 500000, 0,      0,      0),
-	std::make_tuple(13, 122070, 312500, 0,      0,      0),
-	std::make_tuple(16, 152587, 890625, 0,      0,      0),
-	std::make_tuple(19, 190734, 863281, 250000, 0,      0),
-	std::make_tuple(23, 119209, 289550, 781250, 0,      0),
-	std::make_tuple(26, 149011, 611938, 476562, 500000, 0),
-	std::make_tuple(29, 186264, 514923, 095703, 125000, 0),
-	std::make_tuple(33, 116415, 321826, 934814, 453125, 0),
-	std::make_tuple(36, 145519, 152283, 668518,  66406, 250000),
-	std::make_tuple(39, 181898, 940354, 585647, 583007, 812500)
-}};
 
 }
 }}}}
