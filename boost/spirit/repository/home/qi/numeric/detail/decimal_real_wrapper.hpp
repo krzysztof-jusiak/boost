@@ -20,6 +20,7 @@
 
 #include <boost/spirit/repository/home/support/bignum_utils.hpp>
 #include <boost/spirit/repository/home/support/static_table.hpp>
+#include <boost/spirit/repository/home/support/detail/pow_2.hpp>
 #include <boost/spirit/repository/home/support/detail/pow_2m1.hpp>
 #include <boost/spirit/repository/home/support/detail/rec_pow_2.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
@@ -59,9 +60,9 @@ struct decimal_real_wrapper {
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
 #ifdef __LP64__
-	constexpr long dec_num_radix = 1000000000000000000L;
+	constexpr static long src_num_radix = 1000000000000000000L;
 #else
-	constexpr long dec_num_radix = 1000000000L;
+	constexpr static long src_num_radix = 1000000000L;
 #endif
 
 	src_num_type mantissa;
@@ -85,7 +86,7 @@ struct decimal_real_wrapper {
 
 			if (out.back_scale == 1UL) {
 				out.mantissa.push_back(0);
-				out.back_scale = dec_num_radix;
+				out.back_scale = src_num_radix;
 			}
 
 			return true;
@@ -143,7 +144,7 @@ struct decimal_real_wrapper {
 
 	decimal_real_wrapper()
 	: mantissa(1, 0),
-	  back_scale(dec_num_radix),
+	  back_scale(src_num_radix),
 	  int_scale(0), exponent(0)
 	{}
 
@@ -186,13 +187,15 @@ decimal_real_wrapper<T>::operator T() const
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	};
 
-	src_num_type m(mantissa);
+	src_num_type m;
+	{
+		auto iter(mantissa.cend());
+		while (iter > mantissa.cbegin() && !(*(iter - 1)))
+			--iter;
+		m.assign(mantissa.cbegin(), iter);
+	}
 
-	//int adj_scale(mantissa.cend() - pos_e);
 	int d_exp(int_scale);
-
-	//adj_scale = pos_b - mantissa.cbegin();
-	d_exp -= adj_scale;
 
 	d_exp += exponent;
 
@@ -201,9 +204,11 @@ decimal_real_wrapper<T>::operator T() const
 	while (d_exp > 0)
 		scale_down(m, d_exp, b_exp);
 
-	while (d_exp < 0 || m[0] < (dec_num_radix / 2))
+	while (d_exp < 0 || m[0] < (src_num_radix / 2))
 		scale_up(m, d_exp, b_exp);
 
+	T val(0);
+#if 0
 	adj_scale = std::min(
 		static_cast<int>(m.size()), std::numeric_limits<T>::digits10
 	);
@@ -261,151 +266,90 @@ decimal_real_wrapper<T>::operator T() const
 		std::ldexp(val, b_exp - word_bits * mid.size()),
 		sign ? T(-1) : T(1)
 	);
+#endif
+	return val;
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::scale(num_type &m, int &d_exp, int &b_exp)
+void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp)
 {
+	typedef static_table<repository::detail::rec_pow_2<
+		long, int, decimal_real_wrapper<T>::src_num_radix
+	>> rec_pow_2_;
+
+	typedef static_table<repository::detail::pow_2m1<
+		long, int, decimal_real_wrapper<T>::src_num_radix
+	>> pow_2m1_;
+
 	int d(d_exp);
 
-	if (d >= static_cast<int>(tab_pow_2_1.size()))
-		d = tab_pow_2_1.size() - 1;
+	if (d >= int(pow_2m1_::size()))
+		d = pow_2m1_::size() - 1;
 
-	int b(std::get<0>(tab_pow_2_1[d]));
+	int b(pow_2m1_::get_meta<int>(d));
 
-	if (std::get<1>(tab_pow_2_1[d]) < m[0]) {
-		--d;
-	} else if (std::get<1>(tab_pow_2_1x[d]) == m[0]) {
-		if (m.size() > 1 && std::get<2>(tab_pow_2_1[d]) < m[1])
+	{
+		auto v(pow_2m1_::get(d));
+
+		if (std::lexicographical_compare(
+			v.begin(), v.end(),
+			m.cbegin(), m.cend(),
+			std::less<src_num_type::value_type>()
+		))
 			--d;
 	}
 
 	d_exp -= d;
 	b_exp += b;
 
-	constexpr static long long dec_num_radix_sqr
-	= static_cast<long long>(dec_num_radix) * dec_num_radix;
+	auto v(rec_pow_2_::get(d));
+	src_num_type w(m.size() + v.size());
 
-	num_type1 q(1, 0);
-	num_type1 u(m.size() + 3UL, 0);
-	std::copy(m.cbegin(), m.cend(), u.begin() + 1);
+	bignum_mul<decimal_real_wrapper<T>::src_num_radix>(w, m, v);
 
-	num_type1::value_type v[2] = {
-		std::get<1>(tab_pow_2[d]),
-		std::get<2>(tab_pow_2[d])
-	};
-
-	long long lv(static_cast<long long>(v[0]) * dec_num_radix + v[1]);
-	long long acc[3], qx;
-	bool borrow(false);
-
-repeat:
-	u[0] = 0;
-	for (auto uj(u.begin()); uj != (u.end() - 2); ++uj) {
-		acc[0] = *uj;
-		acc[0] *= dec_num_radix;
-		acc[0] += *(uj + 1);
-
-		if (*uj == v[0])
-			qx = dec_num_radix - 1;
-		else {
-			qx = acc[0] / v[0];
-			while ((qx * v[1]) > (
-				(acc[0] - qx * v[0])
-				* dec_num_radix + *(uj + 2)
-			))
-				--qx;
-		}
-
-		acc[0] *= dec_num_radix;
-		acc[0] += *(uj + 2);
-		acc[1] = qx * lv;
-		if (acc[0] >= acc[1]) {
-			borrow = false;
-			acc[1] = acc[0] - acc[1];
-		} else {
-			borrow = true;
-			acc[1] = dec_num_radix_sqr - acc[1] + acc[0];
-		}
-
-		*uj = acc[1] / dec_num_radix_sqr;
-		acc[1] %= dec_num_radix_sqr;
-		*(uj + 1) = acc[1] / dec_num_radix;
-		*(uj + 2) = acc[1] % dec_num_radix;
-
-		if (!q.back()) {
-			if (qx)
-				q.back() = qx;
-		} else
-			q.push_back(qx);
-
-		if (borrow) {
-			--q.back();
-			acc[0] = *(uj + 1);
-			acc[0] *= dec_num_radix;
-			acc[0] += *(uj + 2);
-			acc[0] += lv;
-			*uj = ((acc[0] / dec_num_radix_sqr) + *uj)
-			      % dec_num_radix;
-			acc[1] = acc[0] % dec_num_radix_sqr;
-			*(uj + 1) = acc[1] / dec_num_radix;
-			*(uj + 2) = acc[1] % dec_num_radix;
-		}
-	};
-
-	u.erase(u.begin() + 1, u.end() - 2);
-	if (std::any_of(u.cbegin(), u.cend(), [](num_type1::value_type uj) {
-		return uj != 0;
-	})) {
-		u.push_back(0);
-		goto repeat;
-	}
-
-	m.swap(q);
+	m.swap(w);
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::normalize(num_type &m, int &d_exp, int &b_exp)
+void decimal_real_wrapper<T>::scale_up(
+	src_num_type &m, int &d_exp, int &b_exp
+)
 {
-	int d(-d_exp);
-	if (d >= static_cast<int>(tab_pow_5.size()))
-		d = tab_pow_5.size() - 1;
+	typedef static_table<repository::detail::rec_pow_2<
+		long, int, decimal_real_wrapper<T>::src_num_radix
+	>> rec_pow_2_;
 
-	int b(tab_pow_5[d].first);
-	if (std::lexicographical_compare(
-		m.cbegin(), m.cend(),
-		tab_pow_5[d].second.cbegin(), tab_pow_5[d].second.cend(),
-		std::less<num_type::value_type>()
-	))
-		--d;
+	typedef static_table<repository::detail::pow_2<
+		long, int, decimal_real_wrapper<T>::src_num_radix
+	>> pow_2_;
+
+	int d(-d_exp);
+	if (d >= int(rec_pow_2_::size()))
+		d = rec_pow_2_::size() - 1;
+
+	int b(rec_pow_2_::get_meta<int>(d));
+	{
+		auto v(rec_pow_2_::get(d));
+		if (std::lexicographical_compare(
+			m.cbegin(), m.cend(),
+			v.begin(), v.end(),
+			std::less<src_num_type::value_type>()
+		))
+			--d;
+	}
 
 	b_exp -= b;
 	d_exp += d;
 
-	int n(0), c(0);
-	m.insert(m.end(), d, uint8_t(0));
-	auto p(m.end());
-	auto q(m.end() - d);
+	auto v(pow_2_::get(d));
+	src_num_type w(m.size() + v.size());
 
-	do {
-		--q;
-		c = *q;
-		c = (c << b) + n;
-		n = c / 10;
-		c -= n * 10;
-		--p;
-		*p = c;
-	} while (q != m.begin());
+	bignum_mul<decimal_real_wrapper<T>::src_num_radix>(w, m, v);
 
-	while (n) {
-		c = n;
-		n = c / 10;
-		c -= n * 10;
-		--p;
-		*p = c;
-	}
+	m.swap(w);
 }
 
+#if 0
 template <typename T>
 void decimal_real_wrapper<T>::real_to_bigint(
 	T val, bigint_type &low, bigint_type &high
@@ -530,6 +474,7 @@ int decimal_real_wrapper<T>::target_cmp(
 			return 0;
 	}
 }
+#endif
 
 }
 }}}}
