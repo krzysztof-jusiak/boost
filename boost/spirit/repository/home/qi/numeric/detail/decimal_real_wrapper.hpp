@@ -307,6 +307,9 @@ void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp
 
 	bignum_mul<decimal_real_wrapper<T>::src_num_radix>(w, m, v);
 
+	while (!w.back())
+		w.pop_back();
+
 	m.swap(w);
 }
 
@@ -328,8 +331,9 @@ void decimal_real_wrapper<T>::scale_up(
 		d = rec_pow_2_::size() - 1;
 
 	int b(rec_pow_2_::get_meta<int>(d));
+	auto v(pow_2_::get(d));
 	{
-		auto v(rec_pow_2_::get(d));
+		auto v1(rec_pow_2_::get(d));
 		if (std::lexicographical_compare(
 			m.cbegin(), m.cend(),
 			v.begin(), v.end(),
@@ -341,10 +345,12 @@ void decimal_real_wrapper<T>::scale_up(
 	b_exp -= b;
 	d_exp += d;
 
-	auto v(pow_2_::get(d));
 	src_num_type w(m.size() + v.size());
 
 	bignum_mul<decimal_real_wrapper<T>::src_num_radix>(w, m, v);
+
+	while (!w.back())
+		w.pop_back();
 
 	m.swap(w);
 }

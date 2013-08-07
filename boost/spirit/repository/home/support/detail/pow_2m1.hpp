@@ -32,7 +32,7 @@ struct pow_2m1 {
 template <>
 pow_2m1<long, int, 1000000000000000000L>::value_type const
 pow_2m1<long, int, 1000000000000000000L>::data[] = {
-	0L,
+	100000000000000000L, /* 1 */
 	700000000000000000L, /* 3 */
 	630000000000000000L, /* 6 */
 	511000000000000000L, /* 9 */
@@ -53,7 +53,7 @@ pow_2m1<long, int, 1000000000000000000L>::data[] = {
 template <>
 pow_2m1<long, int, 1000000000000000000L>::selector_type const
 pow_2m1<long, int, 1000000000000000000L>::selector[] = {
-	{ &data[0],  0  },
+	{ &data[0],  1  },
 	{ &data[1],  3  },
 	{ &data[2],  6  },
 	{ &data[3],  9  },
@@ -78,7 +78,7 @@ pow_2m1<long, int, 1000000000000000000L>::selector[] = {
 template <>
 pow_2m1<long, int, 1000000000L>::value_type const
 pow_2m1<long, int, 1000000000L>::data[] = {
-	0L,
+	100000000L, /* 1 */
 	700000000L, /* 3 */
 	630000000L, /* 6 */
 	511000000L, /* 9 */
@@ -99,7 +99,7 @@ pow_2m1<long, int, 1000000000L>::data[] = {
 template <>
 pow_2m1<long, int, 1000000000L>::selector_type const
 pow_2m1<long, int, 1000000000L>::selector[] = {
-	{ &data[0],  0  },
+	{ &data[0],  1  },
 	{ &data[1],  3  },
 	{ &data[2],  6  },
 	{ &data[3],  9  },

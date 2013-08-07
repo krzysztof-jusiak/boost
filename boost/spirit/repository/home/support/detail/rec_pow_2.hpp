@@ -32,7 +32,7 @@ struct rec_pow_2 {
 template <>
 rec_pow_2<long, int, 1000000000000000000L>::value_type const
 rec_pow_2<long, int, 1000000000000000000L>::data[] = {
-	0L,
+	0L,                  /* 1 */
 	125000000000000000L, /* 3 */
 	156250000000000000L, /* 6 */
 	195312500000000000L, /* 9 */
@@ -53,7 +53,7 @@ rec_pow_2<long, int, 1000000000000000000L>::data[] = {
 template <>
 rec_pow_2<long, int, 1000000000000000000L>::selector_type const
 rec_pow_2<long, int, 1000000000000000000L>::selector[] = {
-	{ &data[0],  0},
+	{ &data[0],  1},
 	{ &data[1],  3},
 	{ &data[2],  6},
 	{ &data[3],  9},
@@ -78,7 +78,7 @@ rec_pow_2<long, int, 1000000000000000000L>::selector[] = {
 template <>
 rec_pow_2<long, int, 1000000000L>::value_type const
 rec_pow_2<long, int, 1000000000L>::data[] = {
-	0L,
+	0L,         /* 1 */
 	125000000L, /* 3 */
 	156250000L, /* 6 */
 	195312500L, /* 9 */
@@ -99,7 +99,7 @@ rec_pow_2<long, int, 1000000000L>::data[] = {
 template <>
 rec_pow_2<long, int, 1000000000L>::selector_type const
 rec_pow_2<long, int, 1000000000L>::selector[] = {
-	{ &data[0],  0},
+	{ &data[0],  1},
 	{ &data[1],  3},
 	{ &data[2],  6},
 	{ &data[3],  9},
