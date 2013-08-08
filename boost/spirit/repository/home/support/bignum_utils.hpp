@@ -18,8 +18,8 @@ namespace detail {
 #if defined(__LP64__)
 
 template <long Radix>
-void bignum_mul_step(
-	unsigned long &w, unsigned long &k, unsigned long u, unsigned long v
+std::pair<unsigned long, unsigned long> bignum_mul_step(
+	unsigned long w, unsigned long k, unsigned long u, unsigned long v
 )
 {
 	unsigned __int128 r(u);
@@ -27,15 +27,14 @@ void bignum_mul_step(
 	r += w;
 	r += k;
 
-	w = r % Radix;
-	k = r / Radix;
+	return std::make_pair(r % Radix, r / Radix);
 }
 
 #else
 
 template <long Radix>
-void bignum_mul_step(
-	unsigned long &w, unsigned long &k, unsigned long u, unsigned long v
+std::pair<unsigned long, unsigned long> bignum_mul_step(
+	unsigned long w, unsigned long k, unsigned long u, unsigned long v
 )
 {
 	unsigned long long r(u);
@@ -43,8 +42,7 @@ void bignum_mul_step(
 	r += w;
 	r += k;
 
-	w = r % Radix;
-	k = r / Radix;
+	return std::make_pair(r % Radix, r / Radix);
 }
 
 #endif
@@ -63,13 +61,15 @@ template <
 			w[j - 1] = 0;
 			continue;
 		}
-		unsigned long k(0);
-		for (auto i(u.size()); i > 0; --i)
-			detail::bignum_mul_step<Radix>(
-				w[i + j - 1], k, u[i - 1], v[j - 1]
+		std::pair<unsigned long, unsigned long> k(0, 0);
+		for (auto i(u.size()); i > 0; --i) {
+			k = detail::bignum_mul_step<Radix>(
+				w[i + j - 1], k.second, u[i - 1], v[j - 1]
 			);
+			w[i + j - 1] = k.first;
+		}
 
-		w[j - 1] = k;
+		w[j - 1] = k.second;
 	}
 }
 
