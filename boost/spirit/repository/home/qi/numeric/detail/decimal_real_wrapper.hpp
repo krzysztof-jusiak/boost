@@ -27,7 +27,7 @@
 
 #include <cmath>
 #include <array>
-#include <tuple>
+#include <deque>
 #include <initializer_list>
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
@@ -36,7 +36,7 @@ namespace detail {
 template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
-	typedef std::vector<unsigned long> src_num_type;
+	typedef std::deque<unsigned long> src_num_type;
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
@@ -157,15 +157,16 @@ private:
 	static void real_to_dst_num_type(
 		dst_num_type &high, dst_num_type &low, T val
 	);
-	static void dst_num_type_average(
+	static void average(
 		dst_num_type &mid, dst_num_type const &high,
 		dst_num_type const &low
 	);
-	static bool dst_num_type_assign_cmp(
+	static bool assign_cmp(
 		dst_num_type &dst, dst_num_type const &src
 	);
-	static void dst_num_type_normalize(dst_num_type &val);
-	static int target_cmp(dst_num_type const &val, src_num_type const &m);
+	static void normalize(src_num_type &val);
+	static void normalize(dst_num_type &val);
+	static int target_cmp(dst_num_type val, src_num_type m);
 };
 
 template <typename T>
@@ -209,8 +210,8 @@ decimal_real_wrapper<T>::operator T() const
 
 	T val(0);
 	for (auto iter(m.crbegin()); iter != m.crend(); ++iter) {
-		T += *iter;
-		T /= T(decimal_real_wrapper<T>::src_num_radix);
+		val += *iter;
+		val /= T(src_num_radix);
 	}
 
 	dst_num_type low, mid, high;
@@ -219,14 +220,14 @@ decimal_real_wrapper<T>::operator T() const
 	int x(0);
 
 	while (true) {
-		dst_num_type_average(mid, high, low);
+		average(mid, high, low);
 		auto c(target_cmp(mid, m));
 
 		if (c > 0) {
-			if (dst_num_type_assign_cmp(low, mid))
+			if (assign_cmp(low, mid))
 				break;
 		} else if (c < 0)
-			bigint_assign_cmp(high, mid);
+			assign_cmp(high, mid);
 		else {
 			auto tail(mid.back() & (sig_bit_mask - 1UL));
 			if (
@@ -244,7 +245,7 @@ decimal_real_wrapper<T>::operator T() const
 	mid.back() -= tail;
 	if (tail >= (sig_bit_mask >> 1)) {
 		mid.back() += sig_bit_mask;
-		dst_num_type_normalize(mid);
+		normalize(mid);
 	}
 
 	val = 0;
@@ -294,21 +295,12 @@ void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp
 	auto v(rec_pow_2_::get(d));
 	src_num_type w(m.size() + v.size());
 
-	bignum_mul<decimal_real_wrapper<T>::src_num_radix>(w, m, v);
+	bignum_mul<src_num_radix>(w, m, v);
 
 	while (!w.back())
 		w.pop_back();
 
-	while (w.front() < (decimal_real_wrapper<T>::src_num_radix / 10)) {
-		std::pair<unsigned long, unsigned long> k(0, 0);
-		for (auto i(w.size()); i > 0; --i) {
-			k = repository::detail::bignum_mul_step<
-				decimal_real_wrapper<T>::src_num_radix
-			>(0, k.second, w[i - 1], 10);
-			w[i - 1] = k.first;
-		}
-	}
-
+	normalize(w);
 	m.swap(w);
 }
 
@@ -318,11 +310,11 @@ void decimal_real_wrapper<T>::scale_up(
 )
 {
 	typedef static_table<repository::detail::rec_pow_2<
-		long, int, decimal_real_wrapper<T>::src_num_radix
+		long, int, src_num_radix
 	>> rec_pow_2_;
 
 	typedef static_table<repository::detail::pow_2<
-		long, int, decimal_real_wrapper<T>::src_num_radix
+		long, int, src_num_radix
 	>> pow_2_;
 
 	int d(-d_exp);
@@ -346,21 +338,12 @@ void decimal_real_wrapper<T>::scale_up(
 
 	src_num_type w(m.size() + v.size());
 
-	bignum_mul<decimal_real_wrapper<T>::src_num_radix>(w, m, v);
+	bignum_mul<src_num_radix>(w, m, v);
 
 	while (!w.back())
 		w.pop_back();
 
-	while (w.front() < (decimal_real_wrapper<T>::src_num_radix / 10)) {
-		std::pair<unsigned long, unsigned long> k(0, 0);
-		for (auto i(w.size()); i > 0; --i) {
-			k = repository::detail::bignum_mul_step<
-				decimal_real_wrapper<T>::src_num_radix
-			>(0, k.second, w[i - 1], 10);
-			w[i - 1] = k.first;
-		}
-	}
-
+	normalize(w);
 	m.swap(w);
 }
 
@@ -392,13 +375,13 @@ void decimal_real_wrapper<T>::real_to_dst_num_type(
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::dst_num_type_average(
+void decimal_real_wrapper<T>::average(
 	dst_num_type &mid, dst_num_type const &high,
 	dst_num_type const &low
 )
 {
 	typename dst_num_type::size_type pos(0);
-	long c(0);
+	typename dst_num_type::value_type c(0);
 
 	for (; pos < mid.size(); ++pos) {
 		mid[pos] = high[pos] + low[pos];
@@ -419,11 +402,11 @@ void decimal_real_wrapper<T>::dst_num_type_average(
 }
 
 template <typename T>
-bool decimal_real_wrapper<T>::dst_num_type_assign_cmp(
-	bigint_type &dst, bigint_type const &src, 
+bool decimal_real_wrapper<T>::assign_cmp(
+	dst_num_type &dst, dst_num_type const &src
 )
 {
-	typename bigint_type::size_type dst_pos(0);
+	typename dst_num_type::size_type dst_pos(0);
 	bool eq(true);
 
 	for (auto v : src) {
@@ -435,9 +418,26 @@ bool decimal_real_wrapper<T>::dst_num_type_assign_cmp(
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::dst_num_type_normalize(bigint_type &val)
+void decimal_real_wrapper<T>::normalize(src_num_type &val)
 {
-	typename bigint_type::value_type c(0);
+	while (val.front() < (src_num_radix / 10)) {
+		std::pair<
+			typename src_num_type::value_type,
+			typename src_num_type::value_type
+		> c(0, 0);
+		for (auto i(val.size()); i > 0; --i) {
+			c = repository::detail::bignum_mul_step<src_num_radix>(
+				0, c.second, val[i - 1], 10
+			);
+			val[i - 1] = c.first;
+		}
+	}
+}
+
+template <typename T>
+void decimal_real_wrapper<T>::normalize(dst_num_type &val)
+{
+	typename dst_num_type::value_type c(0);
 
 	for (auto pos(val.size() - 1); pos > 0; --pos) {
 		val[pos] += c;
@@ -450,43 +450,31 @@ void decimal_real_wrapper<T>::dst_num_type_normalize(bigint_type &val)
 
 template <typename T>
 int decimal_real_wrapper<T>::target_cmp(
-	dst_num_type const &val, src_num_type const &m
+	dst_num_type val, src_num_type m
 )
 {
-	bigint_type m_val(val);
-	std::function<int (bigint_type &)> next_digit(
-		[](bigint_type &val) -> int {
-			std::for_each(
-				val.begin(), val.end(),
-				[](typename bigint_type::value_type &v) {
-					v *= 10;
-				}
+	src_num_type m_ref;
+
+	while (m_ref.size() < m.size()) {
+		std::pair<
+			typename dst_num_type::value_type,
+			typename dst_num_type::value_type
+		> c(0, 0);
+		for (auto i(val.size()); i > 0; --i) {
+			c = repository::detail::bignum_mul_step<
+				1L << word_bits
+			>(
+				0, c.second, val[i - 1], src_num_radix
 			);
-			bigint_normalize(val);
-			int d(val[0] >> word_bits);
-			val[0] &= (1UL << word_bits) - 1UL;
-			return d;
+			val[i - 1] = c.first;
 		}
+		m_ref.push_back(c.second);
+	};
+
+	return std::lexicographical_compare(
+		m_ref.cbegin(), m_ref.cend(),
+		m.cbegin(), m.cend()
 	);
-
-	for (int c : m) {
-		auto d(next_digit(m_val));
-		if (c - d)
-			return c - d;
-	}
-
-	while (true) {
-		auto d(next_digit(m_val));
-		if (0 - d)
-			return 0 - d;
-		if (std::all_of(
-			m_val.begin(), m_val.end(),
-			[](typename bigint_type::value_type v) -> bool {
-				return v == 0;
-			}
-		))
-			return 0;
-	}
 }
 
 }
