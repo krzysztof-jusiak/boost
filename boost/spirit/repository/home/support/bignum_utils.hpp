@@ -50,26 +50,49 @@ std::pair<unsigned long, unsigned long> bignum_mul_step(
 }
 
 template <
+	long Radix, typename OutputRange, typename InputRangeU
+> void bignum_mul_s(
+	OutputRange &w, InputRangeU const &u,
+	typename InputRangeU::value_type v
+)
+{
+	std::fill(w.begin() + u.size(), w.end(), 0UL);
+
+	if (!v)
+		return;
+
+	std::pair<unsigned long, unsigned long> c(0, 0);
+	for (auto i(u.size()); i > 0; --i) {
+		c = detail::bignum_mul_step<Radix>(
+			w[i], c.second, u[i - 1], v
+		);
+		w[i] = c.first;
+	}
+
+	w[0] = c.second;
+}
+
+template <
 	long Radix, typename OutputRange, typename InputRangeU,
 	typename InputRangeV
 > void bignum_mul(OutputRange &w, InputRangeU const &u, InputRangeV const &v)
 {
 	std::fill(w.begin() + u.size(), w.end(), 0UL);
 
-	for (auto j(v.size());  j > 0; --j) {
+	for (auto j(v.size()); j > 0; --j) {
 		if (!v[j - 1]) {
 			w[j - 1] = 0;
 			continue;
 		}
-		std::pair<unsigned long, unsigned long> k(0, 0);
+		std::pair<unsigned long, unsigned long> c(0, 0);
 		for (auto i(u.size()); i > 0; --i) {
-			k = detail::bignum_mul_step<Radix>(
-				w[i + j - 1], k.second, u[i - 1], v[j - 1]
+			c = detail::bignum_mul_step<Radix>(
+				w[i + j - 1], c.second, u[i - 1], v[j - 1]
 			);
-			w[i + j - 1] = k.first;
+			w[i + j - 1] = c.first;
 		}
 
-		w[j - 1] = k.second;
+		w[j - 1] = c.second;
 	}
 }
 

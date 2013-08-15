@@ -276,7 +276,7 @@ void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp
 	if (d >= int(pow_2m1_::size()))
 		d = pow_2m1_::size() - 1;
 
-	int b(pow_2m1_::get_meta<int>(d));
+	int b(pow_2m1_::template get_meta<int>(d));
 
 	{
 		auto v(pow_2m1_::get(d));
@@ -295,8 +295,10 @@ void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp
 	auto v(rec_pow_2_::get(d));
 	src_num_type w(m.size() + v.size());
 
+	printf("xx1 %lx, %lx\n", m[0], v[0]);
 	bignum_mul<src_num_radix>(w, m, v);
 
+	printf("xx2 %ld, %lx\n", w.size(), w[0]);
 	while (!w.back())
 		w.pop_back();
 
@@ -321,7 +323,7 @@ void decimal_real_wrapper<T>::scale_up(
 	if (d >= int(rec_pow_2_::size()))
 		d = rec_pow_2_::size() - 1;
 
-	int b(rec_pow_2_::get_meta<int>(d));
+	int b(rec_pow_2_::template get_meta<int>(d));
 	auto v(pow_2_::get(d));
 	{
 		auto v1(rec_pow_2_::get(d));
@@ -453,28 +455,44 @@ int decimal_real_wrapper<T>::target_cmp(
 	dst_num_type val, src_num_type m
 )
 {
-	src_num_type m_ref;
+	typename src_num_type::size_type src_pos(0);
+	src_num_type dst_val_in(val.begin(), val.end());
+	src_num_type dst_val_out(val.size() + 1);
 
-	while (m_ref.size() < m.size()) {
-		std::pair<
-			typename dst_num_type::value_type,
-			typename dst_num_type::value_type
-		> c(0, 0);
-		for (auto i(val.size()); i > 0; --i) {
-			c = repository::detail::bignum_mul_step<
-				1L << word_bits
-			>(
-				0, c.second, val[i - 1], src_num_radix
-			);
-			val[i - 1] = c.first;
-		}
-		m_ref.push_back(c.second);
-	};
+	//printf("Comparing: \n");
+	do {
+		bignum_mul_s<(1L << word_bits)>(
+			dst_val_out, dst_val_in, src_num_radix
+		);
 
-	return std::lexicographical_compare(
-		m_ref.cbegin(), m_ref.cend(),
-		m.cbegin(), m.cend()
-	);
+		//printf("  src %lx dst %lx pos %ld\n", m[src_pos], dst_val_out[0], src_pos);
+		if (m[src_pos] > dst_val_out[0])
+			return 1;
+		else if (m[src_pos] < dst_val_out[0])
+			return -1;
+
+		++src_pos;
+		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
+	} while (src_pos < m.size());
+
+	//printf("   also:\n");
+	while (true) {
+		bignum_mul_s<(1L << word_bits)>(
+			dst_val_out, dst_val_in, src_num_radix
+		);
+
+		//printf("    dst %lx\n", dst_val_out[0]);
+		if (dst_val_out[0] > 0)
+			return -1;
+		else if (std::all_of(
+			dst_val_out.begin(), dst_val_out.end(), [](
+				typename src_num_type::value_type v_
+			) { return v_ == 0; }
+		))
+			return 0;
+
+		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
+	}
 }
 
 }

@@ -26,8 +26,8 @@ struct static_table {
 		: ptr(nullptr) {}
 	
 	private:
-		friend class boost::iterator_core_access;
-		friend class static_table;
+		friend boost::iterator_core_access;
+		friend static_table;
 
 		const_iterator(value_type const *ptr_)
 		: ptr(ptr_) {}
