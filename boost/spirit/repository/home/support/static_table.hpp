@@ -65,15 +65,19 @@ struct static_table {
 	constexpr static range_type get(size_type pos)
 	{
 		return range_type(
-			const_iterator(TableData::selector[pos].ptr),
-			const_iterator(TableData::selector[pos + 1].ptr)
+			const_iterator(
+				TableData::data + TableData::selector[pos]
+			),
+			const_iterator(
+				TableData::data + TableData::selector[pos + 1]
+			)
 		);
 	}
 
 	template <typename MetaT>
 	constexpr static MetaT get_meta(size_type pos)
 	{
-		return TableData::selector[pos].meta;
+		return TableData::metadata[pos];
 	}
 
 	constexpr static size_type size()

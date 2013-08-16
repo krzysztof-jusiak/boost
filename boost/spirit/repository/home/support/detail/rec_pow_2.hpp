@@ -12,22 +12,26 @@ namespace boost { namespace spirit { namespace repository { namespace detail {
 template <typename T, typename MetaT, long Radix>
 struct rec_pow_2 {
 	typedef T value_type;
+	typedef MetaT metadata_type;
+	typedef unsigned short selector_type;
 
-	struct selector_type {
-		value_type const *ptr;
-		MetaT const meta;
-	};
-
+	static metadata_type const metadata[];
 	static value_type const data[];
 	static selector_type const selector[];
 
 	static constexpr std::size_t size()
 	{
-		return sizeof(selector) / sizeof(selector_type);
+		return (sizeof(selector) / sizeof(selector_type)) - 1;
 	}
 };
 
 #if defined(__LP64__)
+
+template <>
+rec_pow_2<long, int, 1000000000000000000L>::metadata_type const
+rec_pow_2<long, int, 1000000000000000000L>::metadata[] = {
+	1, 3, 6, 9, 13, 16, 19, 23, 26, 27
+};
 
 template <>
 rec_pow_2<long, int, 1000000000000000000L>::value_type const
@@ -56,31 +60,16 @@ rec_pow_2<long, int, 1000000000000000000L>::data[] = {
 template <>
 rec_pow_2<long, int, 1000000000000000000L>::selector_type const
 rec_pow_2<long, int, 1000000000000000000L>::selector[] = {
-	{ &data[0],  1},
-	{ &data[1],  3},
-	{ &data[2],  6},
-	{ &data[3],  9},
-	{ &data[4],  13},
-	{ &data[5],  16},
-	{ &data[6],  19},
-	{ &data[7],  23},
-	{ &data[8],  26},
-	{ &data[10], 27},
-	{ &data[12], 0}
-	#if 0
-	{ &data[10], 29},
-	{ &data[12], 33},
-	{ &data[14], 36},
-	{ &data[16], 39},
-	{ &data[18], 43},
-	{ &data[20], 46},
-	{ &data[22], 49},
-	{ &data[24], 53},
-	{ &data[26], 0}
-	#endif
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12
 };
 
 #else
+
+template <>
+rec_pow_2<long, int, 1000000000L>::metadata_type const
+rec_pow_2<long, int, 1000000000L>::metadata[] = {
+	1, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36, 39, 43, 46, 49
+};
 
 template <>
 rec_pow_2<long, int, 1000000000L>::value_type const
@@ -106,24 +95,7 @@ rec_pow_2<long, int, 1000000000L>::data[] = {
 template <>
 rec_pow_2<long, int, 1000000000L>::selector_type const
 rec_pow_2<long, int, 1000000000L>::selector[] = {
-	{ &data[0],  1},
-	{ &data[1],  3},
-	{ &data[2],  6},
-	{ &data[3],  9},
-	{ &data[4],  13},
-	{ &data[6],  16},
-	{ &data[8],  19},
-	{ &data[10], 23},
-	{ &data[12], 26},
-	{ &data[15], 29},
-	{ &data[18], 33},
-	{ &data[21], 36},
-	{ &data[24], 39},
-	{ &data[28], 43},
-	{ &data[32], 46},
-	{ &data[36], 49},
-	{ &data[40], 53},
-	{ &data[45], 0}
+	0, 1, 2, 3, 4, 6, 8, 10, 12, 15, 18, 21, 24, 28, 32, 36, 40
 };
 
 #endif

@@ -64,12 +64,12 @@ template <
 	std::pair<unsigned long, unsigned long> c(0, 0);
 	for (auto i(u.size()); i > 0; --i) {
 		c = detail::bignum_mul_step<Radix>(
-			w[i], c.second, u[i - 1], v
+			*(w.begin() + i), c.second, *(u.begin() + i - 1), v
 		);
-		w[i] = c.first;
+		*(w.begin() + i) = c.first;
 	}
 
-	w[0] = c.second;
+	*w.begin() = c.second;
 }
 
 template <
@@ -80,19 +80,21 @@ template <
 	std::fill(w.begin() + u.size(), w.end(), 0UL);
 
 	for (auto j(v.size()); j > 0; --j) {
-		if (!v[j - 1]) {
-			w[j - 1] = 0;
+		if (!*(v.begin() + j - 1)) {
+			*(w.begin() + j - 1) = 0;
 			continue;
 		}
 		std::pair<unsigned long, unsigned long> c(0, 0);
 		for (auto i(u.size()); i > 0; --i) {
 			c = detail::bignum_mul_step<Radix>(
-				w[i + j - 1], c.second, u[i - 1], v[j - 1]
+				*(w.begin() + i + j - 1),
+				c.second, *(u.begin() + i - 1),
+				*(v.begin() + j - 1)
 			);
-			w[i + j - 1] = c.first;
+			*(w.begin() + i + j - 1) = c.first;
 		}
 
-		w[j - 1] = c.second;
+		*(w.begin() + j - 1) = c.second;
 	}
 }
 
