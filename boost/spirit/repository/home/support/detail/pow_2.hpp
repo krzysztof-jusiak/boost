@@ -19,10 +19,7 @@ struct pow_2 {
 	static value_type const data[];
 	static selector_type const selector[];
 
-	static constexpr std::size_t size()
-	{
-		return (sizeof(selector) / sizeof(selector_type)) - 1;
-	}
+	static std::size_t const size;
 };
 
 #if defined(__LP64__)
@@ -64,6 +61,10 @@ pow_2<long, int, 1000000000000000000L>::selector[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 };
 
+template <>
+std::size_t const
+pow_2<long, int, 1000000000000000000L>::size = 10;
+
 #else
 
 template <>
@@ -98,6 +99,10 @@ pow_2<long, int, 1000000000L>::selector_type const
 pow_2<long, int, 1000000000L>::selector[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22
 };
+
+template <>
+std::size_t const
+pow_2<long, int, 1000000000000000000L>::size = 16;
 
 #endif
 

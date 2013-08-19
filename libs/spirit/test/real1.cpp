@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(real1_1)
 
 	BOOST_CHECK(test::parse_attr("1.23", double_, d));
 	BOOST_CHECK_EQUAL(d, 1.23);
-#if 0
+
 	BOOST_CHECK(test::parse_attr("1.23e+20", double_, d));
 	BOOST_CHECK_EQUAL(d, 1.23e+20);
 
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(real1_1)
 
 	BOOST_CHECK(test::parse_attr("1.23456789", double_, d));
 	BOOST_CHECK_EQUAL(d, 1.23456789);
-
+#if 0
 	BOOST_CHECK(test::parse_attr("1.23456589e+20", double_, d));
 	BOOST_CHECK_EQUAL(d, 1.23456589e+20);
 

@@ -82,7 +82,7 @@ struct static_table {
 
 	constexpr static size_type size()
 	{
-		return TableData::size();
+		return TableData::size;
 	}
 };
 
