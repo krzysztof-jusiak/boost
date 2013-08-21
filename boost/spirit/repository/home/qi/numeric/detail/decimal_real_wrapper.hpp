@@ -36,7 +36,7 @@ namespace detail {
 template <typename T>
 struct decimal_real_wrapper {
 	typedef decimal_real_wrapper<T> wrapper_type;
-	typedef std::deque<unsigned long> src_num_type;
+	typedef std::deque<long> src_num_type;
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
@@ -47,7 +47,7 @@ struct decimal_real_wrapper {
 	constexpr static int bigint_words
 	= (mantissa_bits + word_bits + 1) / word_bits;
 
-	typedef std::array<unsigned long, bigint_words> dst_num_type;
+	typedef std::array<long, bigint_words> dst_num_type;
 
 	/* Normalized mantissa value obtained by naive conversion is expected
 	 * to contain at least that many correct bits. This should be
@@ -67,7 +67,7 @@ struct decimal_real_wrapper {
 
 	src_num_type mantissa;
 	bool sign;
-	unsigned long back_scale;
+	long back_scale;
 	int int_scale;
 	int exponent;
 
@@ -154,8 +154,8 @@ private:
 	static void scale_down(src_num_type &m, int &d_exp, int &b_exp);
 	static void scale_up(src_num_type &m, int &d_exp, int &b_exp);
 
-	static void real_to_dst_num_type(
-		dst_num_type &high, dst_num_type &low, T val
+	static void src_to_dst_num_type(
+		dst_num_type &high, dst_num_type &low, src_num_type const &m
 	);
 	static void average(
 		dst_num_type &mid, dst_num_type const &high,
@@ -208,14 +208,8 @@ decimal_real_wrapper<T>::operator T() const
 	while (d_exp < 0 || m[0] < (src_num_radix / 2))
 		scale_up(m, d_exp, b_exp);
 
-	T val(0);
-	for (auto iter(m.crbegin()); iter != m.crend(); ++iter) {
-		val += *iter;
-		val /= T(src_num_radix);
-	}
-
 	dst_num_type low, mid, high;
-	real_to_dst_num_type(high, low, val);
+	src_to_dst_num_type(high, low, m);
 
 	int x(0);
 
@@ -248,7 +242,7 @@ decimal_real_wrapper<T>::operator T() const
 		normalize(mid);
 	}
 
-	val = 0;
+	T val(0);
 	for (auto v : mid) {
 		val = std::ldexp(val, word_bits);
 		val += v;
@@ -276,29 +270,24 @@ void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp
 	if (d >= int(pow_2m1_::size()))
 		d = pow_2m1_::size() - 1;
 
-	int b(pow_2m1_::template get_meta<int>(d));
+	b_exp += pow_2m1_::template get_meta<int>(d);
+	d_exp -= d;
 
 	{
 		auto v(pow_2m1_::get(d));
 
 		if (std::lexicographical_compare(
 			v.begin(), v.end(),
-			m.cbegin(), m.cend(),
-			std::less<src_num_type::value_type>()
+			m.cbegin(), m.cend()
 		))
-			--d;
+			++d_exp;
 	}
-
-	d_exp -= d;
-	b_exp += b;
 
 	auto v(rec_pow_2_::get(d));
 	src_num_type w(m.size() + v.size());
 
-	printf("xx1 %lx, %lx\n", m[0], v[0]);
 	bignum_mul<src_num_radix>(w, m, v);
 
-	printf("xx2 %ld, %lx\n", w.size(), w[0]);
 	while (!w.back())
 		w.pop_back();
 
@@ -350,25 +339,55 @@ void decimal_real_wrapper<T>::scale_up(
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::real_to_dst_num_type(
-	dst_num_type &high, dst_num_type &low, T val
+void decimal_real_wrapper<T>::src_to_dst_num_type(
+	dst_num_type &high, dst_num_type &low, src_num_type const &m
 )
 {
-	int exp, adj_exp(0);
-	T int_val;
+	long scale(1);
+	std::pair<T, T> val, int_val;
+	std::pair<int, int> exp, adj_exp(0, 0);
+
+	while (true) {
+		val.first = m[0] / scale;
+		val.first /= src_num_radix / scale;
+		if (T(1) != val.first)
+			break;
+		scale *= 10;
+	}
+
+	val.second = (m[0] / scale) + 1;
+	val.second /= src_num_radix / scale;
+
 	typename dst_num_type::size_type pos(0);
 
 	do {
-		val = std::frexp(val, &exp);
-		exp = std::min(word_bits, initial_true_bits - adj_exp);
-		val = std::ldexp(val, exp);
-		val = std::modf(val, &int_val);
-		low[pos] = std::lrint(int_val);
-		low[pos] <<= word_bits - exp;
-		high[pos] = low[pos] | ((1UL << (word_bits - exp)) - 1UL);
-		adj_exp += exp;
+		val.first = std::frexp(val.first, &exp.first);
+		val.second = std::frexp(val.second, &exp.second);
+
+		exp.first = std::min(
+			word_bits, initial_true_bits - adj_exp.first
+		);
+		exp.second = std::min(
+			word_bits, initial_true_bits - adj_exp.second
+		);
+
+		val.first = std::ldexp(val.first, exp.first);
+		val.second = std::ldexp(val.second, exp.second);
+
+		val.first = std::modf(val.first, &int_val.first);
+		val.second = std::modf(val.second, &int_val.second);
+
+		low[pos] = std::lrint(int_val.first);
+		low[pos] <<= word_bits - exp.first;
+
+		high[pos] = std::lrint(int_val.second);
+		high[pos] <<= word_bits - exp.second;
+		high[pos] |= ((1UL << (word_bits - exp.second)) - 1UL);
+
+		adj_exp.first += exp.first;
+		adj_exp.second += exp.second;
 		++pos;
-	} while ((adj_exp < initial_true_bits) && (pos < low.size()));
+	} while ((adj_exp.first < initial_true_bits) && (pos < low.size()));
 
 	while (pos < low.size()) {
 		low[pos] = 0;
