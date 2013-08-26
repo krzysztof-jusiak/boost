@@ -67,8 +67,8 @@ pow_2m1<long, int, 1000000000000000000L>::size = 10;
 #else
 
 template <>
-pow_2m1<long, int, 1000000000000000000L>::metadata_type const
-pow_2m1<long, int, 1000000000000000000L>::metadata[] = {
+pow_2m1<long, int, 1000000000L>::metadata_type const
+pow_2m1<long, int, 1000000000L>::metadata[] = {
 	1, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36, 39, 43, 46, 49
 };
 

@@ -102,7 +102,7 @@ pow_2<long, int, 1000000000L>::selector[] = {
 
 template <>
 std::size_t const
-pow_2<long, int, 1000000000000000000L>::size = 16;
+pow_2<long, int, 1000000000L>::size = 16;
 
 #endif
 
