@@ -60,9 +60,9 @@ struct decimal_real_wrapper {
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
 #ifdef __LP64__
-	constexpr static long src_num_radix = 1000000000000000000L;
+	constexpr static long src_num_radix = 100000000000000000L;
 #else
-	constexpr static long src_num_radix = 1000000000L;
+	constexpr static long src_num_radix = 100000000L;
 #endif
 
 	src_num_type mantissa;
@@ -179,7 +179,7 @@ template <>
 int const decimal_real_wrapper<double>::initial_true_bits = 32;
 
 template <>
-int const decimal_real_wrapper<long double>::initial_true_bits = 32;
+int const decimal_real_wrapper<long double>::initial_true_bits = 48;
 
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
@@ -238,7 +238,7 @@ decimal_real_wrapper<T>::operator T() const
 
 		++x;
 		if (x > 40)
-			exit(-1);
+			break;
 		printf("mid %lx\n", mid[0]);
 	};
 	printf("end %lx\n", mid[0]);
@@ -350,11 +350,14 @@ void decimal_real_wrapper<T>::src_to_dst_num_type(
 	dst_num_type &high, dst_num_type &low, src_num_type const &m
 )
 {
-	T val(m[0]), int_val;
+	T val(0), int_val;
 	int exp, adj_exp(0);
 	typename dst_num_type::size_type pos(0);
 
-	val /= src_num_radix;
+	for (auto iter(m.crbegin()); iter != m.crend(); ++iter) {
+		val += *iter;
+		val /= src_num_radix;
+	}
 
 	if (val == T(1)) {
 		do {
@@ -409,9 +412,9 @@ void decimal_real_wrapper<T>::average(
 	for (; pos < mid.size(); ++pos) {
 		mid[pos] = high[pos] + low[pos];
 		if (c)
-			mid[pos] += 1UL << word_bits;
+			mid[pos] += 1L << word_bits;
 
-		c = mid[pos] & 1UL;
+		c = mid[pos] & 1L;
 		mid[pos] >>= 1;
 	}
 
@@ -419,7 +422,7 @@ void decimal_real_wrapper<T>::average(
 	for (--pos; pos; --pos) {
 		mid[pos] += c;
 		c = mid[pos] >> word_bits;
-		mid[pos] &= (1UL << word_bits) - 1UL;
+		mid[pos] &= (1L << word_bits) - 1L;
 	}
 	mid[0] += c;
 }
