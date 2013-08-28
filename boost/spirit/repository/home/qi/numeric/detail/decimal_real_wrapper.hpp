@@ -157,6 +157,9 @@ private:
 	static void src_to_dst_num_type(
 		dst_num_type &high, dst_num_type &low, src_num_type const &m
 	);
+	static void src_to_dst_num_type(
+		dst_num_type &dst, src_num_type const &src, T error
+	);
 	static void average(
 		dst_num_type &mid, dst_num_type const &high,
 		dst_num_type const &low
@@ -173,13 +176,37 @@ template <typename T>
 constexpr int decimal_real_wrapper<T>::word_bits;
 
 template <>
-int const decimal_real_wrapper<float>::initial_true_bits = 16;
+int const decimal_real_wrapper<float>::initial_true_bits = 12;
 
 template <>
-int const decimal_real_wrapper<double>::initial_true_bits = 32;
+int const decimal_real_wrapper<double>::initial_true_bits = 28;
 
 template <>
-int const decimal_real_wrapper<long double>::initial_true_bits = 48;
+int const decimal_real_wrapper<long double>::initial_true_bits = 44;
+
+template <typename T>
+void print(typename decimal_real_wrapper<T>::src_num_type const &m)
+{
+	bool delim(false);
+	for (auto v : m) {
+		if (delim)
+			printf("_");;
+		delim = true;
+		printf("%08ld", v);
+	}
+}
+
+template <typename T>
+void print(typename decimal_real_wrapper<T>::dst_num_type const &m)
+{
+	bool delim(false);
+	for (auto v : m) {
+		if (delim)
+			printf("_");;
+		delim = true;
+		printf("%07lx", v);
+	}
+}
 
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
@@ -209,13 +236,33 @@ decimal_real_wrapper<T>::operator T() const
 		scale_up(m, d_exp, b_exp);
 
 	dst_num_type low, mid, high;
-	src_to_dst_num_type(high, low, m);
+	src_to_dst_num_type(mid, m, T(0));
+	//src_to_dst_num_type(high, low, m);
 
 	int x(0);
-	printf("start wb %d, low %lx, high %lx\n", word_bits, low[0], high[0]);
+	printf("start "); print<T>(mid); printf("\n");
+
+	auto c(target_cmp(mid, m));
+	if (c > 0) {
+		std::copy(mid.begin(), mid.end(), low.begin());
+		src_to_dst_num_type(high, m, T(1e-7));
+	} else if (c < 0) {
+		std::copy(mid.begin(), mid.end(), high.begin());
+		src_to_dst_num_type(low, m, T(-1e-7));
+	} else {
+		auto tail(mid.back() & (sig_bit_mask - 1UL));
+		if (
+			tail == (sig_bit_mask >> 1)
+			&& !(mid.back() & sig_bit_mask)
+		)
+			mid.back() -= tail;
+
+		goto skip;
+	}
+
 	while (true) {
 		average(mid, high, low);
-		auto c(target_cmp(mid, m));
+		c = target_cmp(mid, m);
 
 		if (c > 0) {
 			printf("1\n");
@@ -237,11 +284,12 @@ decimal_real_wrapper<T>::operator T() const
 		}
 
 		++x;
-		if (x > 40)
+		if (x > 50)
 			break;
-		printf("mid %lx\n", mid[0]);
+		printf("mid "); print<T>(mid); printf("\n");
 	};
-	printf("end %lx\n", mid[0]);
+	skip:
+	printf("end "); print<T>(mid); printf("\n");
 	auto tail(mid.back() & (sig_bit_mask - 1UL));
 	mid.back() -= tail;
 	if (tail >= (sig_bit_mask >> 1)) {
@@ -262,7 +310,9 @@ decimal_real_wrapper<T>::operator T() const
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::scale_down(src_num_type &m, int &d_exp, int &b_exp)
+void decimal_real_wrapper<T>::scale_down(
+	src_num_type &m, int &d_exp, int &b_exp
+)
 {
 	typedef static_table<repository::detail::rec_pow_2<
 		long, int, decimal_real_wrapper<T>::src_num_radix
@@ -347,6 +397,34 @@ void decimal_real_wrapper<T>::scale_up(
 
 template <typename T>
 void decimal_real_wrapper<T>::src_to_dst_num_type(
+	dst_num_type &dst, src_num_type const &src, T error
+)
+{
+	T val(0), int_val;
+	int exp, adj_exp(0);
+	typename dst_num_type::size_type pos(0);
+
+	for (auto iter(src.crbegin()); iter != src.crend(); ++iter) {
+		val += *iter;
+		val /= src_num_radix;
+	}
+
+	printf("init %.30f, %.30f\n", val, 1.23/2);
+	val += error;
+
+	if (val < T(1))
+		for (auto &v : dst) {
+			val = std::frexp(val, &exp);
+			val = std::ldexp(val, word_bits);
+			val = std::modf(val, &int_val);
+			v = std::lrint(int_val);
+		}
+	else
+		std::fill(dst.begin(), dst.end(), (1L << word_bits) - 1L);
+}
+
+template <typename T>
+void decimal_real_wrapper<T>::src_to_dst_num_type(
 	dst_num_type &high, dst_num_type &low, src_num_type const &m
 )
 {
@@ -358,7 +436,7 @@ void decimal_real_wrapper<T>::src_to_dst_num_type(
 		val += *iter;
 		val /= src_num_radix;
 	}
-
+	printf("init %.30f, %.30f\n", val, 1.23/2);
 	if (val == T(1)) {
 		do {
 			exp = std::min(word_bits, initial_true_bits - adj_exp);
@@ -483,13 +561,14 @@ int decimal_real_wrapper<T>::target_cmp(
 	src_num_type dst_val_in(val.begin(), val.end());
 	src_num_type dst_val_out(val.size() + 1);
 
-	printf("Comparing: \n");
+	printf("Comparing: src "); print<T>(m); printf(" dst "); print<T>(val); printf("\n");
 	do {
+		printf("  next "); print<T>(dst_val_in); printf("\n");
 		bignum_mul_s<(1L << word_bits)>(
 			dst_val_out, dst_val_in, src_num_radix
 		);
 
-		printf("  src %lx dst %lx pos %zd\n", m[src_pos], dst_val_out[0], src_pos);
+		printf("  out %ld pos %zd\n", dst_val_out[0], src_pos);
 		if (m[src_pos] > dst_val_out[0])
 			return 1;
 		else if (m[src_pos] < dst_val_out[0])
@@ -499,13 +578,14 @@ int decimal_real_wrapper<T>::target_cmp(
 		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
 	} while (src_pos < m.size());
 
-	printf("   also:\n");
+	printf("    also:\n");
 	while (true) {
+		printf("      next "); print<T>(dst_val_in); printf("\n");
 		bignum_mul_s<(1L << word_bits)>(
 			dst_val_out, dst_val_in, src_num_radix
 		);
 
-		printf("    dst %lx\n", dst_val_out[0]);
+		printf("    dst %ld\n", dst_val_out[0]);
 		if (dst_val_out[0] > 0)
 			return -1;
 		else if (std::all_of(
