@@ -169,7 +169,10 @@ private:
 	);
 	static void normalize(src_num_type &val);
 	static void normalize(dst_num_type &val);
-	static int target_cmp(dst_num_type val, src_num_type m);
+	static int target_cmp(
+		src_num_type &delta, dst_num_type const &val,
+		src_num_type const &m
+	);
 };
 
 template <typename T>
@@ -236,13 +239,14 @@ decimal_real_wrapper<T>::operator T() const
 		scale_up(m, d_exp, b_exp);
 
 	dst_num_type low, mid, high;
+	src_num_type dx;
 	src_to_dst_num_type(mid, m, T(0));
 	//src_to_dst_num_type(high, low, m);
 
 	int x(0);
 	printf("start "); print<T>(mid); printf("\n");
 
-	auto c(target_cmp(mid, m));
+	auto c(target_cmp(dx, mid, m));
 	if (c > 0) {
 		std::copy(mid.begin(), mid.end(), low.begin());
 		src_to_dst_num_type(high, m, T(1e-7));
@@ -262,17 +266,17 @@ decimal_real_wrapper<T>::operator T() const
 
 	while (true) {
 		average(mid, high, low);
-		c = target_cmp(mid, m);
+		c = target_cmp(dx, mid, m);
 
 		if (c > 0) {
 			printf("1\n");
 			if (assign_cmp(low, mid))
 				break;
 		} else if (c < 0) {
-			printf("2\n");
+			printf("-1\n");
 			assign_cmp(high, mid);
 		} else {
-			printf("3\n");
+			printf("0\n");
 			auto tail(mid.back() & (sig_bit_mask - 1UL));
 			if (
 				tail == (sig_bit_mask >> 1)
@@ -554,12 +558,13 @@ void decimal_real_wrapper<T>::normalize(dst_num_type &val)
 
 template <typename T>
 int decimal_real_wrapper<T>::target_cmp(
-	dst_num_type val, src_num_type m
+	src_num_type &delta, dst_num_type const &val, src_num_type const &m
 )
 {
 	typename src_num_type::size_type src_pos(0);
 	src_num_type dst_val_in(val.begin(), val.end());
 	src_num_type dst_val_out(val.size() + 1);
+	delta.clear();
 
 	printf("Comparing: src "); print<T>(m); printf(" dst "); print<T>(val); printf("\n");
 	do {
@@ -569,11 +574,15 @@ int decimal_real_wrapper<T>::target_cmp(
 		);
 
 		printf("  out %ld pos %zd\n", dst_val_out[0], src_pos);
-		if (m[src_pos] > dst_val_out[0])
+		delta.push_back(m[src_pos] - dst_val_out[0]);
+		if (delta.back())
+			goto out;
+/*
+		if (delta.back() > 0)
 			return 1;
-		else if (m[src_pos] < dst_val_out[0])
+		else if (delta.back() < 0)
 			return -1;
-
+*/
 		++src_pos;
 		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
 	} while (src_pos < m.size());
@@ -586,16 +595,46 @@ int decimal_real_wrapper<T>::target_cmp(
 		);
 
 		printf("    dst %ld\n", dst_val_out[0]);
-		if (dst_val_out[0] > 0)
-			return -1;
-		else if (std::all_of(
+		if (dst_val_out[0] > 0) {
+			delta.push_back(-dst_val_out[0]);
+			goto out;
+		} else if (std::all_of(
 			dst_val_out.begin(), dst_val_out.end(), [](
 				typename src_num_type::value_type v_
-			) { return v_ == 0; }
+			) -> bool { return !v_; }
 		))
 			return 0;
 
 		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
+	}
+out:
+	typename src_num_type::value_type c(0);
+
+	for (auto iter(delta.rbegin()); iter != delta.rend(); ++iter) {
+		*iter -= c;
+		c = 0;
+		if (*iter < 0) {
+			*iter = src_num_radix + *iter;
+			c = 1;
+		}
+	}
+
+	printf("  delta: ");
+	if (c) {
+		c = 0;
+		--(*delta.rbegin());
+		for (auto iter(delta.rbegin()); iter != delta.rend(); ++iter) {
+			*iter = src_num_radix - *iter + c - 1;
+			if (*iter > src_num_radix) {
+				*iter -= src_num_radix;
+				c = 1;
+			}
+		}
+		print<T>(delta); printf("\n");
+		return -1;
+	} else {
+		print<T>(delta); printf("\n");
+		return 1;
 	}
 }
 

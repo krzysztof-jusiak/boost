@@ -16,7 +16,7 @@
 #include "test.hpp"
 
 namespace boost { namespace spirit { namespace repository { namespace qi {
-#if 0
+
 BOOST_AUTO_TEST_CASE(real1_0)
 {
 	float d;
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(real1_0)
 	BOOST_CHECK(test::parse_attr("1e23", float_, d));
 	BOOST_CHECK_EQUAL(d, 1e23F);
 }
-#endif
+
 BOOST_AUTO_TEST_CASE(real1_1)
 {
 	double d;
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(real1_2)
 
 	BOOST_CHECK(test::parse_attr("1.23e+20", long_double, d));
 	BOOST_CHECK_EQUAL(d, 1.23e+20L);
-#if 0
+
 	BOOST_CHECK(test::parse_attr("1.23e-20", long_double, d));
 	BOOST_CHECK_EQUAL(d, 1.23e-20L);
 
@@ -228,13 +228,13 @@ BOOST_AUTO_TEST_CASE(real1_2)
 
 	BOOST_CHECK(test::parse_attr("9.025971879324147880346310405868e-277", long_double, d));
 	BOOST_CHECK_EQUAL(d, 9.025971879324147880346310405868e-277L);
-
+#if 0
 	BOOST_CHECK(test::parse_attr("2.2250738585072014e-308", long_double, d));
 	BOOST_CHECK_EQUAL(d, 2.2250738585072014e-308L);
-
+#endif
 	BOOST_CHECK(test::parse_attr("2.2250738585072013e-308", long_double, d));
 	BOOST_CHECK_EQUAL(d, 2.2250738585072013e-308L);
-#endif
+
 }
 
 }}}}
