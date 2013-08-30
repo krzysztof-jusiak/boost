@@ -49,12 +49,6 @@ struct decimal_real_wrapper {
 
 	typedef std::array<long, bigint_words> dst_num_type;
 
-	/* Normalized mantissa value obtained by naive conversion is expected
-	 * to contain at least that many correct bits. This should be
-	 * calculatable somehow.
-	 */
-	static int const initial_true_bits;
-
 	/* Least significant value bit in the bigint expansion. */
 	constexpr static unsigned long sig_bit_mask
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
@@ -173,19 +167,13 @@ private:
 		src_num_type &delta, dst_num_type const &val,
 		src_num_type const &m
 	);
+	static int target_cmp(
+		dst_num_type const &val, src_num_type const &m
+	);
 };
 
 template <typename T>
 constexpr int decimal_real_wrapper<T>::word_bits;
-
-template <>
-int const decimal_real_wrapper<float>::initial_true_bits = 12;
-
-template <>
-int const decimal_real_wrapper<double>::initial_true_bits = 28;
-
-template <>
-int const decimal_real_wrapper<long double>::initial_true_bits = 44;
 
 template <typename T>
 void print(typename decimal_real_wrapper<T>::src_num_type const &m)
@@ -240,20 +228,25 @@ decimal_real_wrapper<T>::operator T() const
 
 	dst_num_type low, mid, high;
 	src_num_type dx;
-	src_to_dst_num_type(mid, m, T(0));
-	//src_to_dst_num_type(high, low, m);
-
-	int x(0);
-	printf("start "); print<T>(mid); printf("\n");
-
+	T err(0);
+	src_to_dst_num_type(mid, m, err);
 	auto c(target_cmp(dx, mid, m));
+
+	if (c)
+		for (auto iter(dx.crbegin()); iter != dx.crend(); ++iter) {
+			err += *iter;
+			err /= src_num_radix;
+		}
+
 	if (c > 0) {
-		std::copy(mid.begin(), mid.end(), low.begin());
-		src_to_dst_num_type(high, m, T(1e-7));
+		std::copy(mid.cbegin(), mid.cend(), low.begin());
+		src_to_dst_num_type(high, m, err);
 	} else if (c < 0) {
-		std::copy(mid.begin(), mid.end(), high.begin());
-		src_to_dst_num_type(low, m, T(-1e-7));
-	} else {
+		std::copy(mid.cbegin(), mid.cend(), high.begin());
+		src_to_dst_num_type(low, m, -err);
+	}
+	
+	if (!c || std::equal(low.cbegin(), low.cend(), high.cbegin())) {
 		auto tail(mid.back() & (sig_bit_mask - 1UL));
 		if (
 			tail == (sig_bit_mask >> 1)
@@ -261,22 +254,19 @@ decimal_real_wrapper<T>::operator T() const
 		)
 			mid.back() -= tail;
 
-		goto skip;
+		goto skip_search;
 	}
 
 	while (true) {
 		average(mid, high, low);
-		c = target_cmp(dx, mid, m);
+		c = target_cmp(mid, m);
 
 		if (c > 0) {
-			printf("1\n");
 			if (assign_cmp(low, mid))
 				break;
-		} else if (c < 0) {
-			printf("-1\n");
+		} else if (c < 0)
 			assign_cmp(high, mid);
-		} else {
-			printf("0\n");
+		else {
 			auto tail(mid.back() & (sig_bit_mask - 1UL));
 			if (
 				tail == (sig_bit_mask >> 1)
@@ -286,14 +276,8 @@ decimal_real_wrapper<T>::operator T() const
 
 			break;
 		}
-
-		++x;
-		if (x > 50)
-			break;
-		printf("mid "); print<T>(mid); printf("\n");
 	};
-	skip:
-	printf("end "); print<T>(mid); printf("\n");
+skip_search:
 	auto tail(mid.back() & (sig_bit_mask - 1UL));
 	mid.back() -= tail;
 	if (tail >= (sig_bit_mask >> 1)) {
@@ -405,15 +389,13 @@ void decimal_real_wrapper<T>::src_to_dst_num_type(
 )
 {
 	T val(0), int_val;
-	int exp, adj_exp(0);
-	typename dst_num_type::size_type pos(0);
+	int exp;
 
 	for (auto iter(src.crbegin()); iter != src.crend(); ++iter) {
 		val += *iter;
 		val /= src_num_radix;
 	}
 
-	printf("init %.30f, %.30f\n", val, 1.23/2);
 	val += error;
 
 	if (val < T(1))
@@ -425,61 +407,6 @@ void decimal_real_wrapper<T>::src_to_dst_num_type(
 		}
 	else
 		std::fill(dst.begin(), dst.end(), (1L << word_bits) - 1L);
-}
-
-template <typename T>
-void decimal_real_wrapper<T>::src_to_dst_num_type(
-	dst_num_type &high, dst_num_type &low, src_num_type const &m
-)
-{
-	T val(0), int_val;
-	int exp, adj_exp(0);
-	typename dst_num_type::size_type pos(0);
-
-	for (auto iter(m.crbegin()); iter != m.crend(); ++iter) {
-		val += *iter;
-		val /= src_num_radix;
-	}
-	printf("init %.30f, %.30f\n", val, 1.23/2);
-	if (val == T(1)) {
-		do {
-			exp = std::min(word_bits, initial_true_bits - adj_exp);
-			low[pos] = (1L << exp) - 1L;
-			low[pos] <<= word_bits - exp;
-			high[pos] = (1L << word_bits) - 1L;
-			adj_exp += exp;
-			++pos;
-		} while ((adj_exp < initial_true_bits) && (pos < low.size()));
-		while (pos < low.size()) {
-			low[pos] = 0;
-			high[pos++] = (1UL << word_bits) - 1UL;
-		}
-		return;
-	}
-
-	do {
-		val = std::frexp(val, &exp);
-		exp = std::min(
-			word_bits, initial_true_bits - adj_exp
-		);
-		val = std::ldexp(val, exp);
-		val = std::modf(val, &int_val);
-
-		low[pos] = std::lrint(int_val);
-		high[pos] = low[pos];
-		low[pos] <<= word_bits - exp;
-
-		high[pos] <<= word_bits - exp;
-		high[pos] |= ((1L << (word_bits - exp)) - 1L);
-
-		adj_exp += exp;
-		++pos;
-	} while ((adj_exp < initial_true_bits) && (pos < low.size()));
-
-	while (pos < low.size()) {
-		low[pos] = 0;
-		high[pos++] = (1UL << word_bits) - 1UL;
-	}
 }
 
 template <typename T>
@@ -566,35 +493,24 @@ int decimal_real_wrapper<T>::target_cmp(
 	src_num_type dst_val_out(val.size() + 1);
 	delta.clear();
 
-	printf("Comparing: src "); print<T>(m); printf(" dst "); print<T>(val); printf("\n");
 	do {
-		printf("  next "); print<T>(dst_val_in); printf("\n");
 		bignum_mul_s<(1L << word_bits)>(
 			dst_val_out, dst_val_in, src_num_radix
 		);
 
-		printf("  out %ld pos %zd\n", dst_val_out[0], src_pos);
 		delta.push_back(m[src_pos] - dst_val_out[0]);
 		if (delta.back())
 			goto out;
-/*
-		if (delta.back() > 0)
-			return 1;
-		else if (delta.back() < 0)
-			return -1;
-*/
+
 		++src_pos;
 		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
 	} while (src_pos < m.size());
 
-	printf("    also:\n");
 	while (true) {
-		printf("      next "); print<T>(dst_val_in); printf("\n");
 		bignum_mul_s<(1L << word_bits)>(
 			dst_val_out, dst_val_in, src_num_radix
 		);
 
-		printf("    dst %ld\n", dst_val_out[0]);
 		if (dst_val_out[0] > 0) {
 			delta.push_back(-dst_val_out[0]);
 			goto out;
@@ -604,6 +520,8 @@ int decimal_real_wrapper<T>::target_cmp(
 			) -> bool { return !v_; }
 		))
 			return 0;
+		else
+			delta.push_back(0);
 
 		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
 	}
@@ -619,22 +537,69 @@ out:
 		}
 	}
 
-	printf("  delta: ");
 	if (c) {
 		c = 0;
-		--(*delta.rbegin());
-		for (auto iter(delta.rbegin()); iter != delta.rend(); ++iter) {
-			*iter = src_num_radix - *iter + c - 1;
+
+		if (!*delta.rbegin())
+			c = 1;
+		else
+			*delta.rbegin() = src_num_radix - *delta.rbegin();
+
+		for (
+			auto iter(delta.rbegin() + 1);
+			iter != delta.rend();
+			++iter
+		) {
+			*iter = src_num_radix - *iter - 1 + c;
 			if (*iter > src_num_radix) {
 				*iter -= src_num_radix;
 				c = 1;
-			}
+			} else
+				c = 0;
 		}
-		print<T>(delta); printf("\n");
 		return -1;
-	} else {
-		print<T>(delta); printf("\n");
+	} else
 		return 1;
+}
+
+template <typename T>
+int decimal_real_wrapper<T>::target_cmp(
+	dst_num_type const &val, src_num_type const &m
+)
+{
+	typename src_num_type::size_type src_pos(0);
+	src_num_type dst_val_in(val.begin(), val.end());
+	src_num_type dst_val_out(val.size() + 1);
+
+	do {
+		bignum_mul_s<(1L << word_bits)>(
+			dst_val_out, dst_val_in, src_num_radix
+		);
+
+		if (m[src_pos] > dst_val_out[0])
+			return 1;
+		else if (m[src_pos] < dst_val_out[0])
+			return -1;
+
+		++src_pos;
+		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
+	} while (src_pos < m.size());
+
+	while (true) {
+		bignum_mul_s<(1L << word_bits)>(
+			dst_val_out, dst_val_in, src_num_radix
+		);
+
+		if (dst_val_out[0] > 0) {
+			return -1;
+		} else if (std::all_of(
+			dst_val_out.begin(), dst_val_out.end(), [](
+				typename src_num_type::value_type v_
+			) -> bool { return !v_; }
+		))
+			return 0;
+
+		dst_val_in.assign(dst_val_out.begin() + 1, dst_val_out.end());
 	}
 }
 

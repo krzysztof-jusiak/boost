@@ -55,30 +55,24 @@ void test_arg(T arg, char const *arg_ref)
 
 int main(int argc, char **argv)
 {
-	//TESTARG(float, 1.23f);
-	TESTARG(double, 1.23);
-	//TESTARG(long double, 1.23L);
-
-//#define NOT_WORKING 1
-#ifdef NOT_WORKING
 	TESTARG(double, 9.0259718793241475e-277);
+
 	TESTARG(double, .8174817660e43);
 	TESTARG(double, 4.77363413e42);
 	TESTARG(double, 220e58);
 
-	TESTARG(float, 1.23);
+	TESTARG(float, 1.23f);
 	TESTARG(double, 1.23);
-	TESTARG(long double, 1.23);
+	TESTARG(long double, 1.23L);
 
-	TESTARG(float, 1.23e+20);
+	TESTARG(float, 1.23e+20f);
 	TESTARG(double, 1.23e+20);
-	TESTARG(long double, 1.23e+20);
+	TESTARG(long double, 1.23e+20L);
 
-	TESTARG(float, 1.23e-20);
+	TESTARG(float, 1.23e-20f);
 	TESTARG(double, 1.23e-20);
-	TESTARG(long double, 1.23e-20);
+	TESTARG(long double, 1.23e-20L);
 
 	TESTARG(double, 1e23);
-#endif
 	return 0;
 }
