@@ -56,20 +56,21 @@ template <
 	typename InputRangeU::value_type v
 )
 {
-	std::fill(w.begin() + u.size(), w.end(), 0UL);
-
+	std::fill(w.begin(), w.end(), 0);
 	if (!v)
 		return;
 
 	std::pair<unsigned long, unsigned long> c(0, 0);
-	for (auto i(u.size()); i > 0; --i) {
-		c = detail::bignum_mul_step<Radix>(
-			*(w.begin() + i), c.second, *(u.begin() + i - 1), v
-		);
-		*(w.begin() + i) = c.first;
-	}
+	auto w_iter(w.begin());
 
-	*w.begin() = c.second;
+	for (auto up : u) {
+		c = detail::bignum_mul_step<Radix>(
+			*w_iter, c.second, up, v
+		);
+		*w_iter = c.first;
+		++w_iter;
+	}
+	*w_iter = c.second;
 }
 
 template <
@@ -77,24 +78,28 @@ template <
 	typename InputRangeV
 > void bignum_mul(OutputRange &w, InputRangeU const &u, InputRangeV const &v)
 {
-	std::fill(w.begin() + u.size(), w.end(), 0UL);
+	std::fill_n(w.begin(), v.size(), 0);
 
-	for (auto j(v.size()); j > 0; --j) {
-		if (!*(v.begin() + j - 1)) {
-			*(w.begin() + j - 1) = 0;
+	auto w_iter_v(w.begin()), w_iter_u(w.begin());
+
+	for (auto vp : v) {
+		if (!v) {
+			*w_iter_v = 0;
+			++w_iter_v;
 			continue;
 		}
-		std::pair<unsigned long, unsigned long> c(0, 0);
-		for (auto i(u.size()); i > 0; --i) {
-			c = detail::bignum_mul_step<Radix>(
-				*(w.begin() + i + j - 1),
-				c.second, *(u.begin() + i - 1),
-				*(v.begin() + j - 1)
-			);
-			*(w.begin() + i + j - 1) = c.first;
-		}
 
-		*(w.begin() + j - 1) = c.second;
+		w_iter_u = w_iter_v;
+		std::pair<unsigned long, unsigned long> c(0, 0);
+		for (auto up : u) {
+			c = detail::bignum_mul_step<Radix>(
+				*w_iter_u, c.second, up, vp
+			);
+			*w_iter_u = c.first;
+			++w_iter_u;
+		}
+		*w_iter_u = c.second;
+		++w_iter_v;
 	}
 }
 

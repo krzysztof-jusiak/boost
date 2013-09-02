@@ -37,6 +37,11 @@ struct static_table {
 			++ptr;
 		}
 
+		void decrement()
+		{
+			--ptr;
+		}
+
 		bool equal(const_iterator const &other) const
 		{
 			return ptr == other.ptr;

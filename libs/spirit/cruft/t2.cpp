@@ -55,6 +55,10 @@ void test_arg(T arg, char const *arg_ref)
 
 int main(int argc, char **argv)
 {
+#if 0
+	TESTARG(double, 0.0);
+	TESTARG(double, -0.0);
+
 	TESTARG(double, 9.0259718793241475e-277);
 
 	TESTARG(double, .8174817660e43);
@@ -72,7 +76,7 @@ int main(int argc, char **argv)
 	TESTARG(float, 1.23e-20f);
 	TESTARG(double, 1.23e-20);
 	TESTARG(long double, 1.23e-20L);
-
+#endif
 	TESTARG(double, 1e23);
 	return 0;
 }
