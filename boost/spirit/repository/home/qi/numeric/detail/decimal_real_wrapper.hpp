@@ -146,8 +146,14 @@ struct decimal_real_wrapper {
 	operator T() const;
 
 private:
-	static void scale_down(src_num_type &m, int &d_exp, int &b_exp);
-	static void scale_up(src_num_type &m, int &d_exp, int &b_exp);
+	static void scale_down(
+		src_num_type &m_out, src_num_type const &m,
+		int &d_exp, int &b_exp
+	);
+	static void scale_up(
+		src_num_type &m_out, src_num_type const &m,
+		int &d_exp, int &b_exp
+	);
 
 	static void src_to_dst_num_type(
 		dst_num_type &high, dst_num_type &low, src_num_type const &m
@@ -203,19 +209,23 @@ void print(typename decimal_real_wrapper<T>::dst_num_type const &m)
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
-	src_num_type m;
+	src_num_type mx, my;
+	mx.reserve(8);
+	my.reserve(8);
+
 	for (auto iter(mantissa.crbegin()); iter != mantissa.crend(); ++iter) {
 		if (*iter) {
-			m.resize(iter.base() - mantissa.cbegin());
+			mx.resize(iter.base() - mantissa.cbegin());
 			std::reverse_copy(
-				mantissa.cbegin(), mantissa.cbegin() + m.size(),
-				m.begin()
+				mantissa.cbegin(),
+				mantissa.cbegin() + mx.size(),
+				mx.begin()
 			);
 			break;
 		}
 	}
 
-	if (m.empty()) {
+	if (mx.empty()) {
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	}
 
@@ -225,17 +235,21 @@ decimal_real_wrapper<T>::operator T() const
 
 	int b_exp(0);
 
-	while (d_exp > 0)
-		scale_down(m, d_exp, b_exp);
+	while (d_exp > 0) {
+		scale_down(my, mx, d_exp, b_exp);
+		mx.swap(my);
+	}
 
-	while (d_exp < 0 || m.back() < (src_num_radix / 2))
-		scale_up(m, d_exp, b_exp);
+	while (d_exp < 0 || mx.back() < (src_num_radix / 2)) {
+		scale_up(my, mx, d_exp, b_exp);
+		mx.swap(my);
+	}
 
 	dst_num_type low, mid, high;
 	src_num_type dx;
 	T err(0);
-	src_to_dst_num_type(mid, m, err);
-	auto c(target_cmp(dx, mid, m));
+	src_to_dst_num_type(mid, mx, err);
+	auto c(target_cmp(dx, mid, mx));
 
 	if (c)
 		for (auto d : dx) {
@@ -245,10 +259,10 @@ decimal_real_wrapper<T>::operator T() const
 
 	if (c > 0) {
 		std::copy(mid.cbegin(), mid.cend(), low.begin());
-		src_to_dst_num_type(high, m, err);
+		src_to_dst_num_type(high, mx, err);
 	} else if (c < 0) {
 		std::copy(mid.cbegin(), mid.cend(), high.begin());
-		src_to_dst_num_type(low, m, -err);
+		src_to_dst_num_type(low, mx, -err);
 	}
 	
 	if (!c || std::equal(low.cbegin(), low.cend(), high.cbegin())) {
@@ -264,7 +278,7 @@ decimal_real_wrapper<T>::operator T() const
 
 	while (true) {
 		average(mid, high, low);
-		c = target_cmp(mid, m);
+		c = target_cmp(mid, mx);
 
 		if (c > 0) {
 			if (assign_cmp(low, mid))
@@ -304,7 +318,7 @@ skip_search:
 
 template <typename T>
 void decimal_real_wrapper<T>::scale_down(
-	src_num_type &m, int &d_exp, int &b_exp
+	src_num_type &m_out, src_num_type const &m, int &d_exp, int &b_exp
 )
 {
 	typedef static_table<repository::detail::rec_pow_2<
@@ -334,20 +348,16 @@ void decimal_real_wrapper<T>::scale_down(
 	}
 
 	auto v(rec_pow_2_::get(d));
-	src_num_type w(m.size() + v.size());
+	m_out.resize(m.size() + v.size());
 
-	bignum_mul<src_num_radix>(w, m, v);
+	bignum_mul<src_num_radix>(m_out, m, v);
 
-	while (!w.back())
-		w.pop_back();
-
-	normalize(w);
-	m.swap(w);
+	normalize(m_out);
 }
 
 template <typename T>
 void decimal_real_wrapper<T>::scale_up(
-	src_num_type &m, int &d_exp, int &b_exp
+	src_num_type &m_out, src_num_type const &m, int &d_exp, int &b_exp
 )
 {
 	typedef static_table<repository::detail::rec_pow_2<
@@ -377,15 +387,11 @@ void decimal_real_wrapper<T>::scale_up(
 	b_exp -= b;
 	d_exp += d;
 
-	src_num_type w(m.size() + v.size());
+	m_out.resize(m.size() + v.size());
 
-	bignum_mul<src_num_radix>(w, m, v);
+	bignum_mul<src_num_radix>(m_out, m, v);
 
-	while (!w.back())
-		w.pop_back();
-
-	normalize(w);
-	m.swap(w);
+	normalize(m_out);
 }
 
 template <typename T>

@@ -67,6 +67,7 @@ int main(int argc, char **argv)
 
 	TESTARG(float, 1.23f);
 	TESTARG(double, 1.23);
+#endif
 	TESTARG(long double, 1.23L);
 
 	TESTARG(float, 1.23e+20f);
@@ -76,7 +77,6 @@ int main(int argc, char **argv)
 	TESTARG(float, 1.23e-20f);
 	TESTARG(double, 1.23e-20);
 	TESTARG(long double, 1.23e-20L);
-#endif
 	TESTARG(double, 1e23);
 	return 0;
 }

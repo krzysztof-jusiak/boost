@@ -15,37 +15,22 @@
 namespace boost { namespace spirit { namespace repository {
 namespace detail {
 
+template <long Radix>
+std::pair<unsigned long, unsigned long> bignum_mul_step(
+	unsigned long w, unsigned long k, unsigned long u, unsigned long v
+)
+{
 #if defined(__LP64__)
-
-template <long Radix>
-std::pair<unsigned long, unsigned long> bignum_mul_step(
-	unsigned long w, unsigned long k, unsigned long u, unsigned long v
-)
-{
 	unsigned __int128 r(u);
-	r *= v;
-	r += w;
-	r += k;
-
-	return std::make_pair(r % Radix, r / Radix);
-}
-
 #else
-
-template <long Radix>
-std::pair<unsigned long, unsigned long> bignum_mul_step(
-	unsigned long w, unsigned long k, unsigned long u, unsigned long v
-)
-{
 	unsigned long long r(u);
+#endif
 	r *= v;
 	r += w;
 	r += k;
 
 	return std::make_pair(r % Radix, r / Radix);
 }
-
-#endif
 
 }
 
@@ -78,7 +63,7 @@ template <
 	typename InputRangeV
 > void bignum_mul(OutputRange &w, InputRangeU const &u, InputRangeV const &v)
 {
-	std::fill_n(w.begin(), v.size(), 0);
+	std::fill(w.begin(), w.end() - v.size(), 0);
 
 	auto w_iter_v(w.begin()), w_iter_u(w.begin());
 

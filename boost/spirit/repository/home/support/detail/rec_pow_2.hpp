@@ -91,7 +91,7 @@ rec_pow_2<long, int, 100000000L>::data[] = {
 template <>
 rec_pow_2<long, int, 100000000L>::selector_type const
 rec_pow_2<long, int, 100000000L>::selector[] = {
-	0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 19, 21, 25, 29, 33, 38
+	0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 19, 22, 26, 30, 34, 39
 };
 
 template <>

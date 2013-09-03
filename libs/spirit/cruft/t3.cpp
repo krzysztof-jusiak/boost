@@ -16,10 +16,13 @@ int main(int argc, char **argv)
 	constexpr long radix = 100000000L;
 #endif
 
-	std::vector<long> u({100 * (radix / 1000)});
+	//std::vector<long> u({100 * (radix / 1000)});
+	std::vector<long> u({
+		0L, 0L, 1562500L, 83404541L, 70211815L, 23125782L, 55511151L
+	});
 	typedef static_table<detail::rec_pow_2<long, int, radix>> r_tbl;
 
-	auto r(r_tbl::get(9));
+	auto r(r_tbl::get(7));
 	printf("r: ");
 	for (auto v: r)
 		std::cout << v << ' ';
