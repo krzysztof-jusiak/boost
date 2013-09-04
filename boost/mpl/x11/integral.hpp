@@ -36,14 +36,26 @@ typedef bool_<true> true_type;
 template <char value>
 using char_ = integral_constant<char, value>;
 
+template <unsigned char value>
+using uchar_ = integral_constant<unsigned char, value>;
+
 template <short value>
 using short_ = integral_constant<short, value>;
+
+template <unsigned short value>
+using ushort_ = integral_constant<unsigned short, value>;
 
 template <int value>
 using int_ = integral_constant<int, value>;
 
+template <unsigned int value>
+using uint_ = integral_constant<unsigned int, value>;
+
 template <long value>
 using long_ = integral_constant<long, value>;
+
+template <unsigned long value>
+using ulong_ = integral_constant<unsigned long, value>;
 
 }}}
 

@@ -9,27 +9,171 @@
 #if !defined(SPIRIT_REPOSITORY_SUPPORT_BIGNUM_UTILS_JUL_27_2013_1830)
 #define SPIRIT_REPOSITORY_SUPPORT_BIGNUM_UTILS_JUL_27_2013_1830
 
-#include <boost/range/iterator_range.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/range/iterator_range.hpp>
+#include <boost/mpl/x11/has_key.hpp>
+#include <boost/mpl/x11/vector.hpp>
+#include <boost/mpl/x11/map.hpp>
+#include <boost/mpl/x11/at.hpp>
 
 namespace boost { namespace spirit { namespace repository {
 namespace detail {
 
+#if defined(__LP64__)
+
+typedef mpl::x11::map<
+	mpl::x11::pair<
+		mpl::x11::long_<100000000000000000L>,
+		mpl::x11::vector<
+			mpl::x11::int_<184>,
+			mpl::x11::ulong_<0x9befeb9fad487c3UL>,
+			mpl::x11::ulong_<0xb877aa3236a4b449UL>
+		>
+	>
+> magic_multipliers;
+
+#else
+
+typedef mpl::x11::map<
+	mpl::x11::pair<
+		mpl::x11::long_<100000000L>,
+		mpl::x11::vector<
+			mpl::x11::int_<90>,
+			mpl::x11::ulong_<0x8461cefdUL>,
+			mpl::x11::ulong_<0xabcc7711UL>
+		>
+	>
+> magic_multipliers;
+
+#endif
+
 template <long Radix>
-std::pair<unsigned long, unsigned long> bignum_mul_step(
+typename std::enable_if<
+	mpl::x11::has_key<
+		magic_multipliers, mpl::x11::long_<Radix>
+	>::value, std::pair<unsigned long, unsigned long>
+>::type bignum_mul_step(
+	unsigned long w, unsigned long k, unsigned long u, unsigned long v
+)
+{
+	typedef typename mpl::x11::at<
+		magic_multipliers,
+		mpl::x11::long_<Radix>
+	>::type magic_values;
+
+	constexpr int const word_shift(
+		std::numeric_limits<unsigned long>::digits
+	);
+	constexpr int const word_offset(
+		mpl::x11::at_c<magic_values, 0>::type::value
+		/ word_shift
+	);
+	constexpr int const subword_shift(
+		mpl::x11::at_c<magic_values, 0>::type::value
+		% word_shift
+	);
+	constexpr unsigned long const m[2] = {
+		mpl::x11::at_c<magic_values, 1>::type::value,
+		mpl::x11::at_c<magic_values, 2>::type::value
+	};
+
+#if defined(__LP64__)
+	unsigned __int128 acc(u);
+#else
+	unsigned long long acc(u);
+#endif
+
+	printf("--- \n");
+	acc *= v;
+	acc += w;
+	acc += k;
+
+//	printf("   u %lu v %lu r %llu\n", u, v, acc);
+
+	unsigned long x[2] = {
+		static_cast<unsigned long>(acc),
+		static_cast<unsigned long>(acc >> word_shift)
+	};
+
+	unsigned long y[4];
+	unsigned long c(0);
+
+	acc = x[0];
+	acc *= m[0];
+	y[0] = acc;
+	c = acc >> word_shift;
+
+	acc = x[1];
+	acc *= m[0];
+	acc += c;
+	y[1] = acc;
+	y[2] = acc >> word_shift;
+
+	acc = x[0];
+	acc *= m[1];
+	acc += y[1];
+	y[1] = acc;
+	c = acc >> word_shift;
+
+	acc = x[1];
+	acc *= m[1];
+	acc += y[2];
+	acc += c;
+	y[2] = acc;
+	y[3] = acc >> word_shift;
+
+	acc = y[0];
+	acc += x[0];
+	y[0] = acc;
+	acc >>= word_shift;
+	acc += y[1];
+	acc += x[1];
+	y[1] = acc;
+	acc >>= word_shift;
+	acc += y[2];
+	y[2] = acc;
+	acc >>= word_shift;
+	acc += y[3];
+	y[3] = acc;
+
+	std::pair<unsigned long, unsigned long> rv;
+
+	if (word_offset < 3) {
+		rv.second = y[word_offset + 1];
+		rv.second <<= word_shift - subword_shift;
+		rv.second |= y[word_offset] >> subword_shift;
+	} else
+		rv.second = y[3] >> subword_shift;
+
+	rv.first = rv.second * Radix;
+	if (x[0] >= rv.first)
+		rv.first = x[0] - rv.first;
+	else
+		rv.first = rv.first - x[0];
+
+	printf("   q %lu r %lu\n", rv.second, rv.first);
+	return rv;
+}
+
+template <long Radix>
+typename std::enable_if<
+	!mpl::x11::has_key<
+		magic_multipliers, mpl::x11::long_<Radix>
+	>::value, std::pair<unsigned long, unsigned long>
+>::type bignum_mul_step(
 	unsigned long w, unsigned long k, unsigned long u, unsigned long v
 )
 {
 #if defined(__LP64__)
-	unsigned __int128 r(u);
+	unsigned __int128 acc(u);
 #else
-	unsigned long long r(u);
+	unsigned long long acc(u);
 #endif
-	r *= v;
-	r += w;
-	r += k;
+	acc *= v;
+	acc += w;
+	acc += k;
 
-	return std::make_pair(r % Radix, r / Radix);
+	return std::make_pair(acc % Radix, acc / Radix);
 }
 
 }

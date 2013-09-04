@@ -3,6 +3,7 @@
 #include <cxxabi.h>
 
 #if defined(X11)
+#include <boost/mpl/x11/map.hpp>
 #include <boost/mpl/x11/vector.hpp>
 #include <boost/mpl/x11/begin_end.hpp>
 #include <boost/mpl/x11/front_back.hpp>
@@ -17,6 +18,7 @@
 
 using namespace boost::mpl::x11;
 #else
+#include <boost/mpl/map.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/insert.hpp>
 #include <boost/mpl/erase_key.hpp>
@@ -49,6 +51,10 @@ int main(int argc, char **argv)
 	typedef vector<char> v1;
 	typedef vector<char, long> v2;
 	typedef vector<char, char, char, char, char, char, char, char, int> v9;
+	typedef map<
+		pair<long_<567>, vector<int_<15>, long_<16>>>,
+		pair<long_<569>, vector<unsigned, long long>>
+	> m1;
 
 //	typedef erase_key<m_, char>::type m;
 	std::cout << "1: " << demangle<v1>() << '\n';
@@ -62,5 +68,14 @@ int main(int argc, char **argv)
 	std::cout << "3: " << demangle<v9>() << '\n';
 	std::cout << "3.1: " << demangle<front<v9>::type>() << '\n';
 	std::cout << "3.2: " << demangle<back<v9>::type>() << '\n';
+
+	std::cout << "4.1: " << demangle<at_c<v9, 3>::type>() << '\n';
+	std::cout << "4.2: " << demangle<at_c<v2, 1>::type>() << '\n';
+	std::cout << "4.3: " << demangle<at<m1, long_<569>>::type>() << '\n';
+
+	typedef typename at<m1, long_<567>>::type vx;
+	constexpr int const x(at_c<vx, 0>::type::value);
+	std::cout << "4.4: " << has_key<m1, long_<567>>::value << " " << x << '\n';
+	
 	return 0;
 }

@@ -6,6 +6,11 @@
 #include <boost/spirit/repository/home/support/static_table.hpp>
 #include <boost/spirit/repository/home/support/detail/rec_pow_2.hpp>
 
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/repository/home/qi/numeric/real.hpp>
+
 using namespace boost::spirit::repository;
 
 int main(int argc, char **argv)
@@ -16,10 +21,10 @@ int main(int argc, char **argv)
 	constexpr long radix = 100000000L;
 #endif
 
-	//std::vector<long> u({100 * (radix / 1000)});
-	std::vector<long> u({
-		0L, 0L, 1562500L, 83404541L, 70211815L, 23125782L, 55511151L
-	});
+	std::vector<long> u({100 * (radix / 1000)});
+	//std::vector<long> u({
+	//	0L, 0L, 1562500L, 83404541L, 70211815L, 23125782L, 55511151L
+	//});
 	typedef static_table<detail::rec_pow_2<long, int, radix>> r_tbl;
 
 	auto r(r_tbl::get(7));
