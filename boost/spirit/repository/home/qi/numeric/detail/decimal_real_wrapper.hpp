@@ -60,6 +60,11 @@ struct decimal_real_wrapper {
 	constexpr static long src_num_radix = 100000000L;
 #endif
 
+	static_assert(
+		(1L << word_bits) > src_num_radix,
+		"Input numeric base must be smaller than target bit width."
+	);
+
 	src_num_type mantissa;
 	bool sign;
 	long back_scale;
@@ -156,10 +161,7 @@ private:
 	);
 
 	static void src_to_dst_num_type(
-		dst_num_type &high, dst_num_type &low, src_num_type const &m
-	);
-	static void src_to_dst_num_type(
-		dst_num_type &dst, src_num_type const &src, T error
+		dst_num_type &dst, src_num_type const &m
 	);
 	static void average(
 		dst_num_type &mid, dst_num_type const &high,
@@ -190,7 +192,7 @@ void print(typename decimal_real_wrapper<T>::src_num_type const &m)
 		if (delim)
 			printf("_");;
 		delim = true;
-		printf("%08ld", v);
+		printf("%ld", v);
 	}
 }
 
@@ -202,16 +204,17 @@ void print(typename decimal_real_wrapper<T>::dst_num_type const &m)
 		if (delim)
 			printf("_");;
 		delim = true;
-		printf("%07lx", v);
+		printf("%lx", v);
 	}
 }
 
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
-	src_num_type mx, my;
+	src_num_type mx, my, mz;
 	mx.reserve(8);
 	my.reserve(8);
+	mz.reserve(8);
 
 	for (auto iter(mantissa.crbegin()); iter != mantissa.crend(); ++iter) {
 		if (*iter) {
@@ -246,25 +249,52 @@ decimal_real_wrapper<T>::operator T() const
 	}
 
 	dst_num_type low, mid, high;
-	src_num_type dx;
-	T err(0);
-	src_to_dst_num_type(mid, mx, err);
-	auto c(target_cmp(dx, mid, mx));
-
-	if (c)
-		for (auto d : dx) {
-			err += d;
-			err /= src_num_radix;
-		}
+	src_to_dst_num_type(mid, mx);
+	auto c(target_cmp(my, mid, mx));
 
 	if (c > 0) {
 		std::copy(mid.cbegin(), mid.cend(), low.begin());
-		src_to_dst_num_type(high, mx, err);
+		mz.assign(mx.cbegin(), mx.cend());
+		long c(0);
+		auto y_iter(my.cbegin());
+		for (
+			auto z_iter(
+				mz.begin() + (mz.size() - my.size())
+			);
+			z_iter != mz.end(); ++z_iter
+		) {
+			*z_iter += *y_iter + c;
+			if (*z_iter > src_num_radix) {
+				c = 1;
+				*z_iter %= src_num_radix;
+			} else
+				c = 0;
+			++y_iter;
+		}
+		src_to_dst_num_type(high, mz);
 	} else if (c < 0) {
 		std::copy(mid.cbegin(), mid.cend(), high.begin());
-		src_to_dst_num_type(low, mx, -err);
+		mz.assign(mx.cbegin(), mx.cend());
+		long c(0);
+		auto y_iter(my.cbegin());
+		for (
+			auto z_iter(
+				mz.begin() + (mz.size() - my.size())
+			);
+			z_iter != mz.end(); ++z_iter
+		) {
+			if (*z_iter >= (*y_iter + c)) {
+				*z_iter -= *y_iter + c;
+				c = 0;
+			} else {
+				*z_iter = src_num_radix - *y_iter
+					  + *z_iter - c;
+				c = 1;
+			}
+			++y_iter;
+		}
+		src_to_dst_num_type(low, mz);
 	}
-	
 	if (!c || std::equal(low.cbegin(), low.cend(), high.cbegin())) {
 		auto tail(mid.back() & (sig_bit_mask - 1UL));
 		if (
@@ -396,28 +426,29 @@ void decimal_real_wrapper<T>::scale_up(
 
 template <typename T>
 void decimal_real_wrapper<T>::src_to_dst_num_type(
-	dst_num_type &dst, src_num_type const &src, T error
+	dst_num_type &dst, src_num_type const &src
 )
 {
-	T val(0), int_val;
-	int exp;
+	constexpr std::array<long, 2> const r = {
+		(1L << word_bits) % src_num_radix,
+		(1L << word_bits) / src_num_radix
+	};
+	src_num_type src_in(src.size() + 2);
+	src_num_type src_out(src.size() + 2);
+	src_in.assign(src.cbegin(), src.cend());
 
-	for (auto d : src) {
-		val += d;
-		val /= src_num_radix;
+	for (auto &d: dst) {
+		bignum_mul<src_num_radix>(src_out, src_in, r);
+		d = src_out.back();
+		src_out.pop_back();
+		d *= src_num_radix;
+		d += src_out.back();
+		src_out.pop_back();
+		src_in.swap(src_out);
+		src_out.push_back(0);
+		src_out.push_back(0);
 	}
-
-	val += error;
-
-	if (val < T(1))
-		for (auto &v : dst) {
-			val = std::frexp(val, &exp);
-			val = std::ldexp(val, word_bits);
-			val = std::modf(val, &int_val);
-			v = std::lrint(int_val);
-		}
-	else
-		std::fill(dst.begin(), dst.end(), (1L << word_bits) - 1L);
+	dst.front() &= ~(sig_bit_mask - 1UL);
 }
 
 template <typename T>
@@ -473,7 +504,7 @@ void decimal_real_wrapper<T>::normalize(src_num_type &m)
 		> c(0, 0);
 		for (auto &d : m) {
 			c = repository::detail::bignum_mul_step<src_num_radix>(
-				0, c.second, d, 10
+				c.second, d, 10
 			);
 			d = c.first;
 		}
@@ -544,7 +575,7 @@ out:
 	typename src_num_type::value_type c(0);
 	std::reverse(delta.begin(), delta.end());
 
-	for (auto &d : delta) {
+	for (auto &d: delta) {
 		d -= c;
 		c = 0;
 		if (d < 0) {

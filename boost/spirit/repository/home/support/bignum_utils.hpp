@@ -53,9 +53,12 @@ typename std::enable_if<
 		magic_multipliers, mpl::x11::long_<Radix>
 	>::value, std::pair<unsigned long, unsigned long>
 >::type bignum_mul_step(
-	unsigned long w, unsigned long k, unsigned long u, unsigned long v
+	unsigned long k, unsigned long u, unsigned long v
 )
 {
+	if (!(u && v))
+		return std::make_pair(k % Radix, k / Radix);
+
 	typedef typename mpl::x11::at<
 		magic_multipliers,
 		mpl::x11::long_<Radix>
@@ -83,12 +86,8 @@ typename std::enable_if<
 	unsigned long long acc(u);
 #endif
 
-	printf("--- \n");
 	acc *= v;
-	acc += w;
 	acc += k;
-
-//	printf("   u %lu v %lu r %llu\n", u, v, acc);
 
 	unsigned long x[2] = {
 		static_cast<unsigned long>(acc),
@@ -151,7 +150,6 @@ typename std::enable_if<
 	else
 		rv.first = rv.first - x[0];
 
-	printf("   q %lu r %lu\n", rv.second, rv.first);
 	return rv;
 }
 
@@ -161,16 +159,18 @@ typename std::enable_if<
 		magic_multipliers, mpl::x11::long_<Radix>
 	>::value, std::pair<unsigned long, unsigned long>
 >::type bignum_mul_step(
-	unsigned long w, unsigned long k, unsigned long u, unsigned long v
+	unsigned long k, unsigned long u, unsigned long v
 )
 {
+	if (!(u && v))
+		return std::make_pair(k % Radix, k / Radix);
+
 #if defined(__LP64__)
 	unsigned __int128 acc(u);
 #else
 	unsigned long long acc(u);
 #endif
 	acc *= v;
-	acc += w;
 	acc += k;
 
 	return std::make_pair(acc % Radix, acc / Radix);
@@ -185,16 +185,18 @@ template <
 	typename InputRangeU::value_type v
 )
 {
-	std::fill(w.begin(), w.end(), 0);
-	if (!v)
+	
+	if (!v) {
+		std::fill(w.begin(), w.end(), 0);
 		return;
+	}
 
 	std::pair<unsigned long, unsigned long> c(0, 0);
 	auto w_iter(w.begin());
 
 	for (auto up : u) {
 		c = detail::bignum_mul_step<Radix>(
-			*w_iter, c.second, up, v
+			c.second, up, v
 		);
 		*w_iter = c.first;
 		++w_iter;
@@ -212,7 +214,7 @@ template <
 	auto w_iter_v(w.begin()), w_iter_u(w.begin());
 
 	for (auto vp : v) {
-		if (!v) {
+		if (!vp) {
 			*w_iter_v = 0;
 			++w_iter_v;
 			continue;
@@ -222,7 +224,7 @@ template <
 		std::pair<unsigned long, unsigned long> c(0, 0);
 		for (auto up : u) {
 			c = detail::bignum_mul_step<Radix>(
-				*w_iter_u, c.second, up, vp
+				*w_iter_u + c.second, up, vp
 			);
 			*w_iter_u = c.first;
 			++w_iter_u;

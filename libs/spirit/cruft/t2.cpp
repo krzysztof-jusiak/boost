@@ -35,6 +35,8 @@ ref_cvt<long double>::operator long double() const
 	return strtold(s.c_str(), nullptr);
 }
 
+int errors(0);
+
 template <typename T>
 void test_arg(T arg, char const *arg_ref)
 {
@@ -49,12 +51,16 @@ void test_arg(T arg, char const *arg_ref)
 	std::cout << "  y: " << val_r << '\n';
 	std::cout << "  eq: " << (val_t == val_r)
 		  << " delta: " << (val_t - val_r) << '\n';
+
+	if (val_t != val_r)
+		++errors;
 }
 
 #define TESTARG(t, x) test_arg<t>(x, #x)
 
 int main(int argc, char **argv)
 {
+	/*
 	TESTARG(double, 0.0);
 	TESTARG(double, -0.0);
 
@@ -71,11 +77,17 @@ int main(int argc, char **argv)
 
 	TESTARG(float, 1.23e+20f);
 	TESTARG(double, 1.23e+20);
+
 	TESTARG(long double, 1.23e+20L);
 
 	TESTARG(float, 1.23e-20f);
+	*/
 	TESTARG(double, 1.23e-20);
+	/*
 	TESTARG(long double, 1.23e-20L);
 	TESTARG(double, 1e23);
+	*/
+	if (errors)
+		std::cout << "errors " << errors << '\n';
 	return 0;
 }

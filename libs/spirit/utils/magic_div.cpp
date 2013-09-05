@@ -4,7 +4,9 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-    Based on algorithm from section 10-10 of Hacker's Delight by H. Warren
+    Based on algorithm from section 10-10 of Hacker's Delight by H. Warren to
+    produce multiplicative coefficients for constant division (as used in
+    section 10-8 thereof).
 ==============================================================================*/
 
 #include <limits>
@@ -80,7 +82,10 @@ int main(int argc, char **argv)
 	++q2;
 
 	printf("adj %d, ", adj);
-	printf("shift %d, ", p - std::numeric_limits<decltype(m)>::digits);
+	printf(
+		"shift %d (%d), ", p,
+		p - std::numeric_limits<decltype(m)>::digits
+	);
 	printf("M %lx_%lx\n", static_cast<unsigned long>(
 			q2 >> std::numeric_limits<unsigned long>::digits
 		), static_cast<unsigned long>(q2)
