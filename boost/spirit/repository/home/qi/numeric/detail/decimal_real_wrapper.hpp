@@ -24,7 +24,14 @@
 #include <boost/spirit/repository/home/support/detail/pow_2m1.hpp>
 #include <boost/spirit/repository/home/support/detail/rec_pow_2.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
-#include <boost/geometry/geometries/adapted/boost_range/reversed.hpp>
+
+#include <boost/range/adaptor/reversed.hpp>
+
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm/reverse.hpp>
+#include <boost/range/algorithm/reverse_copy.hpp>
+#include <boost/range/algorithm_ext/for_each.hpp>
+#include <boost/range/algorithm/lexicographical_compare.hpp>
 
 #include <cmath>
 #include <array>
@@ -151,34 +158,45 @@ struct decimal_real_wrapper {
 	operator T() const;
 
 private:
-	static void scale_down(
-		src_num_type &m_out, src_num_type const &m,
-		int &d_exp, int &b_exp
-	);
-	static void scale_up(
-		src_num_type &m_out, src_num_type const &m,
-		int &d_exp, int &b_exp
-	);
+	struct helper {
+		src_num_type m;
+		int d_exp;
+		int b_exp;
 
-	static void src_to_dst_num_type(
-		dst_num_type &dst, src_num_type const &m
-	);
+		helper(typename src_num_type::size_type new_cap)
+		: b_exp(0)
+		{
+			m.reserve(new_cap);
+			sx.reserve(new_cap);
+			sy.reserve(new_cap);
+		}
+
+		bool get_dst_range(
+			dst_num_type &high, dst_num_type &mid,
+			dst_num_type &low
+		);
+
+		static void normalize(src_num_type &s);
+
+		void scale_down();
+		void scale_up();
+		void src_to_dst_num_type(
+			dst_num_type &dst, src_num_type const &src
+		);
+		int target_cmp(dst_num_type const &val);
+
+	private:
+		src_num_type sx;
+		src_num_type sy;
+		src_num_type sz;
+	};
+
 	static void average(
 		dst_num_type &mid, dst_num_type const &high,
 		dst_num_type const &low
 	);
-	static bool assign_cmp(
-		dst_num_type &dst, dst_num_type const &src
-	);
-	static void normalize(src_num_type &m);
+
 	static void normalize(dst_num_type &val);
-	static int target_cmp(
-		src_num_type &delta, dst_num_type const &val,
-		src_num_type const &m
-	);
-	static int target_cmp(
-		dst_num_type const &val, src_num_type const &m
-	);
 };
 
 template <typename T>
@@ -188,7 +206,7 @@ template <typename T>
 void print(typename decimal_real_wrapper<T>::src_num_type const &m)
 {
 	bool delim(false);
-	for (auto v : m) {
+	for (auto v: m | boost::adaptors::reversed) {
 		if (delim)
 			printf("_");;
 		delim = true;
@@ -211,91 +229,30 @@ void print(typename decimal_real_wrapper<T>::dst_num_type const &m)
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
-	src_num_type mx, my, mz;
-	mx.reserve(8);
-	my.reserve(8);
-	mz.reserve(8);
+	helper h(8);
 
 	for (auto iter(mantissa.crbegin()); iter != mantissa.crend(); ++iter) {
 		if (*iter) {
-			mx.resize(iter.base() - mantissa.cbegin());
+			h.m.resize(iter.base() - mantissa.cbegin());
 			std::reverse_copy(
 				mantissa.cbegin(),
-				mantissa.cbegin() + mx.size(),
-				mx.begin()
+				mantissa.cbegin() + h.m.size(),
+				h.m.begin()
 			);
 			break;
 		}
 	}
 
-	if (mx.empty()) {
+	if (h.m.empty()) {
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	}
 
-	int d_exp(int_scale);
+	h.d_exp = int_scale;
+	h.d_exp += exponent;
+	dst_num_type high, mid, low;
+	bool do_search(true);
 
-	d_exp += exponent;
-
-	int b_exp(0);
-
-	while (d_exp > 0) {
-		scale_down(my, mx, d_exp, b_exp);
-		mx.swap(my);
-	}
-
-	while (d_exp < 0 || mx.back() < (src_num_radix / 2)) {
-		scale_up(my, mx, d_exp, b_exp);
-		mx.swap(my);
-	}
-
-	dst_num_type low, mid, high;
-	src_to_dst_num_type(mid, mx);
-	auto c(target_cmp(my, mid, mx));
-
-	if (c > 0) {
-		std::copy(mid.cbegin(), mid.cend(), low.begin());
-		mz.assign(mx.cbegin(), mx.cend());
-		long c(0);
-		auto y_iter(my.cbegin());
-		for (
-			auto z_iter(
-				mz.begin() + (mz.size() - my.size())
-			);
-			z_iter != mz.end(); ++z_iter
-		) {
-			*z_iter += *y_iter + c;
-			if (*z_iter > src_num_radix) {
-				c = 1;
-				*z_iter %= src_num_radix;
-			} else
-				c = 0;
-			++y_iter;
-		}
-		src_to_dst_num_type(high, mz);
-	} else if (c < 0) {
-		std::copy(mid.cbegin(), mid.cend(), high.begin());
-		mz.assign(mx.cbegin(), mx.cend());
-		long c(0);
-		auto y_iter(my.cbegin());
-		for (
-			auto z_iter(
-				mz.begin() + (mz.size() - my.size())
-			);
-			z_iter != mz.end(); ++z_iter
-		) {
-			if (*z_iter >= (*y_iter + c)) {
-				*z_iter -= *y_iter + c;
-				c = 0;
-			} else {
-				*z_iter = src_num_radix - *y_iter
-					  + *z_iter - c;
-				c = 1;
-			}
-			++y_iter;
-		}
-		src_to_dst_num_type(low, mz);
-	}
-	if (!c || std::equal(low.cbegin(), low.cend(), high.cbegin())) {
+	if (!h.get_dst_range(high, mid, low) || boost::range::equal(low, high)) {
 		auto tail(mid.back() & (sig_bit_mask - 1UL));
 		if (
 			tail == (sig_bit_mask >> 1)
@@ -303,18 +260,26 @@ decimal_real_wrapper<T>::operator T() const
 		)
 			mid.back() -= tail;
 
-		goto skip_search;
+		do_search = false;
 	}
 
-	while (true) {
+	while (do_search) {
 		average(mid, high, low);
-		c = target_cmp(mid, mx);
+		auto c(h.target_cmp(mid));
 
 		if (c > 0) {
-			if (assign_cmp(low, mid))
-				break;
+			boost::range::for_each(
+				low, mid, [&do_search] (
+					typename dst_num_type::value_type &lv,
+					typename dst_num_type::value_type &mv
+				) {
+					do_search = do_search && (lv == mv);
+					lv = mv;
+				}
+			);
+			do_search = !do_search;
 		} else if (c < 0)
-			assign_cmp(high, mid);
+			boost::range::copy(mid, high.begin());
 		else {
 			auto tail(mid.back() & (sig_bit_mask - 1UL));
 			if (
@@ -326,7 +291,7 @@ decimal_real_wrapper<T>::operator T() const
 			break;
 		}
 	};
-skip_search:
+
 	auto tail(mid.back() & (sig_bit_mask - 1UL));
 	mid.back() -= tail;
 	if (tail >= (sig_bit_mask >> 1)) {
@@ -341,15 +306,139 @@ skip_search:
 	}
 
 	return std::copysign(
-		std::ldexp(val, b_exp - word_bits * mid.size()),
+		std::ldexp(val, h.b_exp - word_bits * mid.size()),
 		sign ? T(-1) : T(1)
 	);
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::scale_down(
-	src_num_type &m_out, src_num_type const &m, int &d_exp, int &b_exp
+bool decimal_real_wrapper<T>::helper::get_dst_range(
+	dst_num_type &high, dst_num_type &mid, dst_num_type &low
 )
+{
+	while (d_exp > 0)
+		scale_down();
+
+	while (d_exp < 0 || m.back() < (src_num_radix / 2))
+		scale_up();
+
+	src_to_dst_num_type(mid, m);
+
+	sx.resize(mid.size() + 1);
+	sy.resize(mid.size() + 1);
+	sz.clear();
+
+	sx.pop_back();
+	boost::range::reverse_copy(mid, sx.begin());
+	bool check_tail(true);
+	for (auto d: m | boost::adaptors::reversed) {
+		bignum_mul_s<(1L << word_bits)>(sy, sx, src_num_radix);
+		sz.push_back(d - sy.back());
+		if (sz.back()) {
+			check_tail = false;
+			break;
+		}
+		sx.swap(sy);
+		sx.pop_back();
+		sy.push_back(0);
+	}
+
+	while (check_tail) {
+		bignum_mul_s<(1L << word_bits)>(sy, sx, src_num_radix);
+		if (sy.back() > 0) {
+			sz.push_back(-sy.back());
+			break;
+		} else if (std::all_of(
+			sy.cbegin(), sy.cend(), [](
+				typename src_num_type::value_type v_
+			) -> bool { return !v_; }
+		))
+			return false;
+		else
+			sz.push_back(0);
+
+		sx.swap(sy);
+		sx.pop_back();
+		sy.push_back(0);
+	}
+
+	typename src_num_type::value_type c(0);
+	boost::range::reverse(sz);
+
+	for (auto &d: sz) {
+		d -= c;
+		c = 0;
+		if (d < 0) {
+			d += src_num_radix;
+			c = 1;
+		}
+	}
+
+	if (c) {
+		c = 0;
+
+		if (!sz.front())
+			c = 1;
+		else
+			sz.front() = src_num_radix - sz.front();
+
+		for (auto iter(sz.begin() + 1); iter != sz.end(); ++iter) {
+			*iter = src_num_radix - *iter - 1 + c;
+			if (*iter > src_num_radix) {
+				*iter -= src_num_radix;
+				c = 1;
+			} else
+				c = 0;
+		}
+
+		boost::range::copy(mid, high.begin());
+		sx.assign(m.cbegin(), m.cend());
+		long c(0);
+		auto z_iter(sz.cbegin());
+		for (
+			auto x_iter(
+				sx.begin() + (sx.size() - sz.size())
+			);
+			x_iter != sx.end(); ++x_iter
+		) {
+			if (*x_iter >= (*z_iter + c)) {
+				*x_iter -= *z_iter + c;
+				c = 0;
+			} else {
+				*x_iter = src_num_radix - *z_iter
+					  + *x_iter - c;
+				c = 1;
+			}
+			++z_iter;
+		}
+		src_to_dst_num_type(low, sx);
+	} else {
+		std::copy(mid.cbegin(), mid.cend(), low.begin());
+		sx.assign(m.cbegin(), m.cend());
+		long c(0);
+		auto z_iter(sz.cbegin());
+
+		for (
+			auto x_iter(
+				sx.begin() + (sx.size() - sz.size())
+			);
+			x_iter != sx.end(); ++x_iter
+		) {
+			*x_iter += *z_iter + c;
+			if (*x_iter > src_num_radix) {
+				c = 1;
+				*x_iter %= src_num_radix;
+			} else
+				c = 0;
+			++z_iter;
+		}
+		src_to_dst_num_type(high, sx);
+	}
+	return true;
+}
+
+template <typename T>
+void decimal_real_wrapper<T>::helper::scale_down()
 {
 	typedef static_table<repository::detail::rec_pow_2<
 		long, int, decimal_real_wrapper<T>::src_num_radix
@@ -367,28 +456,21 @@ void decimal_real_wrapper<T>::scale_down(
 	b_exp += pow_2m1_::template get_meta<int>(d);
 	d_exp -= d;
 
-	{
-		auto v(pow_2m1_::get(d) | boost::adaptors::reversed);
-
-		if (std::lexicographical_compare(
-			v.begin(), v.end(),
-			m.crbegin(), m.crend()
-		))
-			++d_exp;
-	}
+	if (boost::range::lexicographical_compare(
+		pow_2m1_::get(d) | boost::adaptors::reversed,
+		m | boost::adaptors::reversed
+	))
+		++d_exp;
 
 	auto v(rec_pow_2_::get(d));
-	m_out.resize(m.size() + v.size());
-
-	bignum_mul<src_num_radix>(m_out, m, v);
-
-	normalize(m_out);
+	sx.resize(m.size() + v.size());
+	bignum_mul<src_num_radix>(sx, m, v);
+	normalize(sx);
+	m.swap(sx);
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::scale_up(
-	src_num_type &m_out, src_num_type const &m, int &d_exp, int &b_exp
-)
+void decimal_real_wrapper<T>::helper::scale_up()
 {
 	typedef static_table<repository::detail::rec_pow_2<
 		long, int, src_num_radix
@@ -404,51 +486,47 @@ void decimal_real_wrapper<T>::scale_up(
 
 	int b(rec_pow_2_::template get_meta<int>(d));
 	auto v(pow_2_::get(d));
-	{
-		auto v1(rec_pow_2_::get(d) |  boost::adaptors::reversed);
-		if (std::lexicographical_compare(
-			m.crbegin(), m.crend(),
-			v1.begin(), v1.end(),
-			std::less<src_num_type::value_type>()
-		))
-			--d;
-	}
+
+	if (boost::range::lexicographical_compare(
+		m | boost::adaptors::reversed,
+		rec_pow_2_::get(d) |  boost::adaptors::reversed
+	))
+		--d;
 
 	b_exp -= b;
 	d_exp += d;
 
-	m_out.resize(m.size() + v.size());
-
-	bignum_mul<src_num_radix>(m_out, m, v);
-
-	normalize(m_out);
+	sx.resize(m.size() + v.size());
+	bignum_mul<src_num_radix>(sx, m, v);
+	normalize(sx);
+	m.swap(sx);
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::src_to_dst_num_type(
+void decimal_real_wrapper<T>::helper::src_to_dst_num_type(
 	dst_num_type &dst, src_num_type const &src
 )
 {
-	constexpr std::array<long, 2> const r = {
+	constexpr std::array<long, 2> const r = {{
 		(1L << word_bits) % src_num_radix,
 		(1L << word_bits) / src_num_radix
-	};
-	src_num_type src_in(src.size() + 2);
-	src_num_type src_out(src.size() + 2);
-	src_in.assign(src.cbegin(), src.cend());
+	}};
+	if (&src != &sx)
+		sx.assign(src.cbegin(), src.cend());
+
+	sy.resize(sx.size() + 2);
 
 	for (auto &d: dst) {
-		bignum_mul<src_num_radix>(src_out, src_in, r);
-		d = src_out.back();
-		src_out.pop_back();
+		bignum_mul<src_num_radix>(sy, sx, r);
+		d = sy.back();
+		sy.pop_back();
 		d *= src_num_radix;
-		d += src_out.back();
-		src_out.pop_back();
-		src_in.swap(src_out);
-		src_out.push_back(0);
-		src_out.push_back(0);
+		d += sy.back();
+		sy.pop_back();
+		sx.swap(sy);
+		sy.push_back(0);
+		sy.push_back(0);
 	}
-	dst.front() &= ~(sig_bit_mask - 1UL);
 }
 
 template <typename T>
@@ -479,30 +557,14 @@ void decimal_real_wrapper<T>::average(
 }
 
 template <typename T>
-bool decimal_real_wrapper<T>::assign_cmp(
-	dst_num_type &dst, dst_num_type const &src
-)
+void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 {
-	typename dst_num_type::size_type dst_pos(0);
-	bool eq(true);
-
-	for (auto v : src) {
-		eq = eq && (dst[dst_pos] == v);
-		dst[dst_pos++] = v;
-	}
-
-	return eq;
-}
-
-template <typename T>
-void decimal_real_wrapper<T>::normalize(src_num_type &m)
-{
-	while (m.back() < (src_num_radix / 10)) {
+	while (s.back() < (src_num_radix / 10)) {
 		std::pair<
 			typename src_num_type::value_type,
 			typename src_num_type::value_type
 		> c(0, 0);
-		for (auto &d : m) {
+		for (auto &d : s) {
 			c = repository::detail::bignum_mul_step<src_num_radix>(
 				c.second, d, 10
 			);
@@ -526,134 +588,42 @@ void decimal_real_wrapper<T>::normalize(dst_num_type &val)
 }
 
 template <typename T>
-int decimal_real_wrapper<T>::target_cmp(
-	src_num_type &delta, dst_num_type const &val, src_num_type const &m
-)
+int decimal_real_wrapper<T>::helper::target_cmp(dst_num_type const &val)
 {
-	src_num_type dst_val_in(val.size() + 1);
-	src_num_type dst_val_out(val.size() + 1);
-	delta.clear();
-	dst_val_in.pop_back();
-	std::reverse_copy(val.cbegin(), val.cend(), dst_val_in.begin());
+	sx.resize(val.size());
+	sy.resize(val.size() + 1);
+	boost::range::reverse_copy(val, sx.begin());
 
-	for (auto m_iter(m.crbegin()); m_iter != m.crend(); ++m_iter) {
-		bignum_mul_s<(1L << word_bits)>(
-			dst_val_out, dst_val_in, src_num_radix
-		);
+	for (auto d: m | boost::adaptors::reversed) {
+		bignum_mul_s<(1L << word_bits)>(sy, sx, src_num_radix);
 
-		delta.push_back(*m_iter - dst_val_out.back());
-		if (delta.back())
-			goto out;
-
-		dst_val_in.swap(dst_val_out);
-		dst_val_in.pop_back();
-		dst_val_out.push_back(0);
-	}
-
-	while (true) {
-		bignum_mul_s<(1L << word_bits)>(
-			dst_val_out, dst_val_in, src_num_radix
-		);
-
-		if (dst_val_out.back() > 0) {
-			delta.push_back(-dst_val_out.back());
-			goto out;
-		} else if (std::all_of(
-			dst_val_out.begin(), dst_val_out.end(), [](
-				typename src_num_type::value_type v_
-			) -> bool { return !v_; }
-		))
-			return 0;
-		else
-			delta.push_back(0);
-
-		dst_val_in.swap(dst_val_out);
-		dst_val_in.pop_back();
-		dst_val_out.push_back(0);
-	}
-out:
-	typename src_num_type::value_type c(0);
-	std::reverse(delta.begin(), delta.end());
-
-	for (auto &d: delta) {
-		d -= c;
-		c = 0;
-		if (d < 0) {
-			d += src_num_radix;
-			c = 1;
-		}
-	}
-
-	if (c) {
-		c = 0;
-
-		if (!delta.front())
-			c = 1;
-		else
-			delta.front() = src_num_radix - delta.front();
-
-		for (
-			auto iter(delta.begin() + 1);
-			iter != delta.end();
-			++iter
-		) {
-			*iter = src_num_radix - *iter - 1 + c;
-			if (*iter > src_num_radix) {
-				*iter -= src_num_radix;
-				c = 1;
-			} else
-				c = 0;
-		}
-		return -1;
-	} else
-		return 1;
-}
-
-template <typename T>
-int decimal_real_wrapper<T>::target_cmp(
-	dst_num_type const &val, src_num_type const &m
-)
-{
-	src_num_type dst_val_in(val.size() + 1);
-	src_num_type dst_val_out(val.size() + 1);
-	dst_val_in.pop_back();
-	std::reverse_copy(val.cbegin(), val.cend(), dst_val_in.begin());
-
-	for (auto m_iter(m.crbegin()); m_iter != m.crend(); ++m_iter) {
-		bignum_mul_s<(1L << word_bits)>(
-			dst_val_out, dst_val_in, src_num_radix
-		);
-
-		if (*m_iter > dst_val_out.back())
+		if (d > sy.back())
 			return 1;
-		else if (*m_iter < dst_val_out.back())
+		else if (d < sy.back())
 			return -1;
 
-		dst_val_in.swap(dst_val_out);
-		dst_val_in.pop_back();
-		dst_val_out.push_back(0);
+		sx.swap(sy);
+		sx.pop_back();
+		sy.push_back(0);
 	}
 
 	while (true) {
-		bignum_mul_s<(1L << word_bits)>(
-			dst_val_out, dst_val_in, src_num_radix
-		);
+		bignum_mul_s<(1L << word_bits)>(sy, sx, src_num_radix);
 
-		if (dst_val_out.back() > 0) {
+		if (sy.back() > 0) {
 			return -1;
 		} else if (std::all_of(
-			dst_val_out.begin(), dst_val_out.end(), [](
+			sy.cbegin(), sy.cend(), [](
 				typename src_num_type::value_type v_
 			) -> bool { return !v_; }
 		))
 			return 0;
 
-		dst_val_in.swap(dst_val_out);
-		dst_val_in.pop_back();
-		dst_val_out.push_back(0);
+		sx.swap(sy);
+		sx.pop_back();
+		sy.push_back(0);
 	}
 }
-
 }
 }}}}
 

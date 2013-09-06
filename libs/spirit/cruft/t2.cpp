@@ -58,9 +58,21 @@ void test_arg(T arg, char const *arg_ref)
 
 #define TESTARG(t, x) test_arg<t>(x, #x)
 
+#define WORKING 1
 int main(int argc, char **argv)
 {
-	/*
+	TESTARG(double, -12.79e69);
+	TESTARG(double, -7669071.49e174);
+
+#if WORKING
+	TESTARG(double, -228.9e-27);
+	TESTARG(double, -812578e9);
+	TESTARG(double, -.7e102);
+	TESTARG(double, 825564e172);
+	TESTARG(double, 889e15);
+	TESTARG(double, -34153134843e60);
+	TESTARG(double, 0360.356e45);
+	TESTARG(double, .9604219e65);
 	TESTARG(double, 0.0);
 	TESTARG(double, -0.0);
 
@@ -77,16 +89,14 @@ int main(int argc, char **argv)
 
 	TESTARG(float, 1.23e+20f);
 	TESTARG(double, 1.23e+20);
-
 	TESTARG(long double, 1.23e+20L);
 
 	TESTARG(float, 1.23e-20f);
-	*/
+
 	TESTARG(double, 1.23e-20);
-	/*
 	TESTARG(long double, 1.23e-20L);
 	TESTARG(double, 1e23);
-	*/
+#endif
 	if (errors)
 		std::cout << "errors " << errors << '\n';
 	return 0;

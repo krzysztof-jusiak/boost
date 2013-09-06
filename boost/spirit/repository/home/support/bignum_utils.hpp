@@ -81,23 +81,23 @@ typename std::enable_if<
 	};
 
 #if defined(__LP64__)
-	unsigned __int128 acc(u);
+	unsigned __int128 prod(u);
 #else
-	unsigned long long acc(u);
+	unsigned long long prod(u);
 #endif
 
-	acc *= v;
-	acc += k;
+	prod *= v;
+	prod += k;
 
 	unsigned long x[2] = {
-		static_cast<unsigned long>(acc),
-		static_cast<unsigned long>(acc >> word_shift)
+		static_cast<unsigned long>(prod),
+		static_cast<unsigned long>(prod >> word_shift)
 	};
 
 	unsigned long y[4];
 	unsigned long c(0);
 
-	acc = x[0];
+	decltype(prod) acc(x[0]);
 	acc *= m[0];
 	y[0] = acc;
 	c = acc >> word_shift;
@@ -144,11 +144,10 @@ typename std::enable_if<
 	} else
 		rv.second = y[3] >> subword_shift;
 
-	rv.first = rv.second * Radix;
-	if (x[0] >= rv.first)
-		rv.first = x[0] - rv.first;
-	else
-		rv.first = rv.first - x[0];
+	acc = rv.second;
+	acc *= Radix;
+	acc = prod - acc;
+	rv.first = static_cast<unsigned long>(acc);
 
 	return rv;
 }

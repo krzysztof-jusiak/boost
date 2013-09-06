@@ -3,6 +3,7 @@ project spirit-numeric-benchmark
 	<include>.
 	<include>../../../..
 	<library>../../../..//random
+	<cxxflags>-g
 	<linkflags>-lrt
 :
 :

@@ -243,7 +243,7 @@ fmtstrtod(const char *as, char **aas)
 		divascii(a, &na, &dp, &bp);
 	while(dp < 0 || a[0] < '5')
 		mulascii(a, &na, &dp, &bp);
-
+	printf("--a %s\n", a);
 	/* close approx by naive conversion */
 	mid[0] = 0;
 	mid[1] = 1;
@@ -259,7 +259,8 @@ fmtstrtod(const char *as, char **aas)
 		low[i] = 0;
 		hig[i] = One-1;
 	}
-
+	printf("--h: %lx_%lx\n", hig[0], hig[1]);
+	printf("--l: %lx_%lx\n", low[0], low[1]);
 	/* binary search for closest mantissa */
 	for(;;) {
 		x++;
@@ -299,6 +300,7 @@ fmtstrtod(const char *as, char **aas)
 			mid[Prec-1] -= c;
 		break;	/* exactly mid */
 	}
+	printf("--m: %lx_%lx\n", mid[0], mid[1]);
 	printf("iter: %d\n", x);
 	/* normal rounding applies */
 	c = mid[Prec-1] & (Sigbit-1);
