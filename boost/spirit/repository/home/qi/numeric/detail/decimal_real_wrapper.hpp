@@ -202,28 +202,25 @@ private:
 template <typename T>
 constexpr int decimal_real_wrapper<T>::word_bits;
 
-template <typename T>
-void print(typename decimal_real_wrapper<T>::src_num_type const &m)
+template <typename Tr, bool Rev = true>
+void print(char const *fmt, Tr const &r)
 {
 	bool delim(false);
-	for (auto v: m | boost::adaptors::reversed) {
-		if (delim)
-			printf("_");;
-		delim = true;
-		printf("%ld", v);
-	}
-}
-
-template <typename T>
-void print(typename decimal_real_wrapper<T>::dst_num_type const &m)
-{
-	bool delim(false);
-	for (auto v : m) {
-		if (delim)
-			printf("_");;
-		delim = true;
-		printf("%lx", v);
-	}
+	if (Rev)
+		for (auto d: r | boost::adaptors::reversed) {
+			if (delim)
+				printf("_");;
+			delim = true;
+			printf(fmt, d);
+		}
+	else
+		for (auto d: r) {
+			if (delim)
+				printf("_");;
+			delim = true;
+			printf(fmt, d);
+		}
+	printf("\n");
 }
 
 template <typename T>
@@ -484,18 +481,17 @@ void decimal_real_wrapper<T>::helper::scale_up()
 	if (d >= int(rec_pow_2_::size()))
 		d = rec_pow_2_::size() - 1;
 
-	int b(rec_pow_2_::template get_meta<int>(d));
-	auto v(pow_2_::get(d));
+	b_exp -= rec_pow_2_::template get_meta<int>(d);
+	d_exp += d;
 
 	if (boost::range::lexicographical_compare(
 		m | boost::adaptors::reversed,
 		rec_pow_2_::get(d) |  boost::adaptors::reversed
 	))
-		--d;
+		--d_exp;
 
-	b_exp -= b;
-	d_exp += d;
-
+	auto v(pow_2_::get(d));
+	
 	sx.resize(m.size() + v.size());
 	bignum_mul<src_num_radix>(sx, m, v);
 	normalize(sx);
@@ -559,6 +555,7 @@ void decimal_real_wrapper<T>::average(
 template <typename T>
 void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 {
+	int x(0);
 	while (s.back() < (src_num_radix / 10)) {
 		std::pair<
 			typename src_num_type::value_type,
@@ -570,6 +567,7 @@ void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 			);
 			d = c.first;
 		}
+		++x;
 	}
 }
 

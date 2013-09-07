@@ -459,10 +459,12 @@ divascii(char *a, int *na, int *dp, int *bp)
 		d = nelem(tab1)-1;
 	t = tab1 + d;
 	b = t->bp;
+	printf("do b %d d_exp %d d %d ", b, *dp, d);
 	if(memcmp(a, t->cmp, t->siz) > 0)
 		d--;
 	*dp -= d;
 	*bp += b;
+	printf("d_exp' %d, %s - %s\n", *dp, a, t->cmp);
 	divby(a, na, b);
 }
 
@@ -519,12 +521,14 @@ mulascii(char *a, int *na, int *dp, int *bp)
 		d = nelem(tab2)-1;
 	t = tab2 + d;
 	b = t->bp;
+	printf("up b %d d_exp %d d %d ", b, *dp, d);
 	if(memcmp(a, t->cmp, t->siz) < 0)
 		d--;
 	p = a + *na;
 	*bp -= b;
 	*dp += d;
 	*na += d;
+	printf("d_exp' %d, %s - %s\n", *dp, a, t->cmp);
 	mulby(a, p+d, p, b);
 }
 
