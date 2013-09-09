@@ -17,6 +17,7 @@
 #include <limits>
 #include <boost/static_assert.hpp>
 #include <boost/spirit/repository/home/qi/char/static_char.hpp>
+#include <boost/spirit/repository/home/qi/string/static_symbols.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
 
 namespace boost { namespace spirit { namespace repository {
@@ -337,6 +338,63 @@ using default_exponent_separator = static_variant<
 	>
 >;
 
+template <typename T>
+struct inf_value_wrapper {
+	typedef T value_type;
+	static constexpr T const value = std::numeric_limits<T>::infinity();
+};
+
+template <typename T>
+constexpr T const inf_value_wrapper<T>::value;
+
+template <typename T>
+struct nan_value_wrapper {
+	typedef T value_type;
+	static constexpr T const value = std::numeric_limits<T>::quiet_NaN();
+};
+
+template <typename T>
+constexpr T const nan_value_wrapper<T>::value;
+
+template <typename T, typename CharType>
+using default_fp_special_values = static_symbols<
+	mpl::x11::map<
+		mpl::x11::pair<
+			mpl::x11::list_c<CharType, 'i', 'n', 'f'>,
+			inf_value_wrapper<T>
+		>,
+		mpl::x11::pair<
+			mpl::x11::list_c<CharType, 'I', 'N', 'F'>,
+			inf_value_wrapper<T>
+		>,
+		mpl::x11::pair<
+			mpl::x11::list_c<
+				CharType,
+				'i', 'n', 'f', 'i', 'n', 'i', 't', 'y'
+			>, inf_value_wrapper<T>
+		>,
+		mpl::x11::pair<
+			mpl::x11::list_c<
+				CharType,
+				'I', 'N', 'F', 'I', 'N', 'I', 'T', 'Y'
+			>, inf_value_wrapper<T>
+		>,
+		mpl::x11::pair<
+			mpl::x11::list_c<CharType, 'n', 'a', 'n'>,
+			nan_value_wrapper<T>
+		>,
+		mpl::x11::pair<
+			mpl::x11::list_c<CharType, 'N', 'A', 'N'>,
+			nan_value_wrapper<T>
+		>,
+		mpl::x11::pair<
+			mpl::x11::list_c<
+				CharType,
+				'n', 'a', 'n', '(', '.', '.', '.', ')'
+			>, nan_value_wrapper<T>
+		>
+	>, CharType
+>;
 
 }}
 }}}

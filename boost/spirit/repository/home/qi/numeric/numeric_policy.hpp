@@ -60,8 +60,8 @@ struct with_exponent_sign {};
 struct with_wrapper {};
 
 /* "Special" is a "static" parser which is attempted before the rest of numeric
- * parser methods to test whether input contains a predefined constant value
- * (such as NaN or Inf).
+ * parser methods (apart from sign, if present) to test whether input contains
+ * a predefined constant value (such as NaN or Inf).
  */
 struct with_special {};
 

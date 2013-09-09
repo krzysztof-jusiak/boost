@@ -236,4 +236,61 @@ BOOST_AUTO_TEST_CASE(real1_2)
 	BOOST_CHECK_EQUAL(d, 2.2250738585072013e-308L);
 }
 
+BOOST_AUTO_TEST_CASE(real1_3)
+{
+	double d;
+	long double ld;
+
+	BOOST_CHECK(test::parse_attr("0.0", double_, d));
+	BOOST_CHECK_EQUAL(d, 0.0);
+
+	BOOST_CHECK(test::parse_attr("-0.0", double_, d));
+	BOOST_CHECK_EQUAL(d, -0.0);
+
+	BOOST_CHECK(test::parse_attr("-12.79e69", double_, d));
+	BOOST_CHECK_EQUAL(d, -12.79e69);
+
+	BOOST_CHECK(test::parse_attr("-12.79e69", long_double, ld));
+	BOOST_CHECK_EQUAL(ld, -12.79e69L);
+
+	BOOST_CHECK(test::parse_attr("-7669071.49e174", double_, d));
+	BOOST_CHECK_EQUAL(d, -7669071.49e174);
+
+	BOOST_CHECK(test::parse_attr("-7669071.49e174", long_double, ld));
+	BOOST_CHECK_EQUAL(ld, -7669071.49e174L);
+
+	BOOST_CHECK(test::parse_attr("-228.9e-27", double_, d));
+	BOOST_CHECK_EQUAL(d, -228.9e-27);
+
+	BOOST_CHECK(test::parse_attr("-812578e9", double_, d));
+	BOOST_CHECK_EQUAL(d, -812578e9);
+
+	BOOST_CHECK(test::parse_attr("-.7e102", double_, d));
+	BOOST_CHECK_EQUAL(d, -.7e102);
+
+	BOOST_CHECK(test::parse_attr("825564e172", double_, d));
+	BOOST_CHECK_EQUAL(d, 825564e172);
+
+	BOOST_CHECK(test::parse_attr("889e15", double_, d));
+	BOOST_CHECK_EQUAL(d, 889e15);
+
+	BOOST_CHECK(test::parse_attr("-34153134843e60", double_, d));
+	BOOST_CHECK_EQUAL(d, -34153134843e60);
+
+	BOOST_CHECK(test::parse_attr("0360.356e45", double_, d));
+	BOOST_CHECK_EQUAL(d, 0360.356e45);
+
+	BOOST_CHECK(test::parse_attr(".9604219e65", double_, d));
+	BOOST_CHECK_EQUAL(d, .9604219e65);
+
+	BOOST_CHECK(test::parse_attr(".8174817660e43", double_, d));
+	BOOST_CHECK_EQUAL(d, .8174817660e43);
+
+	BOOST_CHECK(test::parse_attr("4.77363413e42", double_, d));
+	BOOST_CHECK_EQUAL(d, 4.77363413e42);
+
+	BOOST_CHECK(test::parse_attr("220e58", double_, d));
+	BOOST_CHECK_EQUAL(d, 220e58);
+}
+
 }}}}

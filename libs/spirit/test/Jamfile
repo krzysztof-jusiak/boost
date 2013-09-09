@@ -10,6 +10,7 @@ run int.cpp : : test_case ;
 run real1.cpp : : test_case ;
 run real2.cpp : : test_case ;
 run static_string.cpp : : test_case ;
+run static_symbols.cpp : : test_case ;
 run static_variant.cpp : : test_case ;
 run uint.cpp : : test_case ;
 run unpack_map.cpp : : test_case ;

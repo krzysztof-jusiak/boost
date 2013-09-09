@@ -61,6 +61,8 @@ struct decimal_real_wrapper {
 	constexpr static unsigned long sig_bit_mask
 	= 1UL << (bigint_words * word_bits - mantissa_bits);
 
+	constexpr static long base_src_radix = 10L;
+
 #ifdef __LP64__
 	constexpr static long src_num_radix = 100000000000000000L;
 #else
@@ -87,9 +89,9 @@ struct decimal_real_wrapper {
 		{
 			out.sign = Negative;
 
-			out.back_scale /= 10;
+			out.back_scale /= base_src_radix;
 			out.mantissa.back()
-			+= out.back_scale * ascii_digit_value<10>(in);
+			+= out.back_scale * ascii_digit_value<base_src_radix>(in);
 
 			if (out.back_scale == 1UL) {
 				out.mantissa.push_back(0);
@@ -107,7 +109,7 @@ struct decimal_real_wrapper {
 		template <typename CharType>
 		bool operator()(CharType in, wrapper_type &out)
 		{
-			auto d(ascii_digit_value<10>(in));
+			auto d(ascii_digit_value<base_src_radix>(in));
 			if (!out.int_scale && !d)
 				return true;
 
@@ -126,8 +128,9 @@ struct decimal_real_wrapper {
 		struct impl {
 			bool operator()(CharType in, wrapper_type &out)
 			{
-				out.exponent *= 10;
-				out.exponent += ascii_digit_value<10>(in);
+				out.exponent *= base_src_radix;
+				out.exponent
+				+= ascii_digit_value<base_src_radix>(in);
 				return true;
 			}
 		};
@@ -136,8 +139,9 @@ struct decimal_real_wrapper {
 		struct impl<CharType, true> {
 			bool operator()(CharType in, wrapper_type &out)
 			{
-				out.exponent *= 10;
-				out.exponent -= ascii_digit_value<10>(in);
+				out.exponent *= base_src_radix;
+				out.exponent
+				-= ascii_digit_value<base_src_radix>(in);
 				return true;
 			}
 		};
@@ -555,19 +559,32 @@ void decimal_real_wrapper<T>::average(
 template <typename T>
 void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 {
-	int x(0);
-	while (s.back() < (src_num_radix / 10)) {
-		std::pair<
-			typename src_num_type::value_type,
-			typename src_num_type::value_type
-		> c(0, 0);
-		for (auto &d : s) {
-			c = repository::detail::bignum_mul_step<src_num_radix>(
-				c.second, d, 10
-			);
-			d = c.first;
+	if (src_num_radix
+	    < (std::numeric_limits<typename src_num_type::value_type>::max()
+	       / base_src_radix / 2)
+	) {
+		while (s.back() < (src_num_radix / base_src_radix)) {
+			typename src_num_type::value_type c(0);
+			for (auto &d : s) {
+				d *= base_src_radix;
+				d += c;
+				c = d / src_num_radix;
+				d %= src_num_radix;
+			}
 		}
-		++x;
+	} else {
+		while (s.back() < (src_num_radix / base_src_radix)) {
+			std::pair<
+				typename src_num_type::value_type,
+				typename src_num_type::value_type
+			> c(0, 0);
+			for (auto &d : s) {
+				c = repository::detail::bignum_mul_step<
+					src_num_radix
+				>(c.second, d, base_src_radix);
+				d = c.first;
+			}
+		}
 	}
 }
 

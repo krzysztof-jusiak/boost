@@ -43,7 +43,7 @@ template <typename Tag> struct value_type_impl;
 template <typename Iterator, typename N> struct advance;
 template <typename...> struct at;
 
-template <typename Sequence> struct back;
+template <typename...> struct back;
 template <typename Sequence> struct begin;
 template <typename Sequence> struct clear;
 
@@ -59,7 +59,7 @@ template <typename...> struct erase;
 
 template <typename Sequence, typename Key> struct erase_key;
 
-template <typename Sequence> struct front;
+template <typename...> struct front;
 
 template <typename Sequence, typename Key> struct has_key;
 
@@ -67,7 +67,7 @@ template <typename...> struct insert;
 
 template <typename...> struct insert_range;
 
-template <typename Sequence, typename T> struct key_type;
+template <typename...> struct key_type;
 
 template <typename...> struct O1_size;
 
@@ -81,7 +81,7 @@ template <typename...> struct push_front;
 
 template <typename...> struct size;
 
-template <typename Sequence, typename T> struct value_type;
+template <typename...> struct value_type;
 
 }}}
 
