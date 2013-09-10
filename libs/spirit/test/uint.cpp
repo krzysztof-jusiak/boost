@@ -11,6 +11,7 @@
 #define BOOST_TEST_MODULE spirit
 #include <boost/test/included/unit_test.hpp>
 
+#include <boost/any.hpp>
 #include <boost/mpl/x11/insert.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
@@ -40,31 +41,46 @@ char const *max_hex = "FFFFFFFF";
 char const *hex_overflow = "100000000";
 
 struct ts_filter {
-	bool first_group = true;
+	boost::any last_good;
+	bool first_group;
 
 	template <typename Iterator>
-	bool operator()(Iterator &first, Iterator const &last, int count)
+	bool reset(Iterator const &cur)
 	{
+		last_good = cur;
+		first_group = true;
+		return true;
+	}
+
+	template <typename Iterator>
+	bool operator()(Iterator &first, Iterator const &last)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_good));
+		auto count(first - last_iter);
+		printf("xx %ld %s %s\n", count, first, last_iter);
 		switch (count) {
 		case 0:
-			return true;
+			return false;
 		case 1:
 		case 2:
-			if (!first_group)
-				return false;
-			first_group = false;
 		case 3:
-			if (first == last)
-				return true;
-			else if (*first == ',') {
+			if (!first_group) {
+				first = last_iter;
+				return false;
+			}
+			first_group = false;
+		case 5:
+			if (*first == ',') {
+				last_iter += count - 1;
+				last_good = last_iter;
 				++first;
 				return true;
 			}
 		default:
+			first = last_iter;
 			return false;
-		};
+		}
 	}
-
 };
 
 }
@@ -379,6 +395,7 @@ BOOST_AUTO_TEST_CASE(uint_14)
 	BOOST_CHECK(test::parse_attr("123,456,789,000", uint_ts, u));
 	BOOST_CHECK_EQUAL(u, 123456789000ULL);
 	BOOST_CHECK(!test::parse("1000,234,567,890", uint_ts));
+	printf("-----\n");
 	BOOST_CHECK(!test::parse("1,234,56,890", uint_ts));
 	BOOST_CHECK(!test::parse("1,66", uint_ts));
 }

@@ -15,6 +15,7 @@
 #define SPIRIT_REPOSITORY_QI_NUMERIC_UTILS_MAY_26_2013_2000
 
 #include <limits>
+#include <boost/any.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/spirit/repository/home/qi/char/static_char.hpp>
 #include <boost/spirit/repository/home/qi/string/static_symbols.hpp>
@@ -273,39 +274,54 @@ struct length_filter;
 
 template <unsigned int MinDigits>
 struct length_filter<MinDigits> {
-	unsigned int pos;
-
-	length_filter()
-	: pos(0) {}
+	boost::any last_good;
 
 	template <typename Iterator>
-	bool operator()(Iterator &first, Iterator const &last, int count)
+	bool reset(Iterator const &iter)
 	{
-		if (count > 0) {
-			pos += count;
-			return pos >= MinDigits;
+		last_good = iter;
+		return true;
+	}
+
+	template <typename Iterator>
+	bool operator()(Iterator &first, Iterator const &last)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_good));
+		auto count(first - last_iter);
+
+		if (count < MinDigits) {
+			first = last_iter;
+			return false;
 		} else
 			return true;
-		
 	}
 };
 
 template <unsigned int MinDigits, unsigned int MaxDigits>
 struct length_filter<MinDigits, MaxDigits> {
-	unsigned int pos;
-
-	length_filter()
-	: pos(0) {}
+	boost::any last_good;
 
 	template <typename Iterator>
-	bool operator()(Iterator &first, Iterator const &last, int count)
+	bool reset(Iterator const &iter)
 	{
-		if (count > 0) {
-			pos += count;
-			return (pos >= MinDigits) && (pos <= MaxDigits);
+		last_good = iter;
+		return true;
+	}
+
+	template <typename Iterator>
+	bool operator()(Iterator &first, Iterator const &last)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_good));
+		auto count(first - last_iter);
+
+		if (count < MinDigits) {
+			first = last_iter;
+			return false;
+		} else if (count > MaxDigits) {
+			first = last_iter + MaxDigits;
+			return false;
 		} else
 			return true;
-		
 	}
 };
 
@@ -340,21 +356,26 @@ using default_exponent_separator = static_variant<
 
 template <typename T>
 struct inf_value_wrapper {
-	typedef T value_type;
-	static constexpr T const value = std::numeric_limits<T>::infinity();
-};
+	typedef std::function<T (bool)> value_type;
 
-template <typename T>
-constexpr T const inf_value_wrapper<T>::value;
+	virtual T operator()(bool neg)
+	{
+		return neg ? -std::numeric_limits<T>::infinity()
+			   : std::numeric_limits<T>::infinity();
+	}
+};
 
 template <typename T>
 struct nan_value_wrapper {
-	typedef T value_type;
-	static constexpr T const value = std::numeric_limits<T>::quiet_NaN();
+	typedef std::function<T (bool)> value_type;
+
+	T operator()(bool neg)
+	{
+		return neg ? -std::numeric_limits<T>::quiet_NaN()
+			   : std::numeric_limits<T>::quiet_NaN();
+	}
 };
 
-template <typename T>
-constexpr T const nan_value_wrapper<T>::value;
 
 template <typename T, typename CharType>
 using default_fp_special_values = static_symbols<

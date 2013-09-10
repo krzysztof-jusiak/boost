@@ -48,7 +48,10 @@ using precise_ureal_policy = mpl::x11::map<
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
 	>,
-	mpl::x11::pair<with_wrapper, detail::decimal_real_wrapper<T>>
+	mpl::x11::pair<with_wrapper, detail::decimal_real_wrapper<T>>,
+	mpl::x11::pair<with_special, detail::default_fp_special_values<
+		T, char_encoding::standard::char_type
+	>>
 >;
 
 template <typename T>
@@ -60,22 +63,22 @@ using precise_real_policy = typename mpl::x11::insert<
 >::type;
 
 template <typename T>
-using simple_ureal_policy = mpl::x11::map<
+using fast_ureal_policy = mpl::x11::map<
 	mpl::x11::pair<with_extractor, standard::digit_type>,
 	mpl::x11::pair<with_integer,
 		detail::unchecked_ascii_integer<T, 10>
 	>,
 	mpl::x11::pair<with_fraction, mpl::x11::pair<
-			detail::default_fractional_separator<
-				char_encoding::standard::char_type
-			>,
-			detail::unchecked_ascii_fraction<T, 10>
+		detail::default_fractional_separator<
+			char_encoding::standard::char_type
+		>,
+		detail::unchecked_ascii_fraction<T, 10>
 	>>,
 	mpl::x11::pair<with_exponent, mpl::x11::pair<
-			detail::default_exponent_separator<
-				char_encoding::standard::char_type
-			>,
-			detail::unchecked_ascii_exponent<T, 10>
+		detail::default_exponent_separator<
+			char_encoding::standard::char_type
+		>,
+		detail::unchecked_ascii_exponent<T, 10>
 	>>,
 	mpl::x11::pair<with_exponent_sign,
 		detail::default_sign<char_encoding::standard::char_type>
@@ -83,8 +86,8 @@ using simple_ureal_policy = mpl::x11::map<
 >;
 
 template <typename T>
-using simple_real_policy = typename mpl::x11::insert<
-	simple_ureal_policy<T>,
+using fast_real_policy = typename mpl::x11::insert<
+	fast_ureal_policy<T>,
 	mpl::x11::pair<with_sign,
 		detail::default_sign<char_encoding::standard::char_type>
 	>

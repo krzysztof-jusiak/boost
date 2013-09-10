@@ -61,6 +61,7 @@ void test_arg(T arg, char const *arg_ref)
 #define WORKING 1
 int main(int argc, char **argv)
 {
+	TESTARG(long double, -1234);
 	TESTARG(double, -12.79e69);
 	TESTARG(double, -7669071.49e174);
 

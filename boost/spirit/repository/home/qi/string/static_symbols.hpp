@@ -27,13 +27,13 @@ namespace qi {
 
 template <
 	typename Map,
-	typename CharEncoding = spirit::char_encoding::standard
+	typename CharType = spirit::char_encoding::standard::char_type
 >
-struct static_symbols : terminal<tag::static_symbols<Map, CharEncoding>> {};
+struct static_symbols : terminal<tag::static_symbols<Map, CharType>> {};
 
-template <typename Map, typename CharEncoding>
+template <typename Map, typename CharType>
 struct make_static_symbols {
-	typedef typename CharEncoding::char_type char_type;
+	typedef CharType char_type;
 	typedef typename spirit::qi::symbols<
 		char_type, typename mpl::x11::value_type<
 			Map, typename mpl::x11::front<Map>::type
@@ -50,11 +50,12 @@ struct make_static_symbols {
 		void operator()(P px)
 		{
 			std::basic_string<char_type> str_key;
+			typename mpl::x11::second<P>::type val;
 			mpl::x11::make_value<
 				typename mpl::x11::first<P>::type
 			>(str_key);
 
-			sym.add(str_key, mpl::x11::second<P>::type::value);
+			sym.add(str_key, val);
 		}
 	};
 
@@ -69,18 +70,18 @@ struct make_static_symbols {
 }
 }
 
-template <typename Map, typename CharEncoding>
+template <typename Map, typename CharType>
 struct use_terminal<
-	qi::domain, repository::tag::static_symbols<Map, CharEncoding>
+	qi::domain, repository::tag::static_symbols<Map, CharType>
 > : mpl::true_ {};
 
 namespace qi {
 
-template <typename Map, typename CharEncoding, typename Modifiers>
+template <typename Map, typename CharType, typename Modifiers>
 struct make_primitive<
-	spirit::repository::tag::static_symbols<Map, CharEncoding>,
+	spirit::repository::tag::static_symbols<Map, CharType>,
 	Modifiers
-> : spirit::repository::qi::make_static_symbols<Map, CharEncoding> {};
+> : spirit::repository::qi::make_static_symbols<Map, CharType> {};
 
 }
 }}
