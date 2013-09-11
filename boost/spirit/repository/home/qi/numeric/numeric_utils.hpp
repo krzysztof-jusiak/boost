@@ -16,7 +16,6 @@
 
 #include <limits>
 #include <boost/any.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/spirit/repository/home/qi/char/static_char.hpp>
 #include <boost/spirit/repository/home/qi/string/static_symbols.hpp>
 #include <boost/spirit/repository/home/qi/auxiliary/static_variant.hpp>
@@ -167,7 +166,10 @@ struct unchecked_ascii_exponent {
 		return impl<CharType, Negative>()(in, out, last);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
+	static_assert(
+		Radix > 1 && Radix < 37,
+		"Unsupported radix value (must be between 2 and 36)"
+	);
 };
 
 template <typename T, unsigned int Radix, int MaxDigits, bool Negative = false>
@@ -209,7 +211,10 @@ struct fixed_ascii_integer {
 			return impl<CharType, Negative>()(in, out);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
+	static_assert(
+		Radix > 1 && Radix < 37,
+		"Unsupported radix value (must be between 2 and 36)"
+	);
 };
 
 template <typename T, T Radix, bool Negative = false>
@@ -220,20 +225,18 @@ struct ascii_integer {
 	struct impl {
 		bool operator()(CharType in, T &out)
 		{
-			static T const max((std::numeric_limits<T>::max)());
-			static T const val(max / Radix);
-
-			if (out > val)
-				return false;
-
-			out *= Radix;
+			constexpr T const max((std::numeric_limits<T>::max)());
+			constexpr T const val(max / Radix);
 
 			T digit(ascii_digit_value<Radix>(in));
 
-			if (out > max - digit)
+			if (
+				(out > val)
+				|| ((out * Radix) > (max - digit))
+			)
 				return false;
 
-			out += digit;
+			out = out * Radix + digit;
 			return true;
 		}
 	};
@@ -242,20 +245,18 @@ struct ascii_integer {
 	struct impl<CharType, true> {
 		bool operator()(CharType in, T &out)
 		{
-			static T const min((std::numeric_limits<T>::min)());
-			static T const val((min + 1) / Radix);
-
-			if (out < val)
-				return false;
-
-			out *= Radix;
+			constexpr T const min((std::numeric_limits<T>::min)());
+			constexpr T const val((min + 1) / Radix);
 
 			T digit(ascii_digit_value<Radix>(in));
 
-			if (out < min + digit)
+			if (
+				(out < val)
+				|| ((out * Radix) < (min + digit))
+			)
 				return false;
 
-			out -= digit;
+			out = out * Radix - digit;
 			return true;
 		}
 	};
@@ -266,7 +267,10 @@ struct ascii_integer {
 		return impl<CharType, Negative>()(in, out);
 	}
 
-	BOOST_STATIC_ASSERT(Radix > 1 && Radix < 37);
+	static_assert(
+		Radix > 1 && Radix < 37,
+		"Unsupported radix value (must be between 2 and 36)"
+	);
 };
 
 template <unsigned int...>
@@ -274,54 +278,52 @@ struct length_filter;
 
 template <unsigned int MinDigits>
 struct length_filter<MinDigits> {
-	boost::any last_good;
+	boost::any last_pos;
 
 	template <typename Iterator>
-	bool reset(Iterator const &iter)
+	bool pre(Iterator const &iter)
 	{
-		last_good = iter;
+		last_pos = iter;
 		return true;
+	}
+
+	template <typename Iterator>
+	bool post(Iterator const &iter)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_pos));
+		return (iter - last_iter) >= MinDigits;
 	}
 
 	template <typename Iterator>
 	bool operator()(Iterator &first, Iterator const &last)
 	{
-		auto last_iter(boost::any_cast<Iterator>(last_good));
-		auto count(first - last_iter);
-
-		if (count < MinDigits) {
-			first = last_iter;
-			return false;
-		} else
-			return true;
+		return false;
 	}
 };
 
 template <unsigned int MinDigits, unsigned int MaxDigits>
 struct length_filter<MinDigits, MaxDigits> {
-	boost::any last_good;
+	boost::any last_pos;
 
 	template <typename Iterator>
-	bool reset(Iterator const &iter)
+	bool pre(Iterator const &iter)
 	{
-		last_good = iter;
+		last_pos = iter;
 		return true;
+	}
+
+	template <typename Iterator>
+	bool post(Iterator &iter)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_pos));
+		auto count(iter - last_iter);
+		return (count >= MinDigits) && (count <= MaxDigits);
 	}
 
 	template <typename Iterator>
 	bool operator()(Iterator &first, Iterator const &last)
 	{
-		auto last_iter(boost::any_cast<Iterator>(last_good));
-		auto count(first - last_iter);
-
-		if (count < MinDigits) {
-			first = last_iter;
-			return false;
-		} else if (count > MaxDigits) {
-			first = last_iter + MaxDigits;
-			return false;
-		} else
-			return true;
+		return false;
 	}
 };
 

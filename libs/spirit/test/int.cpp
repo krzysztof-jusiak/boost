@@ -58,10 +58,12 @@ BOOST_AUTO_TEST_CASE(int_0)
 	BOOST_CHECK(test::parse_attr(test::min_int, int_, i));
 	BOOST_CHECK_EQUAL(i, INT_MIN);
 
-	BOOST_CHECK(!test::parse(test::int_overflow, int_));
-	BOOST_CHECK(!test::parse_attr(test::int_overflow, int_, i));
-	BOOST_CHECK(!test::parse(test::int_underflow, int_));
-	BOOST_CHECK(!test::parse_attr(test::int_underflow, int_, i));
+	BOOST_CHECK(test::parse(test::int_overflow, int_));
+	BOOST_CHECK(test::parse_attr(test::int_overflow, int_, i));
+	BOOST_CHECK_EQUAL(i, INT_MAX / 10);
+	BOOST_CHECK(test::parse(test::int_underflow, int_));
+	BOOST_CHECK(test::parse_attr(test::int_underflow, int_, i));
+	BOOST_CHECK_EQUAL(i, INT_MIN / 10);
 
 	BOOST_CHECK(!test::parse("-", int_));
 	BOOST_CHECK(!test::parse_attr("-", int_, i));
@@ -70,7 +72,8 @@ BOOST_AUTO_TEST_CASE(int_0)
 	BOOST_CHECK(!test::parse_attr("+", int_, i));
 
 	/* Bug report from Steve Nutt */
-	BOOST_CHECK(!test::parse_attr("5368709120", int_, i));
+	BOOST_CHECK(test::parse_attr("5368709120", int_, i));
+	BOOST_CHECK_EQUAL(i, 536870912);
 
 	/* with leading zeros */
 	BOOST_CHECK(test::parse("0000000000123456", int_));
@@ -97,12 +100,14 @@ BOOST_AUTO_TEST_CASE(int_1)
 	BOOST_CHECK(test::parse_attr(test::min_long_long, long_long, ll));
 	BOOST_CHECK_EQUAL(ll, LONG_LONG_MIN);
 
-	BOOST_CHECK(!test::parse(test::long_long_overflow, long_long));
-	BOOST_CHECK(!test::parse_attr(test::long_long_overflow, long_long, ll));
-	BOOST_CHECK(!test::parse(test::long_long_underflow, long_long));
-	BOOST_CHECK(!test::parse_attr(                   \
+	BOOST_CHECK(test::parse(test::long_long_overflow, long_long));
+	BOOST_CHECK(test::parse_attr(test::long_long_overflow, long_long, ll));
+	BOOST_CHECK_EQUAL(ll, LONG_LONG_MAX / 10);
+	BOOST_CHECK(test::parse(test::long_long_underflow, long_long));
+	BOOST_CHECK(test::parse_attr(                    \
 		test::long_long_underflow, long_long, ll \
 	));
+	BOOST_CHECK_EQUAL(ll, LONG_LONG_MIN / 10);
 }
 
 BOOST_AUTO_TEST_CASE(int_2)
@@ -284,12 +289,15 @@ BOOST_AUTO_TEST_CASE(int_10)
 	char c;
 
 	BOOST_CHECK(test::parse_attr("99", int8_, c));
-	BOOST_CHECK(!test::parse_attr("999", int8_, c));
+	BOOST_CHECK(test::parse_attr("999", int8_, c));
+	BOOST_CHECK_EQUAL(c, 99);
 
 	short i;
-	using boost::spirit::short_;
-	BOOST_CHECK(!test::parse_attr("32769", short_, i));
-	BOOST_CHECK(!test::parse_attr("41234", short_, i));
+
+	BOOST_CHECK(test::parse_attr("32769", short_, i));
+	BOOST_CHECK_EQUAL(i, 3276);
+	BOOST_CHECK(test::parse_attr("41234", short_, i));
+	BOOST_CHECK_EQUAL(i, 4123);
 }
 
 BOOST_AUTO_TEST_CASE(int_11)

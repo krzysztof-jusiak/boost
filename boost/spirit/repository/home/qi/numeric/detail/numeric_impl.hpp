@@ -340,7 +340,7 @@ bool numeric_impl<Flags>::apply<
 			break;
 
 		if (!i(c, attr))
-			return false;
+			break;
 		else
 			iter = next;
 	}
@@ -386,7 +386,7 @@ bool numeric_impl<Flags>::apply<
 	Iterator iter(first), next(first);
 	extractor_value_type c;
 
-	if (!filt.reset(iter))
+	if (!filt.pre(iter))
 		return 0;
 
 	while (iter != last) {
@@ -405,8 +405,7 @@ bool numeric_impl<Flags>::apply<
 			iter = next;
 	}
 
-	filt(iter, last);
-	if (first != iter) {
+	if (first != iter && filt.post(iter)) {
 		first = iter;
 		return true;
 	} else 
@@ -950,9 +949,12 @@ bool numeric_impl<Flags>::apply<
 		return false;
 
 	if (spirit::qi::parse(first, last, sep)) {
-		if (next_frac::parse(first, last, attr, filt))
+		Attribute f_attr;
+		spirit::traits::assign_to(attr, f_attr);
+		if (next_frac::parse(first, last, f_attr, filt)) {
+			spirit::traits::assign_to(f_attr, attr);
 			return true;
-		else
+		} else
 			return has_int && !has_key<
 				flag_set, flag::no_trailing_dot
 			>::value;

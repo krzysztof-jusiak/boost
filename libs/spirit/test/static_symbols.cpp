@@ -49,39 +49,43 @@ typedef mpl::x11::map<
 > m1;
 
 template <typename T>
-struct nan_wrapper {
-	typedef T value_type;
-	static constexpr T const value = std::numeric_limits<T>::quiet_NaN();
+struct inf_value_wrapper {
+	typedef std::function<T (bool)> value_type;
+
+	virtual T operator()(bool neg)
+	{
+		return neg ? -std::numeric_limits<T>::infinity()
+			   : std::numeric_limits<T>::infinity();
+	}
 };
 
 template <typename T>
-constexpr T const nan_wrapper<T>::value;
+struct nan_value_wrapper {
+	typedef std::function<T (bool)> value_type;
 
-template <typename T>
-struct inf_wrapper {
-	typedef T value_type;
-	static constexpr T const value = std::numeric_limits<T>::infinity();
+	T operator()(bool neg)
+	{
+		return neg ? -std::numeric_limits<T>::quiet_NaN()
+			   : std::numeric_limits<T>::quiet_NaN();
+	}
 };
-
-template <typename T>
-constexpr T const inf_wrapper<T>::value;
 
 typedef mpl::x11::map<
 	mpl::x11::pair<
 		mpl::x11::list_c<char, 'N', 'a', 'N'>,
-		nan_wrapper<double>
+		nan_value_wrapper<double>
 	>,
 	mpl::x11::pair<
 		mpl::x11::list_c<char, 'i', 'n', 'f'>,
-		inf_wrapper<double>
+		inf_value_wrapper<double>
 	>,
 	mpl::x11::pair<
 		mpl::x11::list_c<char, 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y'>,
-		inf_wrapper<double>
+		inf_value_wrapper<double>
 	>,
 	mpl::x11::pair<
 		mpl::x11::list_c<char, 'n', 'a', 'n', '(', '.', '.', '.', ')'>,
-		nan_wrapper<double>
+		nan_value_wrapper<double>
 	>
 > m2;
 
@@ -116,19 +120,19 @@ BOOST_AUTO_TEST_CASE(static_symbols_0)
 BOOST_AUTO_TEST_CASE(static_symbols_1)
 {
 	static_symbols<test::m2> sym;
-	double d;
+	std::function<double (bool)> d;
 
 	BOOST_CHECK((test::parse_attr("NaN", sym, d)));
-	BOOST_CHECK_EQUAL(math::fpclassify(d), FP_NAN);
+	BOOST_CHECK_EQUAL(math::fpclassify(d(false)), FP_NAN);
 
 	BOOST_CHECK((test::parse_attr("inf", sym, d)));
-	BOOST_CHECK_EQUAL(math::fpclassify(d), FP_INFINITE);
+	BOOST_CHECK_EQUAL(math::fpclassify(d(false)), FP_INFINITE);
 
 	BOOST_CHECK((test::parse_attr("nan(...)", sym, d)));
-	BOOST_CHECK_EQUAL(math::fpclassify(d), FP_NAN);
+	BOOST_CHECK_EQUAL(math::fpclassify(d(false)), FP_NAN);
 
 	BOOST_CHECK((test::parse_attr("infinity", sym, d)));
-	BOOST_CHECK_EQUAL(math::fpclassify(d), FP_INFINITE);
+	BOOST_CHECK_EQUAL(math::fpclassify(d(false)), FP_INFINITE);
 }
 
 }}}}

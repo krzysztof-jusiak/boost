@@ -53,21 +53,39 @@ namespace boost { namespace spirit { namespace repository { namespace qi {
 namespace test {
 
 struct ts_filter {
-	boost::any last_good;
+	boost::any last_pos;
 	bool first_group;
+	int span = 0;
 
 	template <typename Iterator>
-	bool reset(Iterator const &iter)
+	bool pre(Iterator const &iter)
 	{
-		last_good = iter;
-		first_group = true;
+		last_pos = iter;
+		if (!span)
+			first_group = true;
 		return true;
+	}
+
+	template <typename Iterator>
+	bool post(Iterator &iter)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_pos));
+		auto count(iter - last_iter);
+
+		if (!span) {
+			++span;
+			return (first_group && (count <= 3)) || (count == 3);
+		} else if (span == 1) {
+			++span;
+			return (count > 0) && (count <= 3);
+		} else
+			return false;
 	}
 
 	template <typename Iterator>
 	bool operator()(Iterator &first, Iterator const &last)
 	{
-		auto last_iter(boost::any_cast<Iterator>(last_good));
+		auto last_iter(boost::any_cast<Iterator>(last_pos));
 		auto count(first - last_iter);
 
 		switch (count) {
@@ -75,20 +93,19 @@ struct ts_filter {
 			return false;
 		case 1:
 		case 2:
-			if (!first_group) {
-				first = last_iter;
+			if (!first_group)
 				return false;
-			}
+
 			first_group = false;
 		case 3:
 			if (*first == ',') {
-				last_iter += count -1;
-				last_good = last_iter;
 				++first;
+				last_pos = first;
 				return true;
-			}
+			} else
+				return false;
 		default:
-			first = last_iter;
+			span = 2;
 			return false;
 		}
 	}
@@ -508,9 +525,21 @@ BOOST_AUTO_TEST_CASE(real2_8)
 	BOOST_CHECK(test::parse_attr("1,234,567.89", ts_real, d));
 	BOOST_CHECK_EQUAL(d, 1234567.89);
 
+	BOOST_CHECK(test::parse("1,234,567.890,12", ts_real));
+	BOOST_CHECK(test::parse_attr("1,234,567.890,12", ts_real, d));
+	BOOST_CHECK_EQUAL(d, 1234567.89012);
+
+	BOOST_CHECK(test::parse_attr("1,234,567.89012", ts_real, d));
+	BOOST_CHECK_EQUAL(d, 1234567.0);
+	
+	BOOST_CHECK(test::parse("1,234,567.8,9012", ts_real));
+	BOOST_CHECK_EQUAL(d, 1234567.0);
 	BOOST_CHECK(!test::parse("1234,567,890", ts_real));
 	BOOST_CHECK(!test::parse("1,234,5678,9", ts_real));
-	BOOST_CHECK(!test::parse("1,234,567.89e6", ts_real));
+
+	BOOST_CHECK(test::parse_attr("1,234,567.89e6", ts_real, d));
+	BOOST_CHECK_EQUAL(d, 1234567.89);
+
 	BOOST_CHECK(!test::parse("1,66", ts_real));
 }
 

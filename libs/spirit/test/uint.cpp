@@ -41,43 +41,48 @@ char const *max_hex = "FFFFFFFF";
 char const *hex_overflow = "100000000";
 
 struct ts_filter {
-	boost::any last_good;
+	boost::any last_pos;
 	bool first_group;
 
 	template <typename Iterator>
-	bool reset(Iterator const &cur)
+	bool pre(Iterator const &iter)
 	{
-		last_good = cur;
+		last_pos = iter;
 		first_group = true;
 		return true;
 	}
 
 	template <typename Iterator>
+	bool post(Iterator &iter)
+	{
+		auto last_iter(boost::any_cast<Iterator>(last_pos));
+		auto count(iter - last_iter);
+
+		return (first_group && (count <= 3)) || (count == 3);
+	}
+
+	template <typename Iterator>
 	bool operator()(Iterator &first, Iterator const &last)
 	{
-		auto last_iter(boost::any_cast<Iterator>(last_good));
+		auto last_iter(boost::any_cast<Iterator>(last_pos));
 		auto count(first - last_iter);
-		printf("xx %ld %s %s\n", count, first, last_iter);
+
 		switch (count) {
 		case 0:
 			return false;
 		case 1:
 		case 2:
-		case 3:
-			if (!first_group) {
-				first = last_iter;
+			if (!first_group)
 				return false;
-			}
+
 			first_group = false;
-		case 5:
+		case 3:
 			if (*first == ',') {
-				last_iter += count - 1;
-				last_good = last_iter;
 				++first;
+				last_pos = first;
 				return true;
 			}
 		default:
-			first = last_iter;
 			return false;
 		}
 	}
@@ -97,8 +102,9 @@ BOOST_AUTO_TEST_CASE(uint_0)
 	BOOST_CHECK(test::parse_attr(test::max_unsigned, uint_, u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(test::unsigned_overflow, uint_));
-	BOOST_CHECK(!test::parse_attr(test::unsigned_overflow, uint_, u));
+	BOOST_CHECK(test::parse(test::unsigned_overflow, uint_));
+	BOOST_CHECK(test::parse_attr(test::unsigned_overflow, uint_, u));
+	BOOST_CHECK_EQUAL(u, UINT_MAX / 10);
 }
 
 BOOST_AUTO_TEST_CASE(uint_1)
@@ -113,8 +119,9 @@ BOOST_AUTO_TEST_CASE(uint_1)
 	BOOST_CHECK(test::parse_attr(test::max_binary, bin, u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(test::binary_overflow, bin));
-	BOOST_CHECK(!test::parse_attr(test::binary_overflow, bin, u));
+	BOOST_CHECK(test::parse(test::binary_overflow, bin));
+	BOOST_CHECK(test::parse_attr(test::binary_overflow, bin, u));
+	BOOST_CHECK_EQUAL(u, 0b10000000000000000000000000000000);
 }
 
 BOOST_AUTO_TEST_CASE(uint_2)
@@ -129,8 +136,9 @@ BOOST_AUTO_TEST_CASE(uint_2)
 	BOOST_CHECK(test::parse_attr(test::max_octal, oct, u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(test::octal_overflow, oct));
-	BOOST_CHECK(!test::parse_attr(test::octal_overflow, oct, u));
+	BOOST_CHECK(test::parse(test::octal_overflow, oct));
+	BOOST_CHECK(test::parse_attr(test::octal_overflow, oct, u));
+	BOOST_CHECK_EQUAL(u, 010000000000);
 }
 
 BOOST_AUTO_TEST_CASE(uint_3)
@@ -149,8 +157,9 @@ BOOST_AUTO_TEST_CASE(uint_3)
 	BOOST_CHECK(test::parse_attr(test::max_hex, hex, u));
 	BOOST_CHECK_EQUAL(u, UINT_MAX);
 
-	BOOST_CHECK(!test::parse(test::hex_overflow, hex));
-	BOOST_CHECK(!test::parse_attr(test::hex_overflow, hex, u));
+	BOOST_CHECK(test::parse(test::hex_overflow, hex));
+	BOOST_CHECK(test::parse_attr(test::hex_overflow, hex, u));
+	BOOST_CHECK_EQUAL(u, 0x10000000);
 }
 
 BOOST_AUTO_TEST_CASE(uint_4)
@@ -251,23 +260,32 @@ BOOST_AUTO_TEST_CASE(uint_6)
 	uint8_t u8;
 	numeric_parser<uint8_t, uint_policy<uint8_t>> uint8_;
 
-	BOOST_CHECK(!test::parse_attr("999", uint8_, u8));
-	BOOST_CHECK(!test::parse_attr("256", uint8_, u8));
+	BOOST_CHECK(test::parse_attr("999", uint8_, u8));
+	BOOST_CHECK_EQUAL(u8, 99);
+	BOOST_CHECK(test::parse_attr("256", uint8_, u8));
+	BOOST_CHECK_EQUAL(u8, 25);
 	BOOST_CHECK(test::parse_attr("255", uint8_, u8));
+	BOOST_CHECK_EQUAL(u8, 255);
 
 	uint16_t u16;
 	numeric_parser<uint16_t, uint_policy<uint16_t>> uint16_;
 
-	BOOST_CHECK(!test::parse_attr("99999", uint16_, u16));
-	BOOST_CHECK(!test::parse_attr("65536", uint16_, u16));
+	BOOST_CHECK(test::parse_attr("99999", uint16_, u16));
+	BOOST_CHECK_EQUAL(u16, 9999);
+	BOOST_CHECK(test::parse_attr("65536", uint16_, u16));
+	BOOST_CHECK_EQUAL(u16, 6553);
 	BOOST_CHECK(test::parse_attr("65535", uint16_, u16));
+	BOOST_CHECK_EQUAL(u16, 65535);
 
 	uint32_t u32;
 	numeric_parser<uint32_t, uint_policy<uint32_t>> uint32_;
 
-	BOOST_CHECK(!test::parse_attr("9999999999", uint32_, u32));
-	BOOST_CHECK(!test::parse_attr("4294967296", uint32_, u32));
+	BOOST_CHECK(test::parse_attr("9999999999", uint32_, u32));
+	BOOST_CHECK_EQUAL(u32, 999999999);
+	BOOST_CHECK(test::parse_attr("4294967296", uint32_, u32));
+	BOOST_CHECK_EQUAL(u32, 429496729);
 	BOOST_CHECK(test::parse_attr("4294967295", uint32_, u32));
+	BOOST_CHECK_EQUAL(u32, 4294967295);
 }
 
 
@@ -394,10 +412,9 @@ BOOST_AUTO_TEST_CASE(uint_14)
 	BOOST_CHECK_EQUAL(u, 12345678900ULL);
 	BOOST_CHECK(test::parse_attr("123,456,789,000", uint_ts, u));
 	BOOST_CHECK_EQUAL(u, 123456789000ULL);
-	BOOST_CHECK(!test::parse("1000,234,567,890", uint_ts));
-	printf("-----\n");
-	BOOST_CHECK(!test::parse("1,234,56,890", uint_ts));
-	BOOST_CHECK(!test::parse("1,66", uint_ts));
+	BOOST_CHECK(!test::parse_attr("1000,234,567,890", uint_ts, u));
+	BOOST_CHECK(!test::parse_attr("1,234,56,890", uint_ts, u));
+	BOOST_CHECK(!test::parse_attr("1,66", uint_ts, u));
 }
 
 #if 0

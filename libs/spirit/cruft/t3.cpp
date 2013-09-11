@@ -20,7 +20,9 @@ int main(int argc, char **argv)
 #else
 	constexpr long radix = 100000000L;
 #endif
-
+	char const *xs = "4294967296";
+	unsigned int xi = strtoul(xs, 0, 10);
+	printf("-- %u\n", xi);
 	std::vector<long> u({100 * (radix / 1000)});
 	//std::vector<long> u({
 	//	0L, 0L, 1562500L, 83404541L, 70211815L, 23125782L, 55511151L
