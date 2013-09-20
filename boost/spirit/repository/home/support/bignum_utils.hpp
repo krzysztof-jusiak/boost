@@ -95,45 +95,24 @@ typename std::enable_if<
 	};
 
 	unsigned long y[4];
-	unsigned long c(0);
 
-	decltype(prod) acc(x[0]);
-	acc *= m[0];
-	y[0] = acc;
-	c = acc >> word_shift;
+	decltype(prod) w0(x[0]);
+	w0 *= m[0];
+	decltype(prod) w1(x[0] < x[1] ? x[1] - x[0] : x[0] - x[1]);
+	w1 *= x[0] < x[1] ? m[0] - m[1] : m[1] - m[0];
+	decltype(prod) w2(x[1]);
+	w2 *= m[1];
 
-	acc = x[1];
-	acc *= m[0];
-	acc += c;
-	y[1] = acc;
-	y[2] = acc >> word_shift;
+	w1 += w2 + w0;
 
-	acc = x[0];
-	acc *= m[1];
-	acc += y[1];
-	y[1] = acc;
-	c = acc >> word_shift;
+	y[0] = w0;
+	w1 += w0 >> word_shift;
 
-	acc = x[1];
-	acc *= m[1];
-	acc += y[2];
-	acc += c;
-	y[2] = acc;
-	y[3] = acc >> word_shift;
+	y[1] = w1;
+	w2 += w1 >> word_shift;
 
-	acc = y[0];
-	acc += x[0];
-	y[0] = acc;
-	acc >>= word_shift;
-	acc += y[1];
-	acc += x[1];
-	y[1] = acc;
-	acc >>= word_shift;
-	acc += y[2];
-	y[2] = acc;
-	acc >>= word_shift;
-	acc += y[3];
-	y[3] = acc;
+	y[2] = w2;
+	y[3] = w2 >> word_shift;
 
 	std::pair<unsigned long, unsigned long> rv;
 
@@ -144,10 +123,10 @@ typename std::enable_if<
 	} else
 		rv.second = y[3] >> subword_shift;
 
-	acc = rv.second;
-	acc *= Radix;
-	acc = prod - acc;
-	rv.first = static_cast<unsigned long>(acc);
+	w0 = rv.second;
+	w0 *= Radix;
+	w0 = prod - w0;
+	rv.first = static_cast<unsigned long>(w0);
 
 	return rv;
 }
