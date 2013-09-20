@@ -46,3 +46,31 @@ less convenient than directly exposed placeholder template, because there are
 too many incompatible definitions of those in various namespaces (std
 placeholders, boost placeholders and whatever other placeholders defined by
 arbitrary libraries).
+
+boost::spirit::repository
+-------------------------
+
+Few alternative parsers for use with Spirit v2 (in c++11 mode) are available
+hereby.
+
+The most important is an alternative, fully compile-time parametrizable
+numeric_parser<> and its type specialized instances (uint_, int_, double_,
+etc.). Unlike the original implementation, this parser supports different
+charsets and numeric systems (thus, it can be used for anything numeric -
+binary extraction to complex floating point number formats).
+
+Several "static" (that is, compile-time configurable) variaties of standard
+Spirit v2 parsers are provided for the sake of the above (static_char<>,
+static_char_range<>, static_string<>, static_variant<> and static_symbols<>).
+These parsers rely on type to value conversion algorithms provided by the
+mpl::x11 library described above.
+
+Additionally, a precise decimal string to floating point conversion algorithm
+is bundled with numeric_parser<> and enabled by the default policy of float_,
+double_ and long_double parsers (there's an impresise conversion policy
+provided as well, matching the speed of stock Spirit v2 parser, which many
+people value more than precision). Unfortunately, the bundled conversion
+algorithm is rather slow (around 6 - 10 times slower that glibc's strtod
+function on a modern Intel CPU). On the bright side, it is implemented purely
+in terms of integer arithmetic and follows a rather original approach. Whether
+it can be further optimized remains to be seen.
