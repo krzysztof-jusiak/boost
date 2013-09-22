@@ -40,11 +40,19 @@ struct make_static_symbols {
 		>::type::value_type
 	> result_type;
 
-	struct apply {
-		result_type &sym;
+	result_type operator()(unused_type, unused_type) const
+        {
+		return p;
+	}
 
-		apply(result_type &sym_) : sym(sym_)
-		{}
+private:
+	struct make_p {
+		result_type p;
+
+		make_p()
+		{
+			mpl::x11::for_each<Map>(*this);
+		}
 
 		template <typename P>
 		void operator()(P px)
@@ -55,17 +63,16 @@ struct make_static_symbols {
 				typename mpl::x11::first<P>::type
 			>(str_key);
 
-			sym.add(str_key, val);
+			p.add(str_key, val);
 		}
 	};
 
-	result_type operator()(unused_type, unused_type) const
-        {
-		result_type rv;
-		mpl::x11::for_each<Map>(apply(rv));
-		return rv;
-	}
+	static result_type const p;
 };
+
+template <typename Map, typename CharType>
+typename make_static_symbols<Map, CharType>::result_type const
+make_static_symbols<Map, CharType>::p = make_static_symbols::make_p().p;
 
 }
 }

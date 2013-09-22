@@ -37,10 +37,25 @@ struct make_static_string {
 
 	result_type operator()(unused_type, unused_type) const
         {
-		std::basic_string<char_type> str;
-		return result_type(mpl::x11::make_value<Sequence>(str));
+		return p;
 	}
+
+private:
+	struct make_p {
+		std::basic_string<char_type> str;
+		result_type p;
+
+		make_p()
+		: p(mpl::x11::make_value<Sequence>(str))
+		{}
+	};
+
+	static result_type const p;
 };
+
+template <typename Sequence, typename CharEncoding>
+typename make_static_string<Sequence, CharEncoding>::result_type const
+make_static_string<Sequence, CharEncoding>::p = make_static_string::make_p().p;
 
 }
 }

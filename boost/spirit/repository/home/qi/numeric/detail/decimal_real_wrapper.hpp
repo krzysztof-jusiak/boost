@@ -230,7 +230,7 @@ void print(char const *fmt, Tr const &r)
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
-	helper h(8);
+	helper h(64);
 
 	for (auto iter(mantissa.crbegin()); iter != mantissa.crend(); ++iter) {
 		if (*iter) {

@@ -42,9 +42,16 @@ struct make_static_char {
 
 	result_type operator()(unused_type, unused_type) const
         {
-		return result_type(CharValue::value);
+		return p;
 	}
+
+private:
+	static result_type const p;
 };
+
+template <typename CharValue, typename CharEncoding>
+typename make_static_char<CharValue, CharEncoding>::result_type const
+make_static_char<CharValue, CharEncoding>::p = CharValue::value;
 
 template <
 	typename CharFrom, typename CharTo,
@@ -64,9 +71,25 @@ struct make_static_char_range {
 
 	result_type operator()(unused_type, unused_type) const
         {
-		return result_type(CharFrom::value, CharTo::value);
+		return p;
 	}
+
+private:
+	struct make_p {
+		result_type p;
+
+		make_p()
+		: p(CharFrom::value, CharTo::value)
+		{}
+	};
+
+	static result_type const p;
 };
+
+template <typename CharFrom, typename CharTo, typename CharEncoding>
+typename make_static_char_range<CharFrom, CharTo, CharEncoding>::result_type const
+make_static_char_range<CharFrom, CharTo, CharEncoding>::p
+= make_static_char_range::make_p().p;
 
 }
 }
