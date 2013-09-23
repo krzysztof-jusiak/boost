@@ -29,6 +29,7 @@
 
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/reverse.hpp>
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/range/algorithm/reverse_copy.hpp>
 #include <boost/range/algorithm_ext/for_each.hpp>
 #include <boost/range/algorithm/lexicographical_compare.hpp>
@@ -48,31 +49,34 @@ struct decimal_real_wrapper {
 
 	constexpr static int mantissa_bits = std::numeric_limits<T>::digits;
 
-	/* Leave some room for carry. */
-	constexpr static int word_bits
-	= std::numeric_limits<long>::digits - 3;
-
-	constexpr static int bigint_words
-	= (mantissa_bits + word_bits + 1) / word_bits;
-
-	typedef std::array<long, bigint_words> dst_num_type;
-
-	/* Least significant value bit in the bigint expansion. */
-	constexpr static unsigned long sig_bit_mask
-	= 1UL << (bigint_words * word_bits - mantissa_bits);
-
 	constexpr static long base_src_radix = 10L;
 
 #ifdef __LP64__
 	constexpr static long src_num_radix = 100000000000000000L;
+	constexpr static int word_bits = 57;
 #else
 	constexpr static long src_num_radix = 100000000L;
+	constexpr static int word_bits = 27;
 #endif
 
-	static_assert(
-		(1L << word_bits) > src_num_radix,
-		"Input numeric base must be smaller than target bit width."
-	);
+/* clang 3.4 required, gcc works
+	constexpr static int word_bits
+	= std::numeric_limits<long>::digits
+	  - __builtin_clzl(src_num_radix) + 1;
+*/
+
+	constexpr static int bigint_words
+	= (mantissa_bits + 1) % word_bits
+	  ? (mantissa_bits + word_bits + 1) / word_bits
+	  : (mantissa_bits + 1) / word_bits;
+
+	typedef std::array<long, bigint_words> dst_num_type;
+
+	/* Least significant value bit in the bigint expansion. */
+	constexpr static unsigned long sig_bit_pos
+	= bigint_words * word_bits - mantissa_bits;
+	constexpr static unsigned long sig_bit_mask
+	= 1UL << sig_bit_pos;
 
 	src_num_type mantissa;
 	bool sign;
@@ -91,7 +95,8 @@ struct decimal_real_wrapper {
 
 			out.back_scale /= base_src_radix;
 			out.mantissa.back()
-			+= out.back_scale * ascii_digit_value<base_src_radix>(in);
+			+= out.back_scale
+			   * ascii_digit_value<base_src_radix>(in);
 
 			if (out.back_scale == 1UL) {
 				out.mantissa.push_back(0);
@@ -253,7 +258,7 @@ decimal_real_wrapper<T>::operator T() const
 	dst_num_type high, mid, low;
 	bool do_search(true);
 
-	if (!h.get_dst_range(high, mid, low) || boost::range::equal(low, high)) {
+	if (!h.get_dst_range(high, mid, low)) {
 		auto tail(mid.back() & (sig_bit_mask - 1UL));
 		if (
 			tail == (sig_bit_mask >> 1)
@@ -262,7 +267,8 @@ decimal_real_wrapper<T>::operator T() const
 			mid.back() -= tail;
 
 		do_search = false;
-	}
+	} else if (boost::range::equal(low, high))
+		do_search = false;
 
 	while (do_search) {
 		average(mid, high, low);
@@ -507,25 +513,35 @@ void decimal_real_wrapper<T>::helper::src_to_dst_num_type(
 	dst_num_type &dst, src_num_type const &src
 )
 {
-	constexpr std::array<long, 2> const r = {{
-		(1L << word_bits) % src_num_radix,
-		(1L << word_bits) / src_num_radix
-	}};
-	if (&src != &sx)
-		sx.assign(src.cbegin(), src.cend());
+	constexpr static long r = (1L << word_bits) % src_num_radix;
+	static_assert(
+		((1L << word_bits) / src_num_radix) == 1L,
+		"Destination radix is not tight enough."
+	);
 
-	sy.resize(sx.size() + 2);
+	src_num_type::value_type kx, ky;
+	std::pair<
+		typename src_num_type::value_type,
+		typename src_num_type::value_type
+	> c(0, 0);
+	src_num_type::value_type acc[src.size()];
+	boost::iterator_range<src_num_type::value_type *> acc_src_r(
+		&acc[0], &acc[src.size()]
+	);
+
+	boost::range::copy(src, acc_src_r.begin());
 
 	for (auto &d: dst) {
-		bignum_mul<src_num_radix>(sy, sx, r);
-		d = sy.back();
-		sy.pop_back();
-		d *= src_num_radix;
-		d += sy.back();
-		sy.pop_back();
-		sx.swap(sy);
-		sy.push_back(0);
-		sy.push_back(0);
+		kx = 0;
+		for (auto &s: acc_src_r) {
+			ky = s;
+			c = repository::detail::bignum_mul_step<
+				src_num_radix
+			>(c.second + kx, s, r);
+			s = c.first;
+			kx = ky;
+		}
+		d = kx + c.second;
 	}
 }
 
@@ -535,25 +551,32 @@ void decimal_real_wrapper<T>::average(
 	dst_num_type const &low
 )
 {
-	typename dst_num_type::size_type pos(0);
 	typename dst_num_type::value_type c(0);
 
-	for (; pos < mid.size(); ++pos) {
-		mid[pos] = high[pos] + low[pos];
-		if (c)
-			mid[pos] += 1L << word_bits;
+	boost::range::transform(
+		low | boost::adaptors::reversed,
+		high | boost::adaptors::reversed,
+		mid.rbegin(), [&c](
+			typename dst_num_type::value_type x,
+			typename dst_num_type::value_type y
+		) -> typename dst_num_type::value_type {
+			c += x + y;
+			auto nc(c & ((1UL << word_bits) - 1UL));
+			c >>= word_bits;
+			return nc;
+		}
+	);
 
-		c = mid[pos] & 1L;
-		mid[pos] >>= 1;
-	}
-
-	c = 0;
-	for (--pos; pos; --pos) {
-		mid[pos] += c;
-		c = mid[pos] >> word_bits;
-		mid[pos] &= (1L << word_bits) - 1L;
-	}
-	mid[0] += c;
+	boost::range::transform(
+		mid, mid.begin(), [&c](
+			typename dst_num_type::value_type x
+		) -> typename dst_num_type::value_type {
+			auto nc((c & 1) << (word_bits - 1));
+			nc |= x >> 1;
+			c = x;
+			return nc;
+		}
+	);
 }
 
 template <typename T>

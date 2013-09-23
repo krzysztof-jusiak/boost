@@ -182,6 +182,30 @@ template <
 	*w_iter = c.second;
 }
 
+/* w is expected to have a "leading" zero location in the most significant
+ * (back()) position.
+ */
+template <
+	long Radix, typename InputOutputRange
+> void bignum_mul_si(
+	InputOutputRange &w, typename InputOutputRange::value_type v
+)
+{
+	if (!v) {
+		std::fill(w.begin(), w.end(), 0);
+		return;
+	}
+
+	std::pair<unsigned long, unsigned long> c(0, 0);
+	for (auto w_iter(w.begin()); w_iter != w.rbegin().base(); ++w_iter) {
+		c = detail::bignum_mul_step<Radix>(
+			c.second, *w_iter, v
+		);
+		*w_iter = c.first;
+	}
+	w.back() = c.second;
+}
+
 template <
 	long Radix, typename OutputRange, typename InputRangeU,
 	typename InputRangeV

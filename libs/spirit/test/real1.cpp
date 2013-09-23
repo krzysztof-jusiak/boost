@@ -291,6 +291,12 @@ BOOST_AUTO_TEST_CASE(real1_3)
 
 	BOOST_CHECK(test::parse_attr("220e58", double_, d));
 	BOOST_CHECK_EQUAL(d, 220e58);
+
+	BOOST_CHECK(test::parse_attr(".03272779e-48", double_, d));
+	BOOST_CHECK_EQUAL(d, .03272779e-48);
+
+	BOOST_CHECK(test::parse_attr("-79.498e-1", double_, d));
+	BOOST_CHECK_EQUAL(d, -79.498e-1);
 }
 
 }}}}

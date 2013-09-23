@@ -20,6 +20,13 @@ int main(int argc, char **argv)
 #else
 	constexpr long radix = 100000000L;
 #endif
+	constexpr static int word_bits =
+		std::numeric_limits<long>::digits
+		- __builtin_clzl(radix) + 1
+	;
+
+	printf("-- wb %d\n", word_bits);
+
 	std::vector<long> u({123 * (radix / 1000)});
 	//std::vector<long> u({
 	//	0L, 0L, 1562500L, 83404541L, 70211815L, 23125782L, 55511151L
@@ -41,7 +48,7 @@ int main(int argc, char **argv)
 	std::cout << '\n';
 	std::cout << "----------\n";
 	std::vector<long> out1(u.size() + 1);
-	bignum_mul_pow_2<radix>(out1, u, 29);
+	//bignum_mul_pow_2<radix>(out1, u, 29);
 	printf("out1: ");
 	for (auto v: out1)
 		std::cout << v << ' ';
