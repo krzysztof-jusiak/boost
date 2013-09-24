@@ -2,7 +2,7 @@
 
 double fmtstrtod(char const *s, char **sp);
 
-#define NUM -12.79e69
+#define NUM 8
 
 #define NUM_X(s) #s
 #define NUM_X1(s) NUM_X(s)

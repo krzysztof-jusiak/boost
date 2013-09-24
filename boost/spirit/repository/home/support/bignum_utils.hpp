@@ -56,6 +56,7 @@ typename std::enable_if<
 	unsigned long k, unsigned long u, unsigned long v
 )
 {
+
 	if (!(u && v))
 		return std::make_pair(k % Radix, k / Radix);
 
@@ -93,17 +94,19 @@ typename std::enable_if<
 		static_cast<unsigned long>(prod),
 		static_cast<unsigned long>(prod >> word_shift)
 	};
-
 	unsigned long y[4];
 
 	decltype(prod) w0(x[0]);
 	w0 *= m[0];
 	decltype(prod) w1(x[0] < x[1] ? x[1] - x[0] : x[0] - x[1]);
-	w1 *= x[0] < x[1] ? m[0] - m[1] : m[1] - m[0];
+	w1 *= m[0] < m[1] ? m[1] - m[0] : m[0] - m[1];
 	decltype(prod) w2(x[1]);
 	w2 *= m[1];
 
-	w1 += w2 + w0;
+	if ((x[0] < x[1]) != (m[0] < m[1]))
+		w1 += w2 + w0;
+	else
+		w1 = w2 + w0 - w1;
 
 	y[0] = w0;
 	w1 += w0 >> word_shift;
@@ -163,7 +166,6 @@ template <
 	typename InputRangeU::value_type v
 )
 {
-	
 	if (!v) {
 		std::fill(w.begin(), w.end(), 0);
 		return;

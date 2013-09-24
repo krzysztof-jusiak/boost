@@ -21,7 +21,6 @@
 #include <boost/spirit/repository/home/support/bignum_utils.hpp>
 #include <boost/spirit/repository/home/support/static_table.hpp>
 #include <boost/spirit/repository/home/support/detail/pow_2.hpp>
-#include <boost/spirit/repository/home/support/detail/pow_2m1.hpp>
 #include <boost/spirit/repository/home/support/detail/rec_pow_2.hpp>
 #include <boost/spirit/repository/home/qi/numeric/numeric_utils.hpp>
 
@@ -82,6 +81,7 @@ struct decimal_real_wrapper {
 	bool sign;
 	long back_scale;
 	int int_scale;
+	int frac_scale;
 	int exponent;
 
 	template <bool Negative = false>
@@ -93,17 +93,16 @@ struct decimal_real_wrapper {
 		{
 			out.sign = Negative;
 
-			out.back_scale /= base_src_radix;
-			out.mantissa.back()
-			+= out.back_scale
-			   * ascii_digit_value<base_src_radix>(in);
-
-			if (out.back_scale == 1UL) {
-				out.mantissa.push_back(0);
-				out.back_scale = src_num_radix;
+			auto d(ascii_digit_value<base_src_radix>(in));
+			if (!out.int_scale) {
+				if (!d) {
+					--out.frac_scale;
+					return true;
+				} else
+					out.int_scale = -1;
 			}
 
-			return true;
+			return out.append_digit(d);
 		}
 	};
 
@@ -114,11 +113,13 @@ struct decimal_real_wrapper {
 		template <typename CharType>
 		bool operator()(CharType in, wrapper_type &out)
 		{
+			out.sign = Negative;
+
 			auto d(ascii_digit_value<base_src_radix>(in));
 			if (!out.int_scale && !d)
 				return true;
 
-			auto rv(fraction_op<Negative>()(in, out));
+			auto rv(out.append_digit(d));
 			if (rv)
 				++out.int_scale;
 			return rv;
@@ -161,7 +162,7 @@ struct decimal_real_wrapper {
 	decimal_real_wrapper()
 	: mantissa(1, 0),
 	  back_scale(src_num_radix),
-	  int_scale(0), exponent(0)
+	  int_scale(0), frac_scale(0), exponent(0)
 	{}
 
 	operator T() const;
@@ -189,9 +190,7 @@ private:
 
 		void scale_down();
 		void scale_up();
-		void src_to_dst_num_type(
-			dst_num_type &dst, src_num_type const &src
-		);
+
 		int target_cmp(dst_num_type const &val);
 
 	private:
@@ -200,11 +199,16 @@ private:
 		src_num_type sz;
 	};
 
+	template <typename U>
+	bool append_digit(U d);
+
+	static void src_to_dst_num_type(
+		dst_num_type &dst, src_num_type const &src
+	);
 	static void average(
 		dst_num_type &mid, dst_num_type const &high,
 		dst_num_type const &low
 	);
-
 	static void normalize(dst_num_type &val);
 };
 
@@ -253,7 +257,7 @@ decimal_real_wrapper<T>::operator T() const
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	}
 
-	h.d_exp = int_scale;
+	h.d_exp = int_scale > 0 ? int_scale : frac_scale;
 	h.d_exp += exponent;
 	dst_num_type high, mid, low;
 	bool do_search(true);
@@ -316,6 +320,20 @@ decimal_real_wrapper<T>::operator T() const
 		std::ldexp(val, h.b_exp - word_bits * mid.size()),
 		sign ? T(-1) : T(1)
 	);
+}
+
+template <typename T>
+template <typename U>
+bool decimal_real_wrapper<T>::append_digit(U d)
+{
+	back_scale /= base_src_radix;
+	mantissa.back() += back_scale * d;
+
+	if (back_scale == 1L) {
+		mantissa.push_back(0);
+		back_scale = src_num_radix;
+	}
+	return true;
 }
 
 template <typename T>
@@ -451,21 +469,22 @@ void decimal_real_wrapper<T>::helper::scale_down()
 		long, int, decimal_real_wrapper<T>::src_num_radix
 	>> rec_pow_2_;
 
-	typedef static_table<repository::detail::pow_2m1<
-		long, int, decimal_real_wrapper<T>::src_num_radix
-	>> pow_2m1_;
+	typedef static_table<repository::detail::pow_2<
+		long, int, src_num_radix
+	>> pow_2_;
 
 	int d(d_exp);
 
-	if (d >= int(pow_2m1_::size()))
-		d = pow_2m1_::size() - 1;
+	if (d >= int(pow_2_::size()))
+		d = pow_2_::size() - 1;
 
-	b_exp += pow_2m1_::template get_meta<int>(d);
+	b_exp += pow_2_::template get_meta<int>(d);
 	d_exp -= d;
 
 	if (boost::range::lexicographical_compare(
-		pow_2m1_::get(d) | boost::adaptors::reversed,
-		m | boost::adaptors::reversed
+		pow_2_::get(d) | boost::adaptors::reversed,
+		m | boost::adaptors::reversed,
+		std::less_equal<typename src_num_type::value_type>()
 	))
 		++d_exp;
 
@@ -501,7 +520,6 @@ void decimal_real_wrapper<T>::helper::scale_up()
 		--d_exp;
 
 	auto v(pow_2_::get(d));
-	
 	sx.resize(m.size() + v.size());
 	bignum_mul<src_num_radix>(sx, m, v);
 	normalize(sx);
@@ -509,7 +527,7 @@ void decimal_real_wrapper<T>::helper::scale_up()
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::helper::src_to_dst_num_type(
+void decimal_real_wrapper<T>::src_to_dst_num_type(
 	dst_num_type &dst, src_num_type const &src
 )
 {

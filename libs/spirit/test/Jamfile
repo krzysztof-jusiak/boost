@@ -9,6 +9,7 @@ alias test_case : : : : <include>../../..
 run int.cpp : : test_case ;
 run real1.cpp : : test_case ;
 run real2.cpp : : test_case ;
+run real3.cpp : : test_case : <library>../../..//random ;
 run static_string.cpp : : test_case ;
 run static_symbols.cpp : : test_case ;
 run static_variant.cpp : : test_case ;
