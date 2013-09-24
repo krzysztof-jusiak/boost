@@ -191,7 +191,7 @@ private:
 		void scale_down();
 		void scale_up();
 
-		int target_cmp(dst_num_type const &val);
+
 
 	private:
 		src_num_type sx;
@@ -209,7 +209,7 @@ private:
 		dst_num_type &mid, dst_num_type const &high,
 		dst_num_type const &low
 	);
-	static void normalize(dst_num_type &val);
+	static int target_cmp(dst_num_type const &dst, src_num_type const &src);
 };
 
 template <typename T>
@@ -276,7 +276,7 @@ decimal_real_wrapper<T>::operator T() const
 
 	while (do_search) {
 		average(mid, high, low);
-		auto c(h.target_cmp(mid));
+		auto c(target_cmp(mid, h.m));
 
 		if (c > 0) {
 			boost::range::for_each(
@@ -307,7 +307,17 @@ decimal_real_wrapper<T>::operator T() const
 	mid.back() -= tail;
 	if (tail >= (sig_bit_mask >> 1)) {
 		mid.back() += sig_bit_mask;
-		normalize(mid);
+
+		typename dst_num_type::value_type c(0);
+		for (
+			auto iter(mid.end() - 1);
+			iter != (mid.begin()); --iter
+		) {
+			*iter += c;
+			c = (*iter) >> word_bits;
+			*iter &= (1UL << word_bits) - 1UL;
+		}
+		mid.front() += c;
 	}
 
 	T val(0);
@@ -543,15 +553,15 @@ void decimal_real_wrapper<T>::src_to_dst_num_type(
 		typename src_num_type::value_type
 	> c(0, 0);
 	src_num_type::value_type acc[src.size()];
-	boost::iterator_range<src_num_type::value_type *> acc_src_r(
+	boost::iterator_range<src_num_type::value_type *> acc_r(
 		&acc[0], &acc[src.size()]
 	);
 
-	boost::range::copy(src, acc_src_r.begin());
+	boost::range::copy(src, acc_r.begin());
 
 	for (auto &d: dst) {
 		kx = 0;
-		for (auto &s: acc_src_r) {
+		for (auto &s: acc_r) {
 			ky = s;
 			c = repository::detail::bignum_mul_step<
 				src_num_radix
@@ -585,16 +595,12 @@ void decimal_real_wrapper<T>::average(
 		}
 	);
 
-	boost::range::transform(
-		mid, mid.begin(), [&c](
-			typename dst_num_type::value_type x
-		) -> typename dst_num_type::value_type {
-			auto nc((c & 1) << (word_bits - 1));
-			nc |= x >> 1;
-			c = x;
-			return nc;
-		}
-	);
+	for (auto &d: mid) {
+		auto nc((c & 1) << (word_bits - 1));
+		nc |= d >> 1;
+		c = d;
+		d = nc;
+	}
 }
 
 template <typename T>
@@ -630,54 +636,58 @@ void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::normalize(dst_num_type &val)
+int decimal_real_wrapper<T>::target_cmp(
+	dst_num_type const &dst,
+	src_num_type const &src
+)
 {
-	typename dst_num_type::value_type c(0);
+	typename dst_num_type::value_type acc[dst.size()];
+	boost::iterator_range<typename dst_num_type::value_type *> acc_r(
+		&acc[0], &acc[dst.size()]
+	);
 
-	for (auto pos(val.size() - 1); pos > 0; --pos) {
-		val[pos] += c;
-		c = val[pos] >> word_bits;
-		val[pos] &= (1UL << word_bits) - 1UL;
-	}
+	boost::range::reverse_copy(dst, acc_r.begin());
 
-	val[0] += c;
-}
+	for (auto u: src | boost::adaptors::reversed) {
+		std::pair<
+			typename dst_num_type::value_type,
+			typename dst_num_type::value_type
+		> c(0, 0);
 
-template <typename T>
-int decimal_real_wrapper<T>::helper::target_cmp(dst_num_type const &val)
-{
-	sx.resize(val.size());
-	sy.resize(val.size() + 1);
-	boost::range::reverse_copy(val, sx.begin());
+		for (auto &v: acc_r) {
+			c = repository::detail::bignum_mul_step<
+				1L << word_bits
+			>(c.second, v, src_num_radix);
+			v = c.first;
+		}
 
-	for (auto d: m | boost::adaptors::reversed) {
-		bignum_mul_s<(1L << word_bits)>(sy, sx, src_num_radix);
-
-		if (d > sy.back())
+		if (u > c.second)
 			return 1;
-		else if (d < sy.back())
+		else if (u < c.second)
 			return -1;
-
-		sx.swap(sy);
-		sx.pop_back();
-		sy.push_back(0);
 	}
 
 	while (true) {
-		bignum_mul_s<(1L << word_bits)>(sy, sx, src_num_radix);
+		std::pair<
+			typename dst_num_type::value_type,
+			typename dst_num_type::value_type
+		> c(0, 0);
 
-		if (sy.back() > 0) {
+		for (auto &v: acc_r) {
+			c = repository::detail::bignum_mul_step<
+				1L << word_bits
+			>(c.second, v, src_num_radix);
+			v = c.first;
+		}
+
+		if (c.second > 0) {
 			return -1;
 		} else if (std::all_of(
-			sy.cbegin(), sy.cend(), [](
-				typename src_num_type::value_type v_
-			) -> bool { return !v_; }
+			acc_r.begin(), acc_r.end(), [](
+				typename src_num_type::value_type v
+			) -> bool { return !v; }
 		))
 			return 0;
-
-		sx.swap(sy);
-		sx.pop_back();
-		sy.push_back(0);
 	}
 }
 }
