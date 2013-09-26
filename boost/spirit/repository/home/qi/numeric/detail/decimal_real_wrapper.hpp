@@ -18,7 +18,6 @@
 #if !defined(SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815)
 #define SPIRIT_REPOSITORY_QI_REAL_WRAPPER_JUL_3_2013_1815
 
-#include <boost/spirit/repository/home/support/bignum_utils.hpp>
 #include <boost/spirit/repository/home/support/static_table.hpp>
 #include <boost/spirit/repository/home/support/detail/pow_2.hpp>
 #include <boost/spirit/repository/home/support/detail/rec_pow_2.hpp>
@@ -51,11 +50,22 @@ struct decimal_real_wrapper {
 
 	constexpr static word_type base_src_radix = 10L;
 
+	/* Reciprocal constants can be computed using the supplied utility
+	 * magic_div.cpp.
+	 */
 #ifdef __LP64__
 	constexpr static word_type src_num_radix = 100000000000000000L;
+	constexpr static unsigned long src_radix_rec[2] = {
+		0x9befeb9fad487c3UL, 0xb877aa3236a4b449UL
+	};
+	constexpr static int src_radix_rec_shift = 184;
 	constexpr static int word_bits = 57;
 #else
 	constexpr static word_type src_num_radix = 100000000L;
+	constexpr static unsigned long src_radix_rec[2] = {
+		0x8461cefdUL, 0xabcc7711UL
+	};
+	constexpr static int src_radix_rec_shift = 90;
 	constexpr static int word_bits = 27;
 #endif
 
@@ -77,13 +87,6 @@ struct decimal_real_wrapper {
 	= bigint_words * word_bits - mantissa_bits;
 	constexpr static unsigned long sig_bit_mask
 	= 1UL << sig_bit_pos;
-
-	src_num_type mantissa;
-	bool sign;
-	long back_scale;
-	int int_scale;
-	int frac_scale;
-	int exponent;
 
 	template <bool Negative = false>
 	struct fraction_op {
@@ -169,39 +172,26 @@ struct decimal_real_wrapper {
 	operator T() const;
 
 private:
-	struct helper {
-		src_num_type m;
-		int d_exp;
-		int b_exp;
-
-		helper(typename src_num_type::size_type new_cap)
-		: b_exp(0)
-		{
-			m.reserve(new_cap);
-			sx.reserve(new_cap);
-			sy.reserve(new_cap);
-		}
-
-		bool get_dst_range(
-			dst_num_type &high, dst_num_type &mid,
-			dst_num_type &low
-		);
-
-		static void normalize(src_num_type &s);
-
-		void scale_down();
-		void scale_up();
-
-
-
-	private:
-		src_num_type sx;
-		src_num_type sy;
-		src_num_type sz;
-	};
+	src_num_type mantissa;
+	bool sign;
+	long back_scale;
+	int int_scale;
+	int frac_scale;
+	int exponent;
 
 	template <typename U>
 	bool append_digit(U d);
+
+	bool get_dst_range(
+		dst_num_type &high, dst_num_type &mid,
+		dst_num_type &low, src_num_type &m, int &b_exp
+	) const;
+
+	static void scale_down(src_num_type &m, int &d_exp, int &b_exp);
+	static void scale_up(src_num_type &m, int &d_exp, int &b_exp);
+
+	static void normalize_be(src_num_type &m);
+	static void normalize_le(src_num_type &m);
 
 	template <typename SrcSeq>
 	static void src_to_dst_num_type(
@@ -211,14 +201,24 @@ private:
 		dst_num_type &mid, dst_num_type const &high,
 		dst_num_type const &low
 	);
-	static typename src_num_type::value_type target_cmp(
+	static word_type target_cmp(
 		dst_num_type const &dst, src_num_type const &src,
 		int &delta_offset
 	);
+	static std::pair<word_type, word_type> src_mul_step(
+		word_type c, word_type u, word_type v
+	);
+	static std::pair<word_type, word_type> dst_mul_step(
+		word_type c, word_type u, word_type v
+	);
+	static word_type src_div_step(unsigned long xl, unsigned long xh);
 };
 
 template <typename T>
 constexpr int decimal_real_wrapper<T>::word_bits;
+
+template <typename T>
+constexpr unsigned long decimal_real_wrapper<T>::src_radix_rec[2];
 
 template <typename Tr, bool Rev = true>
 void print(char const *fmt, Tr const &r)
@@ -244,30 +244,30 @@ void print(char const *fmt, Tr const &r)
 template <typename T>
 decimal_real_wrapper<T>::operator T() const
 {
-	helper h(64);
+	src_num_type m;
+	m.reserve(16);
 
 	for (auto iter(mantissa.crbegin()); iter != mantissa.crend(); ++iter) {
 		if (*iter) {
-			h.m.resize(iter.base() - mantissa.cbegin());
-			std::reverse_copy(
+			m.resize(iter.base() - mantissa.cbegin());
+			std::copy(
 				mantissa.cbegin(),
-				mantissa.cbegin() + h.m.size(),
-				h.m.begin()
+				mantissa.cbegin() + m.size(),
+				m.begin()
 			);
 			break;
 		}
 	}
 
-	if (h.m.empty()) {
+	if (m.empty()) {
 		return std::copysign(T(0), sign ? T(-1) : T(1));
 	}
 
-	h.d_exp = int_scale > 0 ? int_scale : frac_scale;
-	h.d_exp += exponent;
+	int b_exp(0);
 	dst_num_type high, mid, low;
 	bool do_search(true);
 
-	if (!h.get_dst_range(high, mid, low)) {
+	if (!get_dst_range(high, mid, low, m, b_exp)) {
 		auto tail(mid.back() & (sig_bit_mask - 1UL));
 		if (
 			tail == (sig_bit_mask >> 1)
@@ -282,13 +282,12 @@ decimal_real_wrapper<T>::operator T() const
 	while (do_search) {
 		average(mid, high, low);
 		int d_off(0);
-		auto c(target_cmp(mid, h.m, d_off));
+		auto c(target_cmp(mid, m, d_off));
 
 		if (c > 0) {
 			boost::range::for_each(
 				low, mid, [&do_search] (
-					typename dst_num_type::value_type &lv,
-					typename dst_num_type::value_type &mv
+					word_type &lv, word_type &mv
 				) {
 					do_search = do_search && (lv == mv);
 					lv = mv;
@@ -333,7 +332,7 @@ decimal_real_wrapper<T>::operator T() const
 	}
 
 	return std::copysign(
-		std::ldexp(val, h.b_exp - word_bits * mid.size()),
+		std::ldexp(val, b_exp - word_bits * mid.size()),
 		sign ? T(-1) : T(1)
 	);
 }
@@ -353,15 +352,21 @@ bool decimal_real_wrapper<T>::append_digit(U d)
 }
 
 template <typename T>
-bool decimal_real_wrapper<T>::helper::get_dst_range(
-	dst_num_type &high, dst_num_type &mid, dst_num_type &low
-)
+bool decimal_real_wrapper<T>::get_dst_range(
+	dst_num_type &high, dst_num_type &mid, dst_num_type &low,
+	src_num_type &m, int &b_exp
+) const
 {
+	int d_exp(int_scale > 0 ? int_scale : frac_scale);
+	d_exp += exponent;
+
 	while (d_exp > 0)
-		scale_down();
+		scale_down(m, d_exp, b_exp);
+
+	boost::range::reverse(m);
 
 	while (d_exp < 0 || m.back() < (src_num_radix / 2))
-		scale_up();
+		scale_up(m, d_exp, b_exp);
 
 	src_to_dst_num_type(mid, m);
 
@@ -371,10 +376,8 @@ bool decimal_real_wrapper<T>::helper::get_dst_range(
 	if (!delta)
 		return false;
 
-	typename src_num_type::value_type mx_[m.size()];
-	boost::iterator_range<typename src_num_type::value_type *> mx(
-		&mx_[0], &mx_[m.size()]
-	);
+	word_type mx_[m.size()];
+	boost::iterator_range<word_type *> mx(&mx_[0], &mx_[m.size()]);
 
 	boost::range::copy(m, mx.begin());
 	if (delta_off >= mx.size()) {
@@ -410,7 +413,9 @@ bool decimal_real_wrapper<T>::helper::get_dst_range(
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::helper::scale_down()
+void decimal_real_wrapper<T>::scale_down(
+	src_num_type &m, int &d_exp, int &b_exp
+)
 {
 	typedef static_table<repository::detail::rec_pow_2<
 		long, int, decimal_real_wrapper<T>::src_num_radix
@@ -430,28 +435,41 @@ void decimal_real_wrapper<T>::helper::scale_down()
 
 	if (boost::range::lexicographical_compare(
 		pow_2_::get(d) | boost::adaptors::reversed,
-		m | boost::adaptors::reversed,
-		std::less_equal<typename src_num_type::value_type>()
+		m, std::less_equal<word_type>()
 	))
 		++d_exp;
 
 	auto v(rec_pow_2_::get(d));
-	sx.resize(m.size() + v.size());
-	bignum_mul<src_num_radix>(sx, m, v);
-	normalize(sx);
-	m.swap(sx);
+
+#if defined(__LP64__)
+	unsigned __int128 acc(0);
+#else
+	unsigned long long acc(0);
+#endif
+
+	m.resize(m.size() + v.size() + 1, 0);
+	auto order(rec_pow_2_::template get_meta<int>(d));
+
+	for (auto &s: m) {
+		acc *= src_num_radix;
+		acc += s;
+		s = static_cast<word_type>(acc >> order);
+		acc -= (acc >> order) << order;
+	}
+	normalize_be(m);
+	//printf("=do_m= "); print<src_num_type, false>("%ld", m);
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::helper::scale_up()
+void decimal_real_wrapper<T>::scale_up(
+	src_num_type &m, int &d_exp, int &b_exp
+)
 {
 	typedef static_table<repository::detail::rec_pow_2<
 		long, int, src_num_radix
 	>> rec_pow_2_;
 
-	typedef static_table<repository::detail::pow_2<
-		long, int, src_num_radix
-	>> pow_2_;
+	constexpr int const word_shift(sizeof(unsigned long) * 8);
 
 	int d(-d_exp);
 	if (d >= int(rec_pow_2_::size()))
@@ -466,11 +484,28 @@ void decimal_real_wrapper<T>::helper::scale_up()
 	))
 		--d_exp;
 
-	auto v(pow_2_::get(d));
-	sx.resize(m.size() + v.size());
-	bignum_mul<src_num_radix>(sx, m, v);
-	normalize(sx);
-	m.swap(sx);
+#if defined(__LP64__)
+	unsigned __int128 acc(0);
+#else
+	unsigned long long acc(0);
+#endif
+
+	m.push_back(0);
+	auto order(rec_pow_2_::template get_meta<int>(d));
+	word_type c(0);
+	for (auto &s: m) {
+		acc = s;
+		acc <<= order;
+		acc += c;
+		c = src_div_step(
+			static_cast<word_type>(acc),
+			static_cast<word_type>(acc >> word_shift)
+		);
+		decltype(acc) p(c);
+		s = static_cast<word_type>(acc - (p * src_num_radix));
+	}
+	normalize_le(m);
+	//printf("=up_m= "); print<src_num_type>("%ld", m);
 }
 
 template <typename T>
@@ -499,9 +534,7 @@ void decimal_real_wrapper<T>::src_to_dst_num_type(
 		kx = 0;
 		for (auto &s: acc_r) {
 			ky = s;
-			c = repository::detail::bignum_mul_step<
-				src_num_radix
-			>(c.second + kx, s, r);
+			c = src_mul_step(c.second + kx, s, r);
 			s = c.first;
 			kx = ky;
 		}
@@ -540,15 +573,18 @@ void decimal_real_wrapper<T>::average(
 }
 
 template <typename T>
-void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
+void decimal_real_wrapper<T>::normalize_le(src_num_type &m)
 {
+	while (!m.back())
+		m.pop_back();
+
 	if (src_num_radix
-	    < (std::numeric_limits<typename src_num_type::value_type>::max()
+	    < (std::numeric_limits<word_type>::max()
 	       / base_src_radix / 2)
 	) {
-		while (s.back() < (src_num_radix / base_src_radix)) {
-			typename src_num_type::value_type c(0);
-			for (auto &d : s) {
+		while (m.back() < (src_num_radix / base_src_radix)) {
+			word_type c(0);
+			for (auto &d : m) {
 				d *= base_src_radix;
 				d += c;
 				c = d / src_num_radix;
@@ -556,15 +592,10 @@ void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 			}
 		}
 	} else {
-		while (s.back() < (src_num_radix / base_src_radix)) {
-			std::pair<
-				typename src_num_type::value_type,
-				typename src_num_type::value_type
-			> c(0, 0);
-			for (auto &d : s) {
-				c = repository::detail::bignum_mul_step<
-					src_num_radix
-				>(c.second, d, base_src_radix);
+		while (m.back() < (src_num_radix / base_src_radix)) {
+			std::pair<word_type, word_type> c(0, 0);
+			for (auto &d : m) {
+				c = src_mul_step(c.second, d, base_src_radix);
 				d = c.first;
 			}
 		}
@@ -572,27 +603,59 @@ void decimal_real_wrapper<T>::helper::normalize(src_num_type &s)
 }
 
 template <typename T>
+void decimal_real_wrapper<T>::normalize_be(src_num_type &m)
+{
+	auto m_b(m.begin());
+	while (!(*m_b))
+		++m_b;
+
+	if (m_b != m.begin())
+		m.erase(m.begin(), m_b);
+
+	if (src_num_radix
+	    < (std::numeric_limits<word_type>::max()
+	       / base_src_radix / 2)
+	) {
+		while (m.front() < (src_num_radix / base_src_radix)) {
+			word_type c(0);
+			for (auto &d : m | boost::adaptors::reversed) {
+				d *= base_src_radix;
+				d += c;
+				c = d / src_num_radix;
+				d %= src_num_radix;
+			}
+		}
+	} else {
+		while (m.front() < (src_num_radix / base_src_radix)) {
+			std::pair<word_type, word_type> c(0, 0);
+			for (auto &d : m | boost::adaptors::reversed) {
+				c = src_mul_step(c.second, d, base_src_radix);
+				d = c.first;
+			}
+		}
+	}
+
+	while (!m.back())
+		m.pop_back();
+}
+
+template <typename T>
 auto decimal_real_wrapper<T>::target_cmp(
 	dst_num_type const &dst, src_num_type const &src, int &delta_offset
-) -> typename src_num_type::value_type
+) -> word_type
 {
-	typename dst_num_type::value_type acc[dst.size()];
-	boost::iterator_range<typename dst_num_type::value_type *> acc_r(
+	word_type acc[dst.size()];
+	boost::iterator_range<word_type *> acc_r(
 		&acc[0], &acc[dst.size()]
 	);
 
 	boost::range::reverse_copy(dst, acc_r.begin());
 
 	for (auto u: src | boost::adaptors::reversed) {
-		std::pair<
-			typename dst_num_type::value_type,
-			typename dst_num_type::value_type
-		> c(0, 0);
+		std::pair<word_type, word_type> c(0, 0);
 
 		for (auto &v: acc_r) {
-			c = repository::detail::bignum_mul_step<
-				1L << word_bits
-			>(c.second, v, src_num_radix);
+			c = dst_mul_step(c.second, v, src_num_radix);
 			v = c.first;
 		}
 
@@ -603,15 +666,10 @@ auto decimal_real_wrapper<T>::target_cmp(
 	}
 
 	while (true) {
-		std::pair<
-			typename dst_num_type::value_type,
-			typename dst_num_type::value_type
-		> c(0, 0);
+		std::pair<word_type, word_type> c(0, 0);
 
 		for (auto &v: acc_r) {
-			c = repository::detail::bignum_mul_step<
-				1L << word_bits
-			>(c.second, v, src_num_radix);
+			c = dst_mul_step(c.second, v, src_num_radix);
 			v = c.first;
 		}
 
@@ -627,6 +685,116 @@ auto decimal_real_wrapper<T>::target_cmp(
 		++delta_offset;
 	}
 }
+
+template <typename T>
+auto decimal_real_wrapper<T>::src_mul_step(
+	word_type c, word_type u, word_type v
+) -> std::pair<word_type, word_type> {
+	if (!(u && v))
+		return std::make_pair(c % src_num_radix, c / src_num_radix);
+
+	 constexpr int const word_shift(sizeof(unsigned long) * 8);
+
+#if defined(__LP64__)
+	unsigned __int128 prod(u);
+#else
+	unsigned long long prod(u);
+#endif
+
+	prod *= v;
+	prod += c;
+
+	std::pair<word_type, word_type> rv;
+	rv.second = src_div_step(
+		static_cast<unsigned long>(prod),
+		static_cast<unsigned long>(prod >> word_shift)
+	);
+
+	decltype(prod) r(rv.second);
+	r *= src_num_radix;
+	r = prod - r;
+	rv.first = static_cast<word_type>(r);
+
+	return rv;
+}
+
+template <typename T>
+auto decimal_real_wrapper<T>::dst_mul_step(
+	word_type c, word_type u, word_type v
+) -> std::pair<word_type, word_type> {
+	if (!(u && v))
+		return std::make_pair(
+			c & ((1UL << word_bits) - 1UL),
+			c >> word_bits
+		);
+
+#if defined(__LP64__)
+	unsigned __int128 prod(u);
+#else
+	unsigned long long prod(u);
+#endif
+
+	prod *= v;
+	prod += c;
+
+	return std::make_pair(
+		static_cast<word_type>(prod & ((1UL << word_bits) - 1UL)),
+		static_cast<word_type>(prod >> word_bits)
+	);
+}
+
+template <typename T>
+auto decimal_real_wrapper<T>::src_div_step(
+	unsigned long xl, unsigned long xh
+) -> word_type
+{
+	constexpr int const word_shift(sizeof(unsigned long) * 8);
+
+#if defined(__LP64__)
+	unsigned __int128 w0(xl);
+#else
+	unsigned long long w0(xl);
+#endif
+
+	w0 *= src_radix_rec[0];
+	decltype(w0) w1(
+		xl < xh ? xh - xl : xl - xh
+	);
+	w1 *= src_radix_rec[0] < src_radix_rec[1]
+	      ? src_radix_rec[1] - src_radix_rec[0]
+	      : src_radix_rec[0] - src_radix_rec[1];
+
+	decltype(w0) w2(xh);
+	w2 *= src_radix_rec[1];
+
+	if ((xl < xh) != (src_radix_rec[0] < src_radix_rec[1]))
+		w1 += w2 + w0;
+	else
+		 w1 = w2 + w0 - w1;
+
+	unsigned long acc[4];
+	acc[0] = w0;
+	w1 += w0 >> word_shift;
+
+	acc[1] = w1;
+	w2 += w1 >> word_shift;
+
+	acc[2] = w2;
+	acc[3] = w2 >> word_shift;
+
+	unsigned long rv;
+
+	if ((src_radix_rec_shift / word_shift) < 3) {
+		rv = acc[(src_radix_rec_shift / word_shift) + 1];
+		rv <<= word_shift - (src_radix_rec_shift % word_shift);
+		rv |= acc[src_radix_rec_shift / word_shift]
+		      >> (src_radix_rec_shift % word_shift);
+	} else
+		rv = acc[3] >> (src_radix_rec_shift % word_shift);
+
+	return rv;
+}
+
 }
 }}}}
 

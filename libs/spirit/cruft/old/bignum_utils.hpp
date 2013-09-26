@@ -47,6 +47,53 @@ typedef mpl::x11::map<
 
 #endif
 
+template <int Shift, unsigned long RD0, unsigned long RD1>
+unsigned long dbl_div_step(std::pair<unsigned long, unsigned long> x)
+{
+	constexpr int const word_shift(sizeof(unsigned long) * 8);
+
+#if defined(__LP64__)
+	unsigned __int128 w0(x.first);
+#else
+	unsigned long long w0(x.first);
+#endif
+
+	w0 *= RD0;
+	decltype(w0) w1(
+		x.first < x.second ? x.second - x.first : x.first - x.second
+	);
+	w1 *= RD0 < RD1 ? RD1 - RD0 : RD0 - RD1;
+	decltype(w0) w2(x.second);
+	w2 *= RD1;
+
+	if ((x.first < x.second) != (RD0 < RD1))
+		w1 += w2 + w0;
+	else
+		w1 = w2 + w0 - w1;
+
+	unsigned long acc[4];
+	acc[0] = w0;
+	w1 += w0 >> word_shift;
+
+	acc[1] = w1;
+	w2 += w1 >> word_shift;
+
+	acc[2] = w2;
+	acc[3] = w2 >> word_shift;
+
+	unsigned long rv;
+
+	if ((Shift / word_shift) < 3) {
+		rv = acc[(Shift / word_shift) + 1];
+		rv <<= word_shift - (Shift % word_shift);
+		rv |= acc[Shift / word_shift] >> (Shift % word_shift);
+	} else
+		rv = acc[3] >> (Shift % word_shift);
+
+	return rv;
+
+}
+
 template <long Radix>
 typename std::enable_if<
 	mpl::x11::has_key<
@@ -56,7 +103,6 @@ typename std::enable_if<
 	unsigned long k, unsigned long u, unsigned long v
 )
 {
-
 	if (!(u && v))
 		return std::make_pair(k % Radix, k / Radix);
 
@@ -65,21 +111,7 @@ typename std::enable_if<
 		mpl::x11::long_<Radix>
 	>::type magic_values;
 
-	constexpr int const word_shift(
-		std::numeric_limits<unsigned long>::digits
-	);
-	constexpr int const word_offset(
-		mpl::x11::at_c<magic_values, 0>::type::value
-		/ word_shift
-	);
-	constexpr int const subword_shift(
-		mpl::x11::at_c<magic_values, 0>::type::value
-		% word_shift
-	);
-	constexpr unsigned long const m[2] = {
-		mpl::x11::at_c<magic_values, 1>::type::value,
-		mpl::x11::at_c<magic_values, 2>::type::value
-	};
+	constexpr int const word_shift(sizeof(unsigned long) * 8);
 
 #if defined(__LP64__)
 	unsigned __int128 prod(u);
@@ -90,46 +122,21 @@ typename std::enable_if<
 	prod *= v;
 	prod += k;
 
-	unsigned long x[2] = {
-		static_cast<unsigned long>(prod),
-		static_cast<unsigned long>(prod >> word_shift)
-	};
-	unsigned long y[4];
-
-	decltype(prod) w0(x[0]);
-	w0 *= m[0];
-	decltype(prod) w1(x[0] < x[1] ? x[1] - x[0] : x[0] - x[1]);
-	w1 *= m[0] < m[1] ? m[1] - m[0] : m[0] - m[1];
-	decltype(prod) w2(x[1]);
-	w2 *= m[1];
-
-	if ((x[0] < x[1]) != (m[0] < m[1]))
-		w1 += w2 + w0;
-	else
-		w1 = w2 + w0 - w1;
-
-	y[0] = w0;
-	w1 += w0 >> word_shift;
-
-	y[1] = w1;
-	w2 += w1 >> word_shift;
-
-	y[2] = w2;
-	y[3] = w2 >> word_shift;
-
 	std::pair<unsigned long, unsigned long> rv;
 
-	if (word_offset < 3) {
-		rv.second = y[word_offset + 1];
-		rv.second <<= word_shift - subword_shift;
-		rv.second |= y[word_offset] >> subword_shift;
-	} else
-		rv.second = y[3] >> subword_shift;
+	rv.second = dbl_div_step<
+		mpl::x11::at_c<magic_values, 0>::type::value,
+		mpl::x11::at_c<magic_values, 1>::type::value,
+		mpl::x11::at_c<magic_values, 2>::type::value
+	>(std::make_pair(
+		static_cast<unsigned long>(prod),
+		static_cast<unsigned long>(prod >> word_shift)
+	));
 
-	w0 = rv.second;
-	w0 *= Radix;
-	w0 = prod - w0;
-	rv.first = static_cast<unsigned long>(w0);
+	decltype(prod) r(rv.second);
+	r *= Radix;
+	r = prod - r;
+	rv.first = static_cast<unsigned long>(r);
 
 	return rv;
 }
