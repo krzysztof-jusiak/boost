@@ -382,6 +382,7 @@ bool decimal_real_wrapper<T>::get_dst_range(
 	boost::iterator_range<word_type *> mx(&mx_[0], &mx_[m.size()]);
 
 	boost::range::copy(m, mx.begin());
+
 	if (delta_off >= mx.size()) {
 		delta_off = mx.size() - 1;
 		delta = delta >= 0 ? 1 : -1;
@@ -389,14 +390,19 @@ bool decimal_real_wrapper<T>::get_dst_range(
 
 	auto pos(mx.end() - delta_off - 1);
 	if (delta > 0) {
-		do {
+		for (; pos != (mx.end() - 1); ++pos) {
 			*pos += delta;
 			if (*pos >= src_num_radix) {
 				*pos -= src_num_radix;
 				delta = 1;
-			} else
+			} else {
+				delta = 0;
 				break;
-		} while (pos++ != mx.end());
+			}
+		}
+		
+		mx.back() += delta;
+
 		boost::range::copy(mid, low.begin());
 		src_to_dst_num_type(high, mx);
 	} else {
@@ -407,7 +413,10 @@ bool decimal_real_wrapper<T>::get_dst_range(
 				delta = -1;
 			} else
 				break;
-		} while (pos++ != mx.end());
+
+			++pos;
+		} while (pos != mx.end());
+
 		boost::range::copy(mid, high.begin());
 		src_to_dst_num_type(low, mx);
 	}

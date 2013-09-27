@@ -58,11 +58,13 @@ void test_arg(T arg, char const *arg_ref)
 
 #define TESTARG(t, x) test_arg<t>(x, #x)
 
-#define WORKING 1
+#define WORKING 0
 int main(int argc, char **argv)
 {
-	TESTARG(double, 6.78e-47);
+	TESTARG(double, 9.025971879324147880346310405868e-277);
 #if WORKING
+	TESTARG(double, 6.78e-47);
+
 	TESTARG(double, -279719.86897e-25);
 	TESTARG(double, .03272779e-48);
 
