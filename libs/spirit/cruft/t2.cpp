@@ -61,9 +61,9 @@ void test_arg(T arg, char const *arg_ref)
 #define WORKING 1
 int main(int argc, char **argv)
 {
-	TESTARG(double, -279719.86897e-25);
-
+	TESTARG(double, 6.78e-47);
 #if WORKING
+	TESTARG(double, -279719.86897e-25);
 	TESTARG(double, .03272779e-48);
 
 	TESTARG(double, -79.498e-1);
@@ -104,6 +104,7 @@ int main(int argc, char **argv)
 	TESTARG(long double, 1.23e-20L);
 	TESTARG(double, 1e23);
 #endif
+
 	if (errors)
 		std::cout << "errors " << errors << '\n';
 	return 0;

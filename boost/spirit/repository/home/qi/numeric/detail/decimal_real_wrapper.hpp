@@ -164,10 +164,12 @@ struct decimal_real_wrapper {
 	};
 
 	decimal_real_wrapper()
-	: mantissa(1, 0),
-	  back_scale(src_num_radix),
+	: back_scale(src_num_radix),
 	  int_scale(0), frac_scale(0), exponent(0)
-	{}
+	{
+		mantissa.reserve(16);
+		mantissa.push_back(0);
+	}
 
 	operator T() const;
 
@@ -434,8 +436,7 @@ void decimal_real_wrapper<T>::scale_down(
 	d_exp -= d;
 
 	if (boost::range::lexicographical_compare(
-		pow_2_::get(d) | boost::adaptors::reversed,
-		m, std::less_equal<word_type>()
+		pow_2_::get(d), m, std::less_equal<word_type>()
 	))
 		++d_exp;
 
@@ -457,7 +458,6 @@ void decimal_real_wrapper<T>::scale_down(
 		acc -= (acc >> order) << order;
 	}
 	normalize_be(m);
-	//printf("=do_m= "); print<src_num_type, false>("%ld", m);
 }
 
 template <typename T>
@@ -479,8 +479,7 @@ void decimal_real_wrapper<T>::scale_up(
 	d_exp += d;
 
 	if (boost::range::lexicographical_compare(
-		m | boost::adaptors::reversed,
-		rec_pow_2_::get(d) |  boost::adaptors::reversed
+		m | boost::adaptors::reversed, rec_pow_2_::get(d)
 	))
 		--d_exp;
 
@@ -497,15 +496,19 @@ void decimal_real_wrapper<T>::scale_up(
 		acc = s;
 		acc <<= order;
 		acc += c;
-		c = src_div_step(
-			static_cast<word_type>(acc),
-			static_cast<word_type>(acc >> word_shift)
-		);
-		decltype(acc) p(c);
-		s = static_cast<word_type>(acc - (p * src_num_radix));
+		if (static_cast<word_type>(acc >> word_shift)) {
+			c = src_div_step(
+				static_cast<word_type>(acc),
+				static_cast<word_type>(acc >> word_shift)
+			);
+			decltype(acc) p(c);
+			s = static_cast<word_type>(acc - (p * src_num_radix));
+		} else {
+			c = static_cast<unsigned long>(acc) / src_num_radix;
+			s = static_cast<unsigned long>(acc) % src_num_radix;
+		}
 	}
 	normalize_le(m);
-	//printf("=up_m= "); print<src_num_type>("%ld", m);
 }
 
 template <typename T>
@@ -578,65 +581,62 @@ void decimal_real_wrapper<T>::normalize_le(src_num_type &m)
 	while (!m.back())
 		m.pop_back();
 
-	if (src_num_radix
-	    < (std::numeric_limits<word_type>::max()
-	       / base_src_radix / 2)
-	) {
-		while (m.back() < (src_num_radix / base_src_radix)) {
-			word_type c(0);
-			for (auto &d : m) {
-				d *= base_src_radix;
-				d += c;
-				c = d / src_num_radix;
-				d %= src_num_radix;
-			}
-		}
-	} else {
-		while (m.back() < (src_num_radix / base_src_radix)) {
-			std::pair<word_type, word_type> c(0, 0);
-			for (auto &d : m) {
-				c = src_mul_step(c.second, d, base_src_radix);
-				d = c.first;
-			}
-		}
+	word_type scale(1);
+	while (m.back() < src_num_radix / base_src_radix) {
+		m.back() *= base_src_radix;
+		scale *= base_src_radix;
 	}
+
+	if (scale == 1)
+		return;
+
+	auto dst_pos(m.begin());
+	auto src_pos(m.begin());
+	while (!(*src_pos))
+		++src_pos;
+
+	std::pair<word_type, word_type> c(0, 0);
+	for (; src_pos != (m.end() - 1); ++src_pos) {
+		c = src_mul_step(c.second, *src_pos, scale);
+		*dst_pos = c.first;
+		++dst_pos;
+	}
+	*dst_pos = m.back();
+	*dst_pos += c.second;
+	++dst_pos;
+
+	if (dst_pos != m.end())
+		m.erase(dst_pos, m.end());
 }
 
 template <typename T>
 void decimal_real_wrapper<T>::normalize_be(src_num_type &m)
 {
-	auto m_b(m.begin());
-	while (!(*m_b))
-		++m_b;
-
-	if (m_b != m.begin())
-		m.erase(m.begin(), m_b);
-
-	if (src_num_radix
-	    < (std::numeric_limits<word_type>::max()
-	       / base_src_radix / 2)
-	) {
-		while (m.front() < (src_num_radix / base_src_radix)) {
-			word_type c(0);
-			for (auto &d : m | boost::adaptors::reversed) {
-				d *= base_src_radix;
-				d += c;
-				c = d / src_num_radix;
-				d %= src_num_radix;
-			}
-		}
-	} else {
-		while (m.front() < (src_num_radix / base_src_radix)) {
-			std::pair<word_type, word_type> c(0, 0);
-			for (auto &d : m | boost::adaptors::reversed) {
-				c = src_mul_step(c.second, d, base_src_radix);
-				d = c.first;
-			}
-		}
-	}
-
 	while (!m.back())
 		m.pop_back();
+
+	auto dst_pos(m.begin());
+	while (!(*dst_pos))
+		++dst_pos;
+
+	if (dst_pos != m.begin())
+		m.erase(m.begin(), dst_pos);
+
+	word_type scale(1);
+	while (m.front() < src_num_radix / base_src_radix) {
+		m.front() *= base_src_radix;
+		scale *= base_src_radix;
+	}
+
+	if (scale == 1)
+		return;
+
+	std::pair<word_type, word_type> c(0, 0);
+	for (dst_pos = m.end() - 1; dst_pos != m.begin(); --dst_pos) {
+		c = src_mul_step(c.second, *dst_pos, scale);
+		*dst_pos = c.first;
+	}
+	*dst_pos += c.second;
 }
 
 template <typename T>
@@ -705,15 +705,20 @@ auto decimal_real_wrapper<T>::src_mul_step(
 	prod += c;
 
 	std::pair<word_type, word_type> rv;
-	rv.second = src_div_step(
-		static_cast<unsigned long>(prod),
-		static_cast<unsigned long>(prod >> word_shift)
-	);
+	if (static_cast<unsigned long>(prod >> word_shift)) {
+		rv.second = src_div_step(
+			static_cast<unsigned long>(prod),
+			static_cast<unsigned long>(prod >> word_shift)
+		);
 
-	decltype(prod) r(rv.second);
-	r *= src_num_radix;
-	r = prod - r;
-	rv.first = static_cast<word_type>(r);
+		decltype(prod) r(rv.second);
+		r *= src_num_radix;
+		r = prod - r;
+		rv.first = static_cast<word_type>(r);
+	} else {
+		rv.second = static_cast<unsigned long>(prod) / src_num_radix;
+		rv.first = static_cast<unsigned long>(prod) % src_num_radix;
+	}
 
 	return rv;
 }
