@@ -60,6 +60,13 @@ struct decimal_real_wrapper {
 	};
 	constexpr static int src_radix_rec_shift = 184;
 	constexpr static int word_bits = 57;
+	constexpr static std::array<word_type, 17> src_radix_scale = {{
+		10L, 100L, 1000L, 10000L, 100000L, 1000000L,
+		10000000L, 100000000L, 1000000000L, 10000000000L,
+		100000000000L, 1000000000000L, 10000000000000L,
+		100000000000000L, 1000000000000000L, 10000000000000000L,
+		100000000000000000L
+	}};
 #else
 	constexpr static word_type src_num_radix = 100000000L;
 	constexpr static unsigned long src_radix_rec[2] = {
@@ -67,6 +74,10 @@ struct decimal_real_wrapper {
 	};
 	constexpr static int src_radix_rec_shift = 90;
 	constexpr static int word_bits = 27;
+	constexpr static std::array<word_type, 8> src_radix_scale = {{
+		10L, 100L, 1000L, 10000L, 100000L, 1000000L, 10000000L,
+		100000000L
+	}};
 #endif
 
 /* clang 3.4 required, gcc works
@@ -221,6 +232,18 @@ constexpr int decimal_real_wrapper<T>::word_bits;
 
 template <typename T>
 constexpr unsigned long decimal_real_wrapper<T>::src_radix_rec[2];
+
+#ifdef __LP64__
+template <typename T>
+constexpr std::array<
+	typename decimal_real_wrapper<T>::word_type, 17
+> decimal_real_wrapper<T>::src_radix_scale;
+#else
+template <typename T>
+constexpr std::array<
+	typename decimal_real_wrapper<T>::word_type, 8
+> decimal_real_wrapper<T>::src_radix_scale;
+#endif
 
 template <typename Tr, bool Rev = true>
 void print(char const *fmt, Tr const &r)
@@ -590,10 +613,16 @@ void decimal_real_wrapper<T>::normalize_le(src_num_type &m)
 	while (!m.back())
 		m.pop_back();
 
-	word_type scale(1);
-	while (m.back() < src_num_radix / base_src_radix) {
-		m.back() *= base_src_radix;
-		scale *= base_src_radix;
+	auto scale(*std::lower_bound(
+		src_radix_scale.cbegin(),
+		src_radix_scale.cend(),
+		src_radix_scale.back() / m.back()
+	) / src_radix_scale.front());
+
+	m.back() *= scale;
+	while (m.back() < (src_radix_scale.back() / src_radix_scale.front())) {
+		m.back() *= src_radix_scale.front();
+		scale *= src_radix_scale.front();
 	}
 
 	if (scale == 1)
@@ -631,10 +660,16 @@ void decimal_real_wrapper<T>::normalize_be(src_num_type &m)
 	if (dst_pos != m.begin())
 		m.erase(m.begin(), dst_pos);
 
-	word_type scale(1);
-	while (m.front() < src_num_radix / base_src_radix) {
-		m.front() *= base_src_radix;
-		scale *= base_src_radix;
+	word_type scale(*std::lower_bound(
+		src_radix_scale.cbegin(),
+		src_radix_scale.cend(),
+		src_radix_scale.back() / m.front()
+	) / src_radix_scale.front());
+
+	m.front() *= scale;
+	while (m.front() < (src_radix_scale.back() / src_radix_scale.front())) {
+		m.front() *= src_radix_scale.front();
+		scale *= src_radix_scale.front();
 	}
 
 	if (scale == 1)
