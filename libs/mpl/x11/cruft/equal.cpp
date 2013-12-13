@@ -2,7 +2,7 @@
 #include <typeinfo>
 #include <cxxabi.h>
 
-#define X11 1
+//#define X11 1
 
 #if defined(X11)
 #include <boost/mpl/x11/reverse_fold.hpp>
@@ -19,6 +19,14 @@ using namespace boost::mpl::x11;
 #else
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/set_c.hpp>
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/vector_c.hpp>
+#include <boost/mpl/less.hpp>
+#include <boost/mpl/greater.hpp>
+#include <boost/mpl/equal.hpp>
+#include <boost/mpl/equal_to.hpp>
+#include <boost/mpl/copy_if.hpp>
+#include <boost/mpl/remove_if.hpp>
 #include <boost/mpl/list.hpp>
 #include <boost/mpl/find.hpp>
 #include <boost/mpl/erase.hpp>
@@ -49,12 +57,12 @@ int main(int argc, char **argv)
 	typedef vector_c<int, -1, -7, -2, -5> negatives;
 	typedef reverse_fold<
 		numbers, vector_c<int>, if_<
-			less<arg<1>, int_<0>>, push_front<arg<0>, arg<1>>,
-			arg<0>
+			less<arg<1 + 1>, int_<0>>, push_front<arg<0 + 1>, arg<1 + 1>>,
+			arg<0 + 1>
 	>>::type result;
 
 	typedef detail::equal_impl<
-		result, negatives, equal_to<arg<0>, arg<1>>
+		result, negatives, equal_to<arg<0 + 1>, arg<1 + 1>>
 	> t1;
 	
 	std::cout << "x11: " << demangle<result>() << "\n\n";
@@ -63,7 +71,7 @@ int main(int argc, char **argv)
 	std::cout << "x14: " << demangle<deref<next<typename t1::first2_>>::type>() << "\n\n";
 
 	std::cout << "v11: "
-		  << equal<result, negatives, equal_to<arg<0>, arg<1>>>::value
+		  << equal<result, negatives, equal_to<arg<0 + 1>, arg<1 + 1>>>::value
 		  << '\n';
 
 }

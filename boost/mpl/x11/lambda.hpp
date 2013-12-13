@@ -58,7 +58,7 @@ struct lambda<> {
 };
 
 template <typename Tag>
-struct lambda<lambda<>, Tag, int_<-1>> {
+struct lambda<lambda<>, Tag, long_<-1>> {
 	typedef false_type is_le;
 	typedef lambda<> result_;
 	typedef lambda<> type;

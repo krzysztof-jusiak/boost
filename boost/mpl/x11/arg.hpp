@@ -10,7 +10,7 @@
 #define MPL_X11_ARG_APR_04_2013_1600
 
 #include <boost/mpl/x11/void.hpp>
-#include <boost/mpl/x11/if.hpp>
+#include <boost/mpl/x11/integral.hpp>
 
 namespace boost { namespace mpl { namespace x11 {
 
@@ -24,12 +24,14 @@ struct arg {
 
 	template <typename T0>
 	struct apply<T0> {
-		typedef typename if_c<!(N - Pos), T0, void_>::type type;
+		typedef typename std::conditional<
+			!(N - Pos), T0, void_
+		>::type type;
 	};
 
 	template <typename T0, typename... Tn>
 	struct apply<T0, Tn...> {
-		typedef typename if_c<
+		typedef typename std::conditional<
 			!(N - Pos), T0,
 			typename arg<
 				N, Pos + 1
