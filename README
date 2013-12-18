@@ -7,6 +7,10 @@ standard).
 boost::mpl::x11
 ---------------
 
+*A throughly cleaned up and fully variadic version of this MPL
+implementation is now available here:
+https://github.com/oakad/ucpf/tree/master/yesod/yesod/mpl*
+
 Original boost::mpl library was a major milestone in the evolution of C++
 programing language. But apart of being an example of advanced C++ thinking
 it also serves as example of hardcore preprocessor programming. Clearly,
